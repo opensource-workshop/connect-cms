@@ -2001,14 +2001,8 @@ class SiteManage extends ManagePluginBase
      */
     public function total($request, $id = null)
     {
-        $total = 0;
-        // ディレクトリの全ファイル一覧
-        $files = FileUtils::getFileList(base_path());
-        foreach ($files as $file) {
-            $total += filesize($file);
-        }
-        // 単位付与
-        $total = FileUtils::getFormatSizeDecimalPoint($total);
+        // 総使用量を取得
+        $total = FileUtils::getTotalUsageFormatted(base_path());
 
         return view('plugins.manage.site.total', [
             "function"    => __FUNCTION__,

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
+use App\Utilities\File\FileUtils;
 
 use App\Plugins\Manage\ManagePluginBase;
 use App\Traits\ConnectCommonTrait;
@@ -124,6 +125,9 @@ class UploadfileManage extends ManagePluginBase
         // データ取得
         $uploads = $uploads_query->paginate($per_page, null, 'page', $page);
 
+        // 使用量の計算
+        $storage_usage = $this->getStorageUsage();
+
         // 入力値をsessionへ保存（検索用）
         $request->flash();
 
@@ -133,6 +137,7 @@ class UploadfileManage extends ManagePluginBase
             "plugin_name" => "uploadfile",
             "uploads"     => $uploads,
             "allowed_per_page" => $this->allowed_per_page,
+            "storage_usage" => $storage_usage,
         ]);
     }
 
@@ -405,4 +410,21 @@ class UploadfileManage extends ManagePluginBase
         return redirect('/manage/uploadfile/')->with('flash_message', $message);
     }
 
+    /**
+     * ストレージ使用量を取得
+     *
+     * @return array
+     */
+    private function getStorageUsage() : array
+    {
+        $usage = [];
+
+        // 総使用量（アプリケーションルート配下）
+        $usage['total'] = FileUtils::getTotalUsageFormatted(base_path());
+
+        // ファイル使用量（storage/app/uploads配下）
+        $usage['uploads'] = FileUtils::getTotalUsageFormatted(storage_path('app/uploads'));
+
+        return $usage;
+    }
 }
