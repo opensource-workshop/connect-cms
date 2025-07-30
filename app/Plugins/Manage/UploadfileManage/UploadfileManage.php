@@ -421,10 +421,24 @@ class UploadfileManage extends ManagePluginBase
         $usage = [];
 
         // 総使用量（アプリケーションルート配下）
+        $startTime = microtime(true);
         $usage['total'] = FileUtils::getTotalUsageFormatted(base_path());
+        $totalElapsed = microtime(true) - $startTime;
+        Log::info('UploadfileManage: Total usage calculation completed', [
+            'path' => base_path(),
+            'size' => $usage['total'],
+            'elapsed_time' => number_format($totalElapsed, 3) . 's'
+        ]);
 
         // ファイル使用量（storage/app/uploads配下）
+        $startTime = microtime(true);
         $usage['uploads'] = FileUtils::getTotalUsageFormatted(storage_path('app/uploads'));
+        $uploadsElapsed = microtime(true) - $startTime;
+        Log::info('UploadfileManage: Uploads usage calculation completed', [
+            'path' => storage_path('app/uploads'),
+            'size' => $usage['uploads'],
+            'elapsed_time' => number_format($uploadsElapsed, 3) . 's'
+        ]);
 
         return $usage;
     }
