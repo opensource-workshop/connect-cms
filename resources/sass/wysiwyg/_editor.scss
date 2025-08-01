@@ -1,0 +1,122 @@
+
+/*  WYSIWYG
+------------------------------------- */
+.mce-content-body {
+    margin: revert;
+}
+
+/* 追加選択肢の背景色が微妙なので打ち消す設定（TableのClassなど） */
+.mce-text {
+    color: #000 !important;
+    background-color: transparent !important;
+}
+
+.mce-active .mce-text {
+/*    color: #fff !important;*/
+    background-color: transparent !important;
+}
+
+.mce-active {
+    background-color: #ededee !important;
+}
+
+/* WYSIWYG のプレビューでGoogle Map が表示されない問題の対応
+   WYSIWYG のプレビュー時に、embed-responsive と iframe の間にspan が生成され、
+   そのspan の position が relative になっていることが原因のため、static に設定する。 */
+.embed-responsive span.mce-preview-object {
+    position: static;
+}
+
+/* WYSIWYG で設定できる記事の書式
+------------------------------------- */
+/* 囲み(グレー) */
+.cc-column {
+    margin: 15px 0;
+    padding: 25px;
+    background-color: #f2f2f2;
+    border-radius: 7px;
+}
+/*
+#ccMainArea .card-body .column {
+    margin: 25px 0;
+    border: #999 2px solid;
+    background-color: #fff;
+}
+*/
+/* 注意ポイント */
+.cc-exclamation {
+    padding-left: 1.1rem;
+    text-indent: -1.2rem;
+}
+.cc-exclamation::before {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background: url("../../images/wysiwyg/acc_exclamation.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 5px 3px 0;
+}
+/* ※印ポイント */
+.cc-note {
+    padding-left: 0.8rem;
+    text-indent: -0.8rem;
+}
+.cc-note::before {
+    content: "";
+    display: inline-block;
+    width: .8rem;
+    height: .8rem;
+    background: url("../../images/wysiwyg/acc_note.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 3px 2px 0;
+}
+.cc-note + .cc-note {
+    margin-top: -10px;
+}
+/* アイコン(PDF) */
+a.cc-icon-pdf:after {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url("../../images/wysiwyg/icon_pdf.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+/* アイコン(Excel) */
+a.cc-icon-excel:after {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url("../../images/wysiwyg/icon_excel.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+/* アイコン(Word) */
+a.cc-icon-word:after {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background: url("../../images/wysiwyg/icon_word.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
+/* アイコン(外部サイト) */
+a.cc-icon-external:after {
+    content: "";
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    background: url("../../images/wysiwyg/icon_external.png") no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+    margin: 0 0 3px 5px;
+}
