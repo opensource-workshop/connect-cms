@@ -366,7 +366,7 @@ class UsersTool
 
     /**
      * バリデーション配列の構築処理
-     * 
+     *
      * @param array $validator_array 既存のバリデーション配列
      * @param Collection $users_columns ユーザカラム情報
      * @param int $columns_set_id 項目セットID
