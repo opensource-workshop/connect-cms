@@ -306,7 +306,13 @@ use App\Models\Core\UsersColumns;
                 <br>
             @endif
 
-            @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
+            @if ($column->column_type == UserColumnType::text || 
+                $column->column_type == UserColumnType::textarea || 
+                $column->column_type == UserColumnType::mail || 
+                $column->column_type == UserColumnType::user_name || 
+                $column->column_type == UserColumnType::login_id || 
+                $column->column_type == UserColumnType::user_email
+            )
                 {{-- チェック処理の設定 --}}
                 <div class="card form-group" id="div_rule">
                     <h5 class="card-header">チェック処理の設定</h5>
@@ -393,7 +399,13 @@ use App\Models\Core\UsersColumns;
                             </div>
                         @endif
 
-                        @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
+                        @if ($column->column_type == UserColumnType::text || 
+                            $column->column_type == UserColumnType::textarea || 
+                            $column->column_type == UserColumnType::mail || 
+                            $column->column_type == UserColumnType::user_name || 
+                            $column->column_type == UserColumnType::login_id || 
+                            $column->column_type == UserColumnType::user_email
+                        )
                             {{-- 正規表現設定 --}}
                             <div class="form-group row">
                                 <label class="col-md-3 col-form-label text-md-right">正規表現</label>
