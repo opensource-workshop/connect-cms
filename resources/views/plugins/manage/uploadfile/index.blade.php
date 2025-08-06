@@ -21,19 +21,8 @@
         {{-- メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
-        {{-- 使用量表示 --}}
+        {{-- アップロードファイル使用量表示 --}}
         <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-body p-3">
-                        <h6 class="card-title mb-2">
-                            <i class="fas fa-folder-open text-primary"></i> 総使用量
-                        </h6>
-                        <p class="card-text h5 mb-0 text-primary">{{ $storage_usage['total'] }}</p>
-                        <small class="text-muted">サイト全体の使用量</small>
-                    </div>
-                </div>
-            </div>
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body p-3">

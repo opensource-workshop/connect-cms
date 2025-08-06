@@ -125,8 +125,8 @@ class UploadfileManage extends ManagePluginBase
         // データ取得
         $uploads = $uploads_query->paginate($per_page, null, 'page', $page);
 
-        // 使用量の計算
-        $storage_usage = $this->getStorageUsage();
+        // アップロードファイル使用量の計算
+        $storage_usage = $this->getUploadsUsage();
 
         // 入力値をsessionへ保存（検索用）
         $request->flash();
@@ -412,23 +412,13 @@ class UploadfileManage extends ManagePluginBase
     }
 
     /**
-     * ストレージ使用量を取得
+     * アップロードファイル使用量を取得
      *
      * @return array
      */
-    private function getStorageUsage() : array
+    private function getUploadsUsage() : array
     {
         $usage = [];
-
-        // 総使用量（アプリケーションルート配下）
-        $startTime = microtime(true);
-        $usage['total'] = FileUtils::getTotalUsageFormatted(base_path());
-        $totalElapsed = microtime(true) - $startTime;
-        Log::info('UploadfileManage: Total usage calculation completed', [
-            'path' => base_path(),
-            'size' => $usage['total'],
-            'elapsed_time' => number_format($totalElapsed, 3) . 's'
-        ]);
 
         // ファイル使用量（storage/app/uploads配下）
         $startTime = microtime(true);
