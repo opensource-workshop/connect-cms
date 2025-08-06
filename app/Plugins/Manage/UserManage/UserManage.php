@@ -872,14 +872,8 @@ class UserManage extends ManagePluginBase
             ]
         ];
 
-        foreach ($users_columns as $users_column) {
-            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
-                // 既に入力チェックセット済みのため、ここではチェックしない
-                continue;
-            }
-            // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $request->columns_set_id, $id);
-        }
+        // デフォルト項目とカスタム項目のバリデーション配列構築
+        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $request->columns_set_id, $id);
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
