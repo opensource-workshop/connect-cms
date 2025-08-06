@@ -21,16 +21,31 @@
         {{-- メッセージ表示 --}}
         @include('plugins.common.flash_message')
 
-        {{-- アップロードファイル使用量表示 --}}
+        {{-- 使用量表示 --}}
         <div class="row mb-3">
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body p-3">
                         <h6 class="card-title mb-2">
-                            <i class="fas fa-folder-open text-success"></i> アップロードファイル使用量
+                            <i class="fas fa-chart-pie text-primary"></i> 総使用量
                         </h6>
-                        <p class="card-text h5 mb-0 text-success">{{ $storage_usage['uploads'] }}</p>
-                        <small class="text-muted">アップロードファイルの使用量</small>
+                        <p class="card-text h5 mb-2 text-primary">{{ $storage_usage['total'] }}</p>
+                        <div class="row text-sm">
+                            <div class="col-md-6">
+                                <div class="mb-1">
+                                    <i class="fas fa-database text-info mr-1"></i>
+                                    <span class="text-muted">データ使用量</span>
+                                </div>
+                                <div class="text-info font-weight-bold">{{ $storage_usage['tables'] }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-1">
+                                    <i class="fas fa-folder-open text-success mr-1"></i>
+                                    <span class="text-muted">アップロードファイル使用量</span>
+                                </div>
+                                <div class="text-success font-weight-bold">{{ $storage_usage['uploads'] }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

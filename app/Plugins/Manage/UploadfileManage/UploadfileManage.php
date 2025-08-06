@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
@@ -125,8 +126,8 @@ class UploadfileManage extends ManagePluginBase
         // データ取得
         $uploads = $uploads_query->paginate($per_page, null, 'page', $page);
 
-        // アップロードファイル使用量の計算
-        $storage_usage = $this->getUploadsUsage();
+        // データ使用量の計算
+        $storage_usage = $this->getDataUsage();
 
         // 入力値をsessionへ保存（検索用）
         $request->flash();
@@ -412,24 +413,108 @@ class UploadfileManage extends ManagePluginBase
     }
 
     /**
-     * アップロードファイル使用量を取得
+     * 各種の使用量（テーブル使用量、アップロードファイル使用量、総使用量）を配列に詰めて返す
      *
      * @return array
      */
-    private function getUploadsUsage() : array
+    private function getDataUsage() : array
     {
         $usage = [];
 
-        // ファイル使用量（storage/app/uploads配下）
-        $startTime = microtime(true);
+        // テーブル使用量
+        $usage['tables'] = $this->getTableUsageFormatted();
+
+        // アップロードファイル使用量（storage/app/uploads配下）
         $usage['uploads'] = FileUtils::getTotalUsageFormatted(storage_path('app/uploads'));
-        $uploadsElapsed = microtime(true) - $startTime;
-        Log::info('UploadfileManage: Uploads usage calculation completed', [
-            'path' => storage_path('app/uploads'),
-            'size' => $usage['uploads'],
-            'elapsed_time' => number_format($uploadsElapsed, 3) . 's'
-        ]);
+
+        // 総使用量（テーブル使用量 + アップロードファイル使用量）
+        $usage['total'] = $this->calculateTotalUsage($usage['tables'], $usage['uploads']);
 
         return $usage;
+    }
+
+    /**
+     * information_schema.tablesからテーブル使用量を算出してフォーマット済みの使用量を返す
+     *
+     * @return string
+     */
+    private function getTableUsageFormatted() : string
+    {
+        try {
+            $database_name = env('DB_DATABASE');
+            
+            // システムスキーマからテーブルの使用量を取得
+            $result = DB::select("
+                SELECT COALESCE(SUM(data_length + index_length), 0) as total_size 
+                FROM information_schema.tables 
+                WHERE table_schema = ? AND table_name NOT IN ('app_logs', 'migrations', 'migration_mappings', 'dusks', 'api_secrets')
+            ", [$database_name]);
+            
+            $total_bytes = $result[0]->total_size ?? 0;
+
+            return FileUtils::getFormatSizeDecimalPoint((int)$total_bytes);
+        } catch (\Exception $e) {
+            Log::error('UploadfileManage: Table usage calculation failed', ['error' => $e->getMessage()]);
+            return '-';
+        }
+    }
+
+    /**
+     * 総使用量（データ使用量＋アップロードファイル使用量）を算出してフォーマット済みの総使用量を返す
+     *
+     * @param string $tables_size
+     * @param string $uploads_size
+     * @return string
+     */
+    private function calculateTotalUsage(string $tables_size, string $uploads_size) : string
+    {
+        try {
+            $tables_bytes = $this->parseFormattedSize($tables_size);
+            $uploads_bytes = $this->parseFormattedSize($uploads_size);
+            
+            $total_bytes = $tables_bytes + $uploads_bytes;
+            
+            // デバッグログ
+            Log::info('UploadfileManage: Total usage calculation details', [
+                'tables_size' => $tables_size,
+                'uploads_size' => $uploads_size,
+                'tables_bytes' => $tables_bytes,
+                'uploads_bytes' => $uploads_bytes,
+                'total_bytes' => $total_bytes
+            ]);
+
+            return FileUtils::getFormatSizeDecimalPoint((int)$total_bytes);
+        } catch (\Exception $e) {
+            Log::error('UploadfileManage: Total usage calculation failed', ['error' => $e->getMessage()]);
+            return '-';
+        }
+    }
+
+    /**
+     * 後続処理の計算用にフォーマット済みサイズ文字列をバイト数に変換して返す
+     *
+     * @param string $formatted_size
+     * @return int
+     */
+    private function parseFormattedSize(string $formatted_size) : int
+    {
+        $formatted_size = trim($formatted_size);
+        
+        // 単位とその倍数を定義（長い単位から順番に処理するため降順で配列を構成）※「MB」→「B」の順でチェックしないと「177.50MB」が「B」として誤認識される
+        $units = ['TB' => 1024*1024*1024*1024, 'GB' => 1024*1024*1024, 'MB' => 1024*1024, 'KB' => 1024, 'B' => 1];
+        
+        // 各単位をチェックして該当する単位を見つける
+        foreach ($units as $unit => $multiplier) {
+            // 文字列の末尾が単位文字列と一致するかチェック ※例：「177.50MB」の末尾2文字が「MB」と一致するか
+            if (substr($formatted_size, -strlen($unit)) === $unit) {
+                // 単位部分を除去して数値部分のみを取得 ※例：「177.50MB」→「177.50」
+                $number = floatval(str_replace($unit, '', $formatted_size));
+                // 数値に倍数を掛けてバイト数に変換（例：177.50 * 1048576 = 186122240バイト）
+                return intval($number * $multiplier);
+            }
+        }
+        
+        // どの単位にも一致しなかった場合は0バイトを返す
+        return 0;
     }
 }
