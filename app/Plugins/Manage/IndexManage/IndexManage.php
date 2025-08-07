@@ -2,7 +2,6 @@
 
 namespace app\Plugins\Manage\IndexManage;
 
-
 use App\Plugins\Manage\ManagePluginBase;
 use App\Utilities\Storage\StorageUsageCalculator;
 

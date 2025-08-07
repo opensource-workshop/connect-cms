@@ -410,6 +410,4 @@ class UploadfileManage extends ManagePluginBase
 
         return redirect('/manage/uploadfile/')->with('flash_message', $message);
     }
-
-
 }
