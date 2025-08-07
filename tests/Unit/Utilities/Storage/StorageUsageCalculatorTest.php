@@ -11,21 +11,16 @@ class StorageUsageCalculatorTest extends TestCase
     {
         parent::setUp();
         
-        // 環境変数を削除
-        if (function_exists('putenv')) {
-            putenv('STORAGE_LIMIT_MB');
-            putenv('STORAGE_USAGE_WARNING_THRESHOLD');
-        }
+        // 設定値をクリア
+        config(['storage_management.limit_mb' => null]);
+        config(['storage_management.warning_threshold' => null]);
     }
     
     protected function tearDown(): void
     {
-        // 環境変数を削除
-        if (function_exists('putenv')) {
-            putenv('STORAGE_LIMIT_MB');
-            putenv('STORAGE_USAGE_WARNING_THRESHOLD');
-            putenv('DB_DATABASE');
-        }
+        // 設定値をクリア
+        config(['storage_management.limit_mb' => null]);
+        config(['storage_management.warning_threshold' => null]);
         
         parent::tearDown();
     }
@@ -44,8 +39,7 @@ class StorageUsageCalculatorTest extends TestCase
     {
         // テスト環境の設定 - 実際のDBとの接続を確保
         config(['database.default' => 'testing']);
-        putenv('DB_DATABASE=testing');
-        putenv('STORAGE_LIMIT_MB=100');
+        config(['storage_management.limit_mb' => 100]);
         
         // メソッド実行
         $result = StorageUsageCalculator::getDataUsage();
@@ -83,7 +77,7 @@ class StorageUsageCalculatorTest extends TestCase
         $this->assertTrue(StorageUsageCalculator::shouldShowWarning(0.85)); // 85% > 80%
         
         // テストケース2: カスタム閾値を設定した場合の動作確認
-        putenv('STORAGE_USAGE_WARNING_THRESHOLD=0.9'); // 90%に変更
+        config(['storage_management.warning_threshold' => 0.9]); // 90%に変更
         $this->assertTrue(StorageUsageCalculator::shouldShowWarning(0.95)); // 95% > 90%
         
         // テストケース3: 閾値ちょうどの境界値テスト（以上の条件なので警告表示）
@@ -103,8 +97,8 @@ class StorageUsageCalculatorTest extends TestCase
      */
     public function testShouldShowWarningReturnsFalseWhenUsageIsBelowThreshold()
     {
-        // 環境変数をクリアしてデフォルト閾値（80%）を使用
-        putenv('STORAGE_USAGE_WARNING_THRESHOLD');
+        // 設定値を明示的にデフォルト値に設定
+        config(['storage_management.warning_threshold' => 0.8]);
         
         // テストケース1: デフォルト閾値（80%）未満の使用率では警告なし
         $this->assertFalse(StorageUsageCalculator::shouldShowWarning(0.75)); // 75% < 80%
@@ -143,8 +137,8 @@ class StorageUsageCalculatorTest extends TestCase
      */
     public function testGetPlanLimitFormattedWithValidConfiguration()
     {
-        // テスト用環境変数設定（100MB）
-        putenv('STORAGE_LIMIT_MB=100');
+        // テスト用設定値設定（100MB）
+        config(['storage_management.limit_mb' => 100]);
         
         // privateメソッドへのアクセス準備
         $method = new \ReflectionMethod(StorageUsageCalculator::class, 'getPlanLimitFormatted');
@@ -191,8 +185,8 @@ class StorageUsageCalculatorTest extends TestCase
      */
     public function testGetPlanLimitFormattedWithDecimalValue()
     {
-        // 小数値を含む環境変数設定（10.5MB）
-        putenv("STORAGE_LIMIT_MB=10.5");
+        // 小数値を含む設定値設定（10.5MB）
+        config(['storage_management.limit_mb' => 10.5]);
         
         // privateメソッドへのアクセス準備
         $method = new \ReflectionMethod(StorageUsageCalculator::class, 'getPlanLimitFormatted');
@@ -370,7 +364,6 @@ class StorageUsageCalculatorTest extends TestCase
     {
         // テストDB環境の設定
         config(['database.default' => 'testing']);
-        putenv('DB_DATABASE=testing');
         
         // privateメソッドへのアクセス準備
         $method = new \ReflectionMethod(StorageUsageCalculator::class, 'getTableUsageFormatted');

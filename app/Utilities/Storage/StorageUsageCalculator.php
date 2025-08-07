@@ -41,7 +41,7 @@ class StorageUsageCalculator
         // 総使用量（テーブル使用量 + アップロードファイル使用量）
         $usage['total'] = self::calculateTotalUsage($usage['tables'], $usage['uploads']);
 
-        // プラン容量（env設定がある場合のみ）
+        // プラン容量（設定がある場合のみ）
         $usage['plan_limit'] = self::getPlanLimitFormatted();
 
         // 使用率（プラン容量が設定されている場合のみ）
@@ -58,7 +58,7 @@ class StorageUsageCalculator
     private static function getTableUsageFormatted(): string
     {
         try {
-            $database_name = env('DB_DATABASE');
+            $database_name = config('database.connections.' . config('database.default') . '.database');
             
             // システムスキーマからテーブルの使用量を取得
             $result = DB::select("
@@ -99,15 +99,15 @@ class StorageUsageCalculator
     }
 
     /**
-     * フォーマット済みのプラン容量を返す ※env設定がない場合、数値以外の設定はnullを返す
+     * フォーマット済みのプラン容量を返す ※設定がない場合、数値以外の設定はnullを返す
      *
      * @return string|null
      */
     private static function getPlanLimitFormatted(): ?string
     {
-        $storage_limit_mb = env('STORAGE_LIMIT_MB');
+        $storage_limit_mb = config('storage_management.limit_mb');
         
-        // env設定がない場合や無効な値の場合はnullを返す
+        // 設定がない場合や無効な値の場合はnullを返す
         if (empty($storage_limit_mb) || !is_numeric($storage_limit_mb) || $storage_limit_mb <= 0) {
             Log::warning('Invalid STORAGE_LIMIT_MB configuration: ' . $storage_limit_mb);
             return null;
@@ -167,7 +167,7 @@ class StorageUsageCalculator
         }
         
         // 警告閾値を取得（デフォルト80%）
-        $warning_threshold = env('STORAGE_USAGE_WARNING_THRESHOLD', self::DEFAULT_WARNING_THRESHOLD);
+        $warning_threshold = config('storage_management.warning_threshold', self::DEFAULT_WARNING_THRESHOLD);
         
         // 使用率が閾値以上の場合は警告表示
         return $usage_percentage >= $warning_threshold;
