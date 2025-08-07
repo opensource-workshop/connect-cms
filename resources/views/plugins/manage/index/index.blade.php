@@ -28,7 +28,7 @@
             <strong>空き容量が残りわずかです（使用率{{ number_format($storage_usage['usage_percentage'] * 100, 1) }}%）。</strong>
         </p>
         <p class="card-text mb-2">
-            容量上限に達すると、ファイルのアップロードができなくなります。
+            データ容量が上限に近づいています。不要なファイルを削除して容量を確保してください。
         </p>
         <p class="card-text mb-0">
             <a href="{{ url('/manage/uploadfile') }}" class="btn btn-primary btn-sm">

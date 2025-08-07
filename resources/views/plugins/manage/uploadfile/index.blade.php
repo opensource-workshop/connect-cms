@@ -52,7 +52,7 @@
                             </div>
                             <p class="text-muted small mt-1 mb-0">
                                 <i class="fas fa-info-circle mr-1"></i>
-                                使用率100%を超えるとファイルアップロードができなくなります。
+                                使用率が高い場合は、不要なファイルを削除してください。
                             </p>
                         </div>
                         @endif
