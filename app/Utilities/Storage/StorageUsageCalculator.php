@@ -95,8 +95,9 @@ class StorageUsageCalculator
     {
         $storage_limit_mb = env('STORAGE_LIMIT_MB');
         
-        // env設定がない場合はnullを返す
-        if (empty($storage_limit_mb) || !is_numeric($storage_limit_mb)) {
+        // env設定がない場合や無効な値の場合はnullを返す
+        if (empty($storage_limit_mb) || !is_numeric($storage_limit_mb) || $storage_limit_mb <= 0) {
+            Log::warning('Invalid STORAGE_LIMIT_MB configuration: ' . $storage_limit_mb);
             return null;
         }
         
