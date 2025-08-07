@@ -17,6 +17,29 @@
     </div>
 @endif
 
+{{-- ストレージ使用量警告メッセージ --}}
+@if ($is_storage_warning_enabled)
+<div class="card mb-3 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <i class="fas fa-exclamation-triangle"></i> ストレージ容量警告
+    </div>
+    <div class="card-body">
+        <p class="card-text mb-2">
+            <strong>空き容量が残りわずかです（使用率{{ number_format($storage_usage['usage_percentage'] * 100, 1) }}%）。</strong>
+        </p>
+        <p class="card-text mb-2">
+            データ容量が上限に近づいています。不要なファイルを削除して容量を確保してください。
+        </p>
+        <p class="card-text mb-0">
+            <a href="{{ url('/manage/uploadfile') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-folder-open"></i> アップロードファイル管理
+            </a>
+            より不要なファイルを削除してください。
+        </p>
+    </div>
+</div>
+@endif
+
 {{-- バージョン情報 --}}
 @if (config('version.show_cc_version'))
 <div class="card mb-2">

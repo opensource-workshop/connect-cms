@@ -2,12 +2,8 @@
 
 namespace app\Plugins\Manage\IndexManage;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-
-use DB;
-
 use App\Plugins\Manage\ManagePluginBase;
+use App\Utilities\Storage\StorageUsageCalculator;
 
 /**
  * 管理画面インデックスクラス
@@ -83,6 +79,10 @@ class IndexManage extends ManagePluginBase
             }
         }
 
+        // ストレージ使用量の取得
+        $storage_usage = StorageUsageCalculator::getDataUsage();
+        $is_storage_warning_enabled = StorageUsageCalculator::shouldShowWarning($storage_usage['usage_percentage']);
+
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.manage.index.index', [
@@ -90,6 +90,8 @@ class IndexManage extends ManagePluginBase
             "rss_xml"      => $rss_xml,
             "errors"       => $errors,
             "is_writable_storage" => is_writable(storage_path()),
+            "storage_usage" => $storage_usage,
+            "is_storage_warning_enabled" => $is_storage_warning_enabled,
         ]);
     }
 
