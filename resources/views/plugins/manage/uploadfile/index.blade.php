@@ -23,11 +23,51 @@
 
         {{-- 使用量表示 --}}
         <div class="row mb-3">
+            @if($storage_usage['plan_limit'])
+            {{-- プラン容量表示（env設定がある場合のみ） --}}
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-body p-3">
                         <h6 class="card-title mb-2">
+                            <i class="fas fa-server text-danger"></i> プラン容量
+                            <i class="fas fa-question-circle text-muted ml-1" data-toggle="tooltip" data-placement="top" title="ご契約プランの上限容量です。"></i>
+                        </h6>
+                        <p class="card-text h5 mb-0 text-danger">{{ $storage_usage['plan_limit'] }}</p>
+                        @if($storage_usage['usage_percentage'] !== null)
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted small">使用率</span>
+                                <span class="small font-weight-bold @if($storage_usage['usage_percentage'] >= 0.9) text-danger @elseif($storage_usage['usage_percentage'] >= 0.7) text-dark @else text-success @endif">
+                                    {{ number_format($storage_usage['usage_percentage'] * 100, 1) }}%
+                                </span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar @if($storage_usage['usage_percentage'] >= 0.9) bg-danger @elseif($storage_usage['usage_percentage'] >= 0.7) bg-warning @else bg-success @endif" 
+                                     role="progressbar" 
+                                     style="width: {{ min($storage_usage['usage_percentage'] * 100, 100) }}%"
+                                     aria-valuenow="{{ $storage_usage['usage_percentage'] * 100 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <p class="text-muted small mt-1 mb-0">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                使用率100%を超えるとファイルアップロードができなくなります。
+                            </p>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+            @else
+            <div class="col-md-6">
+            @endif
+                <div class="card h-100">
+                    <div class="card-body p-3">
+                        <h6 class="card-title mb-2">
                             <i class="fas fa-chart-pie text-primary"></i> 総使用量
+                            <i class="fas fa-question-circle text-muted ml-1" data-toggle="tooltip" data-placement="top" title="データ使用量とアップロードファイル使用量を合計した総容量です。"></i>
                         </h6>
                         <p class="card-text h5 mb-2 text-primary">{{ $storage_usage['total'] }}</p>
                         <div class="row text-sm">
@@ -35,6 +75,7 @@
                                 <div class="mb-1">
                                     <i class="fas fa-database text-info mr-1"></i>
                                     <span class="text-muted">データ使用量</span>
+                                    <i class="fas fa-question-circle text-muted ml-1" data-toggle="tooltip" data-placement="top" title="データベースに保存されているコンテンツデータの使用量です。"></i>
                                 </div>
                                 <div class="text-info font-weight-bold">{{ $storage_usage['tables'] }}</div>
                             </div>
@@ -42,6 +83,7 @@
                                 <div class="mb-1">
                                     <i class="fas fa-folder-open text-success mr-1"></i>
                                     <span class="text-muted">アップロードファイル使用量</span>
+                                    <i class="fas fa-question-circle text-muted ml-1" data-toggle="tooltip" data-placement="top" title="サーバーにアップロードされたファイルの使用量です。"></i>
                                 </div>
                                 <div class="text-success font-weight-bold">{{ $storage_usage['uploads'] }}</div>
                             </div>
@@ -288,6 +330,9 @@
         // 初期状態の設定
         updateSelectAllCheckbox();
         updateBulkDeleteButton();
+
+        // ツールチップの初期化
+        $('[data-toggle="tooltip"]').tooltip();
     });
 </script>
 @endsection

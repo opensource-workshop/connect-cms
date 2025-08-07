@@ -430,6 +430,12 @@ class UploadfileManage extends ManagePluginBase
         // 総使用量（テーブル使用量 + アップロードファイル使用量）
         $usage['total'] = $this->calculateTotalUsage($usage['tables'], $usage['uploads']);
 
+        // プラン容量（env設定がある場合のみ）
+        $usage['plan_limit'] = $this->getPlanLimitFormatted();
+
+        // 使用率（プラン容量が設定されている場合のみ）
+        $usage['usage_percentage'] = $this->getUsagePercentage($usage['total'], $usage['plan_limit']);
+
         return $usage;
     }
 
@@ -516,5 +522,59 @@ class UploadfileManage extends ManagePluginBase
         
         // どの単位にも一致しなかった場合は0バイトを返す
         return 0;
+    }
+
+    /**
+     * フォーマット済みのプラン容量を返す ※env設定がない場合、数値以外の設定はnullを返す
+     *
+     * @return string|null
+     */
+    private function getPlanLimitFormatted() : ?string
+    {
+        $storage_limit_mb = env('STORAGE_LIMIT_MB');
+        
+        // env設定がない場合はnullを返す
+        if (empty($storage_limit_mb) || !is_numeric($storage_limit_mb)) {
+            return null;
+        }
+        
+        // MB→バイトに変換してからフォーマット
+        $storage_limit_bytes = intval($storage_limit_mb) * 1024 * 1024;
+        
+        return FileUtils::getFormatSizeDecimalPoint($storage_limit_bytes);
+    }
+
+    /**
+     * 使用率を計算して返す ※プラン容量が設定されていない場合はnullを返す
+     *
+     * @param string $total_usage フォーマット済み総使用量
+     * @param string|null $plan_limit フォーマット済みプラン容量
+     * @return float|null 使用率（パーセンテージではない）
+     */
+    private function getUsagePercentage(string $total_usage, ?string $plan_limit) : ?float
+    {
+        // プラン容量が設定されていない場合はnullを返す
+        if (empty($plan_limit)) {
+            return null;
+        }
+        
+        try {
+            $total_bytes = $this->parseFormattedSize($total_usage);
+            $limit_bytes = $this->parseFormattedSize($plan_limit);
+            
+            // プラン容量が0の場合は0%として扱う
+            if ($limit_bytes <= 0) {
+                return 0.0;
+            }
+            
+            // 使用率を計算（0.0以上の値、どのぐらい超過しているかも緊急度の判断基準になる為、100%超過も表示）
+            $percentage = $total_bytes / $limit_bytes;
+            
+            return $percentage;
+            
+        } catch (\Exception $e) {
+            Log::error('UploadfileManage: Usage percentage calculation failed', ['error' => $e->getMessage()]);
+            return null;
+        }
     }
 }
