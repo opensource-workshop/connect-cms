@@ -12,6 +12,18 @@ use App\Utilities\File\FileUtils;
 class StorageUsageCalculator
 {
     /**
+     * バイト変換の定数
+     */
+    private const BYTES_PER_KB = 1024;
+    private const BYTES_PER_MB = self::BYTES_PER_KB * 1024;
+    private const BYTES_PER_GB = self::BYTES_PER_MB * 1024;
+    private const BYTES_PER_TB = self::BYTES_PER_GB * 1024;
+    
+    /**
+     * デフォルト警告閾値（80%）
+     */
+    private const DEFAULT_WARNING_THRESHOLD = 0.8;
+    /**
      * 各種の使用量を配列に詰めて返す
      *
      * @return array
@@ -102,7 +114,7 @@ class StorageUsageCalculator
         }
         
         // MB→バイトに変換してからフォーマット
-        $storage_limit_bytes = intval($storage_limit_mb) * 1024 * 1024;
+        $storage_limit_bytes = intval($storage_limit_mb) * self::BYTES_PER_MB;
         
         return FileUtils::getFormatSizeDecimalPoint($storage_limit_bytes);
     }
@@ -155,7 +167,7 @@ class StorageUsageCalculator
         }
         
         // 警告閾値を取得（デフォルト80%）
-        $warning_threshold = env('STORAGE_USAGE_WARNING_THRESHOLD', 0.8);
+        $warning_threshold = env('STORAGE_USAGE_WARNING_THRESHOLD', self::DEFAULT_WARNING_THRESHOLD);
         
         // 使用率が閾値以上の場合は警告表示
         return $usage_percentage >= $warning_threshold;
@@ -173,7 +185,13 @@ class StorageUsageCalculator
         $formatted_size = trim($formatted_size);
         
         // 単位とその倍数を定義（長い単位から順番に処理するため降順で配列を構成）※「MB」→「B」の順でチェックしないと「177.50MB」が「B」として誤認識される
-        $units = ['TB' => 1024*1024*1024*1024, 'GB' => 1024*1024*1024, 'MB' => 1024*1024, 'KB' => 1024, 'B' => 1];
+        $units = [
+            'TB' => self::BYTES_PER_TB,
+            'GB' => self::BYTES_PER_GB,
+            'MB' => self::BYTES_PER_MB,
+            'KB' => self::BYTES_PER_KB,
+            'B' => 1
+        ];
         
         // 各単位をチェックして該当する単位を見つける
         foreach ($units as $unit => $multiplier) {
