@@ -985,7 +985,7 @@ class UserPluginBase extends PluginBase
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
-            //     dispatch_now(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
+            //     dispatch_sync(new ApprovalNoticeJob($this->frame, $this->buckets, $post_row, $show_method));
             // } else {
             //     // スケジュール送信
             //     ApprovalNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method);
@@ -1004,7 +1004,7 @@ class UserPluginBase extends PluginBase
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
-            //     dispatch_now(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
+            //     dispatch_sync(new ApprovedNoticeJob($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method));
             // } else {
             //     // スケジュール送信
             //     ApprovedNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $post_row->created_id, $show_method);
@@ -1020,7 +1020,7 @@ class UserPluginBase extends PluginBase
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
-            //     dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
+            //     dispatch_sync(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_create"));
             // } else {
             //     // スケジュール送信
             //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_create");
@@ -1036,7 +1036,7 @@ class UserPluginBase extends PluginBase
             // // 送信方法の確認
             // if ($bucket_mail->timing == 0) {
             //     // 即時送信
-            //     dispatch_now(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
+            //     dispatch_sync(new PostNoticeJob($this->frame, $this->buckets, $post_row, $show_method, "notice_update"));
             // } else {
             //     // スケジュール送信
             //     PostNoticeJob::dispatch($this->frame, $this->buckets, $post_row, $show_method, "notice_update");
@@ -1086,7 +1086,7 @@ class UserPluginBase extends PluginBase
         // // 送信方法の確認
         // if ($bucket_mail->timing == 0) {
         //     // 即時送信
-        //     dispatch_now(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
+        //     dispatch_sync(new RelateNoticeJob($this->frame, $this->buckets, $post, $show_method, $mail_users));
         // } else {
         //     // スケジュール送信
         //     RelateNoticeJob::dispatch($this->frame, $this->buckets, $post, $show_method, $mail_users);
@@ -1140,7 +1140,7 @@ class UserPluginBase extends PluginBase
         // if ($timing == SendMailTiming::sync) {
         //     // 同期送信
         //     // （物理削除時は、非同期だとメール送信前にデータが消えてしまいModelNotFoundExceptionエラーになるため、同期でメール送信）
-        //     dispatch_now(new DeleteNoticeJob($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment));
+        //     dispatch_sync(new DeleteNoticeJob($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment));
         // } else {
         //     // スケジュール送信
         //     DeleteNoticeJob::dispatch($this->frame, $this->buckets, $post, $title, $show_method, $delete_comment);
