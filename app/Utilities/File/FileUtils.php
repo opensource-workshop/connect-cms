@@ -110,4 +110,25 @@ class FileUtils
         ];
         return strtr($filename, $invalid_chars);
     }
+
+    /**
+     * 指定ディレクトリの総使用量を計算（フォーマット済み文字列で返却）
+     *
+     * @param string $dir 計算対象ディレクトリ
+     * @return string フォーマット済みサイズ（例: "123.45MB"）
+     */
+    public static function getTotalUsageFormatted(string $dir): string
+    {
+        // ディレクトリが存在しない場合は "0B" を返す
+        if (!is_dir($dir)) {
+            return '0B';
+        }
+
+        $total = 0;
+        $files = self::getFileList($dir);
+        foreach ($files as $file) {
+            $total += filesize($file);
+        }
+        return self::getFormatSizeDecimalPoint($total);
+    }
 }

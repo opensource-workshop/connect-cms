@@ -5,9 +5,11 @@ namespace App\Plugins\Manage\UploadfileManage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
+use App\Utilities\Storage\StorageUsageCalculator;
 
 use App\Plugins\Manage\ManagePluginBase;
 use App\Traits\ConnectCommonTrait;
@@ -30,6 +32,11 @@ class UploadfileManage extends ManagePluginBase
     use ConnectCommonTrait;
 
     /**
+     * 表示件数の許可された値
+     */
+    private $allowed_per_page = [10, 50, 100];
+
+    /**
      *  権限定義
      */
     public function declareRole()
@@ -46,6 +53,7 @@ class UploadfileManage extends ManagePluginBase
         $role_ckeck_table["saveUserdir"] = array('admin_site');
         $role_ckeck_table["userdirPublic"] = array('admin_site');
         $role_ckeck_table["deleteUserdirPublic"] = array('admin_site');
+        $role_ckeck_table["bulkDelete"] = array('admin_site');
         return $role_ckeck_table;
     }
 
@@ -104,8 +112,21 @@ class UploadfileManage extends ManagePluginBase
             $uploads_query->orderBy('download_count', 'desc');
         }
 
+        // 表示件数の取得 ※デフォルトは10件
+        $per_page = $this->allowed_per_page[0];
+        if ($request->session()->has('uploadfile_per_page')) {
+            $per_page = (int)$request->session()->get('uploadfile_per_page');
+            // 許可された値のみを使用
+            if (!in_array($per_page, $this->allowed_per_page)) {
+                $per_page = $this->allowed_per_page[0];
+            }
+        }
+
         // データ取得
-        $uploads = $uploads_query->paginate(10, null, 'page', $page);
+        $uploads = $uploads_query->paginate($per_page, null, 'page', $page);
+
+        // データ使用量の計算
+        $storage_usage = StorageUsageCalculator::getDataUsage();
 
         // 入力値をsessionへ保存（検索用）
         $request->flash();
@@ -115,6 +136,8 @@ class UploadfileManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "uploadfile",
             "uploads"     => $uploads,
+            "allowed_per_page" => $this->allowed_per_page,
+            "storage_usage" => $storage_usage,
         ]);
     }
 
@@ -130,6 +153,11 @@ class UploadfileManage extends ManagePluginBase
         ];
 
         session(["search_condition" => $search_condition]);
+
+        // 表示件数は独立して保存（条件設定中バッジの対象外）
+        if ($request->has('uploadfile_per_page')) {
+            session(['uploadfile_per_page' => $request->input('uploadfile_per_page')]);
+        }
 
         return redirect("/manage/uploadfile");
     }
@@ -340,5 +368,46 @@ class UploadfileManage extends ManagePluginBase
         }
 
         return redirect("/manage/uploadfile/userdirPublic")->with('flash_message', '削除しました。');
+    }
+
+    /**
+     * アップロードファイルの一括削除処理
+     *
+     * @param $request
+     */
+    public function bulkDelete($request)
+    {
+        // 選択されたファイルIDの確認
+        if (!$request->has('selected_files') || !is_array($request->selected_files)) {
+            return redirect('/manage/uploadfile/')->with('flash_error_message', '削除するファイルが選択されていません。');
+        }
+
+        $deleted_files = [];
+        $error_files = [];
+
+        foreach ($request->selected_files as $upload_id) {
+            try {
+                $upload = Uploads::findOrFail($upload_id);
+                
+                // ファイル削除
+                Storage::delete($this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension);
+                
+                // レコード削除
+                $deleted_files[] = $upload->client_original_name;
+                $upload->delete();
+                
+            } catch (\Exception $e) {
+                Log::error('UploadfileManage: Bulk delete failed for file ID: ' . $upload_id, ['error' => $e->getMessage()]);
+                $error_files[] = "ID:" . $upload_id;
+            }
+        }
+
+        $message = count($deleted_files) . "件のファイルを削除しました。";
+        if (!empty($error_files)) {
+            $message .= " ※削除に失敗したファイル: " . implode(', ', $error_files);
+            Log::error('UploadfileManage: Bulk delete failed for files: ' . implode(', ', $error_files));
+        }
+
+        return redirect('/manage/uploadfile/')->with('flash_message', $message);
     }
 }
