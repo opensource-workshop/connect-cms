@@ -1197,6 +1197,11 @@ trait MigrationTrait
             $this->importGroups($redo);
         }
 
+        // アップロードファイルのページIDをConnect-CMSのページIDに更新する
+        if ($this->isTarget('cc_import', 'uploads')) {
+            $this->updateUploadsPageIdToCcPageId();
+        }
+
         // ページ内リンクの編集
         if ($added == false) {
             $this->changePageInLink();
@@ -2028,85 +2033,93 @@ trait MigrationTrait
             $this->setPageRolesForMultiLanguagePages($admin_group, $group_ini, 'role_article_admin');
         }
 
-        // アップロード・ファイルのページIDを書き換えるために、アップロード・ファイル定義の読み込み
+        $this->putMonitor(3, "Groups import End.", $this->timerEnd($timer_start));
+    }
+
+    /**
+     * アップロードファイルのページIDを移行済みのConnect-CMSページIDに更新する。
+     * ページID = 0（固定）で移行されているため、更新が必要となる。
+     */
+    private function updateUploadsPageIdToCcPageId()
+    {
+        $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top start.");
+        $timer_start = $this->timerStart();
+
+        // uploads.iniの存在チェック
         if (!Storage::exists($this->getImportPath('uploads/uploads.ini'))) {
-            $this->putMonitor(3, "Groups import End.", $this->timerEnd($timer_start));
+            $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top end. uploads.ini does not exists.", $this->timerEnd($timer_start));
             return;
         }
 
-        // アップロード・ファイルのループ
-        if (Arr::has($this->uploads_ini, "uploads.upload")) {
-            $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top start.");
-
-            // upsert対応
-            // 40万件のアップロードファイル移行で時間かかりすぎるため、upsertに変更
-            $bulks_uploads = array();
-
-            // 1度検索したpage_idを保持 key=(nc2)room_page_id_top, value=(cc)page_id
-            $connect_page_ids = [];
-
-            foreach ($this->uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
-                // ルームのトップページを探しておく。
-                $room_page_id_top = null;
-                if (array_key_exists('room_page_id_top', $this->uploads_ini[$upload_key])) {
-                    $room_page_id_top = $this->uploads_ini[$upload_key]['room_page_id_top'];
-                }
-                if (empty($room_page_id_top)) {
-                    continue;
-                }
-
-                $connect_page_id = null;
-
-                // *** アップロードファイルに対応するConnect-CMS のページを探す
-                if (array_key_exists($room_page_id_top, $connect_page_ids)) {
-                    $connect_page_id = $connect_page_ids[$room_page_id_top];
-                } else {
-                    $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
-                    if (empty($nc2_page)) {
-                        continue;
-                    }
-                    $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
-                    if (empty($connect_page)) {
-                        continue;
-                    }
-                    // (cc)page_idを保持
-                    $connect_page_ids[$room_page_id_top] = $connect_page->destination_key;
-                    $connect_page_id = $connect_page->destination_key;
-                }
-
-                // アップロードファイルを探す
-                $upload_map = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
-                if (empty($upload_map)) {
-                    continue;
-                }
-                // アップロードファイルのページid を更新
-                $upload = Uploads::find($upload_map->destination_key);
-                if (empty($upload)) {
-                    continue;
-                }
-
-                // $upload->page_id = $connect_page->destination_key;
-                // $upload->save();
-                $bulks_uploads[] = [
-                    'id'             => $upload->id,
-                    'page_id'        => $connect_page_id,
-                    // 以降はupsert（MySQLの INSERT ... ON DUPLICATE KEY UPDATE）対応で NOT NULL＋デフォルト値=なし のカラムに値が必要なためセット
-                    // uploadsに存在するデータしかセットしないため、updateのみ、insertはされない想定
-                    'size'           => $upload->size,
-                ];
-            }
-
-            // upsert対応
-            $size = 1000; //Prepared statement contains too many placeholders 対策
-            $chunk_bulks = array_chunk($bulks_uploads, $size);
-            foreach ($chunk_bulks as $bulk) {
-                // upsert()で「MySQLデータベースドライバは、upsertメソッドの第２引数を無視し、常にテーブルの"primary"および"unique"インデックスを既存レコードの検出に使用する」
-                // 情報源：https://readouble.com/laravel/9.x/ja/eloquent.html#upserts laravel8でも同様
-                Uploads::upsert($bulk, ['id'], ['page_id']);
-            }
+        // アップロードファイルの存在チェック
+        if (!Arr::has($this->uploads_ini, "uploads.upload")) {
+            $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top end. uploads.upload does not exists.", $this->timerEnd($timer_start));
+            return;
         }
 
-        $this->putMonitor(3, "Groups import End.", $this->timerEnd($timer_start));
+        // 40万件のアップロードファイル移行で時間かかりすぎたためupsertで更新する
+        $bulks_uploads = array();
+
+        // 1度検索したpage_idを保持 key=(nc2)room_page_id_top, value=(cc)page_id
+        $connect_page_ids = [];
+
+        foreach ($this->uploads_ini['uploads']['upload'] as $upload_key => $upload_item) {
+            // ルームのトップページを探しておく。
+            $room_page_id_top = null;
+            if (array_key_exists('room_page_id_top', $this->uploads_ini[$upload_key])) {
+                $room_page_id_top = $this->uploads_ini[$upload_key]['room_page_id_top'];
+            }
+            if (empty($room_page_id_top)) {
+                continue;
+            }
+
+            $connect_page_id = null;
+
+            // *** アップロードファイルに対応するConnect-CMS のページを探す
+            if (array_key_exists($room_page_id_top, $connect_page_ids)) {
+                $connect_page_id = $connect_page_ids[$room_page_id_top];
+            } else {
+                $nc2_page = MigrationMapping::where('target_source_table', 'source_pages')->where('source_key', $room_page_id_top)->first();
+                if (empty($nc2_page)) {
+                    continue;
+                }
+                $connect_page = MigrationMapping::where('target_source_table', 'connect_page')->where('source_key', $nc2_page->destination_key)->first();
+                if (empty($connect_page)) {
+                    continue;
+                }
+                // (cc)page_idを保持
+                $connect_page_ids[$room_page_id_top] = $connect_page->destination_key;
+                $connect_page_id = $connect_page->destination_key;
+            }
+
+            // アップロードファイルを探す
+            $upload_map = MigrationMapping::where('target_source_table', 'uploads')->where('source_key', $upload_key)->first();
+            if (empty($upload_map)) {
+                continue;
+            }
+            // アップロードファイルのページid を更新
+            $upload = Uploads::find($upload_map->destination_key);
+            if (empty($upload)) {
+                continue;
+            }
+
+            $bulks_uploads[] = [
+                'id'             => $upload->id,
+                'page_id'        => $connect_page_id,
+                // 以降はupsert（MySQLの INSERT ... ON DUPLICATE KEY UPDATE）対応で NOT NULL＋デフォルト値=なし のカラムに値が必要なためセット
+                // uploadsに存在するデータしかセットしないため、updateのみ、insertはされない想定
+                'size'           => $upload->size,
+            ];
+        }
+
+        $size = 1000; //Prepared statement contains too many placeholders 対策
+        $chunk_bulks = array_chunk($bulks_uploads, $size);
+        foreach ($chunk_bulks as $bulk) {
+            // upsert()で「MySQLデータベースドライバは、upsertメソッドの第２引数を無視し、常にテーブルの"primary"および"unique"インデックスを既存レコードの検出に使用する」
+            // 情報源：https://readouble.com/laravel/9.x/ja/eloquent.html#upserts laravel8でも同様
+            Uploads::upsert($bulk, ['id'], ['page_id']);
+        }
+        $this->putMonitor(3, "Update Uploads.page_id to room_page_id_top end.", $this->timerEnd($timer_start));
     }
 
     /**
