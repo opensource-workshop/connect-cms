@@ -12,7 +12,7 @@ class CabinetContent extends Model
 {
     const is_folder_on = 1;
     const is_folder_off = 0;
-    
+
     use NodeTrait;
     // 保存時のユーザー関連データの保持
     use UserableNohistory;
@@ -40,12 +40,7 @@ class CabinetContent extends Model
      */
     public function getDisplayNameAttribute()
     {
-        $displayName = $this->name;
-        // 管理機能のアップロードファイル管理で、ファイル名の変更ができるため、
-        // ファイルはアップロードテーブルから名称取得する
-        if ($this->is_folder === self::is_folder_off) {
-            $displayName = $this->upload->client_original_name;
-        }
-        return $displayName;
+        //キャビネットプラグインでフォルダ名・ファイル名が変更可能なため、uploadsではなくcabinet_contentsのnameを使用する
+        return $this->name;
     }
 }
