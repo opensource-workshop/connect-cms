@@ -8536,6 +8536,11 @@ trait MigrationTrait
             $nc2_uploads_query->whereNotIn('module_id', $this->getMigrationConfig('uploads', 'nc2_export_ommit_module_ids'));
         }
 
+        // 開始アップロードIDの指定
+        if ($this->getMigrationConfig('uploads', 'nc2_export_start_upload_id')) {
+            $nc2_uploads_query->where('upload_id', '>=', $this->getMigrationConfig('uploads', 'nc2_export_start_upload_id'));
+        }
+
         // uploads,ini ファイル
         //Storage::put($this->getImportPath('uploads/uploads.ini'), "[uploads]");
         $this->storagePut($this->getImportPath('uploads/uploads.ini'), "[uploads]");
