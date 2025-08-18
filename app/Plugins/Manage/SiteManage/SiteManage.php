@@ -775,7 +775,7 @@ class SiteManage extends ManagePluginBase
         }
 
         // description
-        $configs = Configs::updateOrCreate(
+        Configs::updateOrCreate(
             ['name'     => 'description'],
             ['category' => 'meta',
              'value'    => $request->description]
@@ -783,49 +783,27 @@ class SiteManage extends ManagePluginBase
 
         // OG画像ファイルのアップロード処理
         if ($request->hasFile('og_image_file')) {
-            // ファイルの基礎情報
-            $extension = $request->file('og_image_file')->getClientOriginalExtension();
-            
-            // 拡張子チェック
-            $allowed_extensions = ['jpg', 'jpeg', 'png'];
-            if (!in_array(mb_strtolower($extension), $allowed_extensions)) {
-                $validator = Validator::make($request->all(), []);
-                $validator->errors()->add('og_image_file', '画像ファイル（jpg, jpeg, png）以外はアップロードできません。');
-                return redirect()->back()->withErrors($validator)->withInput();
+            try {
+                $upload_result = $this->handleFileUpload($request, [
+                    'field_name' => 'og_image_file',
+                    'allowed_extensions' => ['jpg', 'jpeg', 'png'],
+                    'upload_dir' => 'uploads/ogp',
+                    'filename_pattern' => 'og_image_{timestamp}',
+                    'config_name' => 'og_image',
+                    'config_category' => 'meta',
+                    'delete_existing' => true,
+                    'success_message' => 'OG画像をアップロードしました。'
+                ]);
+
+                if (!$upload_result['success']) {
+                    if (isset($upload_result['validator'])) {
+                        return redirect()->back()->withErrors($upload_result['validator'])->withInput();
+                    }
+                    return redirect()->back()->with('error', $upload_result['message']);
+                }
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'OG画像のアップロードに失敗しました。');
             }
-
-            // 既存のOG画像ファイルを削除
-            $existing_og_image = Configs::where('name', 'og_image')->where('category', 'meta')->first();
-            if (!empty($existing_og_image) && !empty($existing_og_image->value)) {
-                $existing_file = public_path() . '/uploads/ogp/' . $existing_og_image->value;
-                File::delete($existing_file);
-            }
-
-            // ファイルの保存
-            $filename = 'og_image_' . time() . '.' . $extension;
-            $request->file('og_image_file')->storeAs('tmp', $filename);
-
-            // ファイルパス
-            $src_file = storage_path() . '/app/tmp/' . $filename;
-            $dst_dir  = public_path() . '/uploads/ogp';
-            $dst_file = $dst_dir . '/' . $filename;
-
-            // ディレクトリの存在チェック
-            if (!File::isDirectory($dst_dir)) {
-                $result = File::makeDirectory($dst_dir, 0755, true);
-            }
-
-            // OGP ディレクトリへファイルの移動
-            if (!rename($src_file, $dst_file)) {
-                die("Couldn't rename file");
-            }
-
-            // OG画像のファイル名設定
-            Configs::updateOrCreate(
-                ['name'     => 'og_image'],
-                ['category' => 'meta',
-                 'value'    => $filename]
-            );
         }
 
         // その他のOGP設定の保存
@@ -849,6 +827,97 @@ class SiteManage extends ManagePluginBase
 
         // ページ管理画面に戻る
         return redirect("/manage/site/meta");
+    }
+
+    /**
+     * ファイルアップロード共通処理
+     *
+     * @param Request $request リクエスト
+     * @param array $config アップロード設定
+     * @return array 結果情報
+     * @throws \Exception アップロードエラー
+     */
+    private function handleFileUpload($request, array $config): array
+    {
+        // デフォルト設定
+        $config = array_merge([
+            'field_name' => 'file',
+            'allowed_extensions' => [],
+            'upload_dir' => 'uploads/common',
+            'filename_pattern' => 'file_{timestamp}',
+            'config_name' => '',
+            'config_category' => '',
+            'delete_existing' => false,
+            'error_message' => 'アップロード可能なファイル形式ではありません。',
+            'success_message' => 'ファイルをアップロードしました。'
+        ], $config);
+
+        if (!$request->hasFile($config['field_name'])) {
+            return ['success' => false, 'message' => 'ファイルが選択されていません。'];
+        }
+
+        $file = $request->file($config['field_name']);
+        $extension = $file->getClientOriginalExtension();
+
+        // 拡張子チェック
+        if (!empty($config['allowed_extensions']) && !in_array(mb_strtolower($extension), $config['allowed_extensions'])) {
+            $validator = Validator::make($request->all(), []);
+            $allowed_str = implode(', ', $config['allowed_extensions']);
+            $validator->errors()->add($config['field_name'], "画像ファイル（{$allowed_str}）以外はアップロードできません。");
+            return ['success' => false, 'validator' => $validator];
+        }
+
+        // 既存ファイル削除（必要な場合）
+        if ($config['delete_existing'] && !empty($config['config_name']) && !empty($config['config_category'])) {
+            $existing_config = Configs::where('name', $config['config_name'])
+                                     ->where('category', $config['config_category'])
+                                     ->first();
+            if (!empty($existing_config) && !empty($existing_config->value)) {
+                $existing_file = public_path() . '/' . $config['upload_dir'] . '/' . $existing_config->value;
+                File::delete($existing_file);
+            }
+        }
+
+        // ファイル名生成
+        if ($config['filename_pattern'] === 'fixed' && isset($config['fixed_filename'])) {
+            $filename = $config['fixed_filename'];
+        } else {
+            $filename = str_replace('{timestamp}', time(), $config['filename_pattern']) . '.' . $extension;
+        }
+
+        // ファイル保存
+        $file->storeAs('tmp', $filename);
+
+        // ファイルパス
+        $src_file = storage_path() . '/app/tmp/' . $filename;
+        $dst_dir = public_path() . '/' . $config['upload_dir'];
+        $dst_file = $dst_dir . '/' . $filename;
+
+        // ディレクトリ作成
+        if (!File::isDirectory($dst_dir)) {
+            if (!File::makeDirectory($dst_dir, 0755, true)) {
+                throw new \RuntimeException('アップロード用ディレクトリの作成に失敗しました。');
+            }
+        }
+
+        // ファイル移動
+        if (!rename($src_file, $dst_file)) {
+            throw new \RuntimeException('ファイルの移動に失敗しました。');
+        }
+
+        // データベース保存（必要な場合）
+        if (!empty($config['config_name']) && !empty($config['config_category'])) {
+            Configs::updateOrCreate(
+                ['name' => $config['config_name']],
+                ['category' => $config['config_category'], 'value' => $filename]
+            );
+        }
+
+        return [
+            'success' => true,
+            'filename' => $filename,
+            'message' => $config['success_message']
+        ];
     }
 
     /**
@@ -1076,46 +1145,30 @@ class SiteManage extends ManagePluginBase
 
         // ファイルがアップロードされた。
         if ($request->hasFile('favicon')) {
-            // ファイルの基礎情報
-            // $client_original_name = $request->file('favicon')->getClientOriginalName();
-            // $mimetype             = $request->file('favicon')->getClientMimeType();
-            $extension            = $request->file('favicon')->getClientOriginalExtension();
+            try {
+                $upload_result = $this->handleFileUpload($request, [
+                    'field_name' => 'favicon',
+                    'allowed_extensions' => ['ico'],
+                    'upload_dir' => 'uploads/favicon',
+                    'filename_pattern' => 'fixed',
+                    'fixed_filename' => 'favicon.ico',
+                    'config_name' => 'favicon',
+                    'config_category' => 'favicon',
+                    'delete_existing' => false,
+                    'success_message' => 'Favicon を設定しました。'
+                ]);
 
-            // 拡張子チェック
-            if (mb_strtolower($extension) != 'ico') {
-                $validator = Validator::make($request->all(), []);
-                $validator->errors()->add('favicon', '.ico 以外はアップロードできません。');
-                // return $this->favicon($request)->withErrors($validator);
-                return redirect()->back()->withErrors($validator)->withInput();
+                if (!$upload_result['success']) {
+                    if (isset($upload_result['validator'])) {
+                        return redirect()->back()->withErrors($upload_result['validator'])->withInput();
+                    }
+                    return redirect()->back()->with('error', $upload_result['message']);
+                }
+
+                session()->flash('flash_message', $upload_result['message']);
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'ファビコンのアップロードに失敗しました。');
             }
-
-            // ファイルの保存
-            $filename = 'favicon.ico';
-            $request->file('favicon')->storeAs('tmp', $filename);
-
-            // ファイルパス
-            $src_file = storage_path() . '/app/tmp/' . $filename;
-            $dst_dir  = public_path() . '/uploads/favicon';
-            $dst_file = $dst_dir . '/' . $filename;
-
-            // ディレクトリの存在チェック
-            if (!File::isDirectory($dst_dir)) {
-                $result = File::makeDirectory($dst_dir);
-            }
-
-            // Favicon ディレクトリへファイルの移動
-            if (!rename($src_file, $dst_file)) {
-                die("Couldn't rename file");
-            }
-
-            // Favicon
-            $configs = Configs::updateOrCreate(
-                ['name'     => 'favicon'],
-                ['category' => 'favicon',
-                 'value'    => $filename]
-            );
-
-            session()->flash('flash_message', 'Favicon を設定しました。');
         }
 
         // ファビコン管理画面に戻る
