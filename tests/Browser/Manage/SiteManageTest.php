@@ -126,15 +126,29 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/site/meta')
                     ->type('description', 'Connect-CMSのテストサイトです。')
+                    ->type('og_site_name', 'Connect-CMS')
+                    ->type('og_title', 'Connect-CMS テストサイト')
+                    ->type('og_description', 'Webサイトを簡単に作成できるコンテンツ管理システム')
+                    ->type('og_type', 'website')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/meta/images/meta');
+        });
+
+        // OGP設定セクションのスクロール表示
+        $this->browse(function (Browser $browser) {
+            $browser->scrollIntoView('h5:contains("OGP設定")')
+                    ->screenshot('manage/site/meta/images/meta_ogp');
         });
 
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "manage/site/meta/images/meta",
              "name": "meta情報",
-             "comment": "<ul class=\"mb-0\"><li>HEADのdescriptionに出力される値を設定できます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>HEADのdescriptionに出力される値を設定できます。</li><li>OGP設定により、SNSでシェアされた際の表示内容を制御できます。</li></ul>"
+            },
+            {"path": "manage/site/meta/images/meta_ogp",
+             "name": "OGP設定",
+             "comment": "<ul class=\"mb-0\"><li>FacebookやTwitterなどのSNSでWebページがシェアされた際に表示される情報を設定できます。</li><li>OG画像は推奨サイズ1200x630pxで、jpg、jpeg、png形式に対応しています。</li></ul>"
             }
         ]', null, 3, 'basic');
     }
@@ -147,7 +161,18 @@ class SiteManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
                     ->assertTitleContains('Connect-CMS')
+                    ->assertSee('メタ情報を更新しました。')
                     ->screenshot('manage/site/meta/images/saveMeta');
+        });
+
+        // OGPタグの出力確認
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/')
+                    ->assertSourceHas('<meta property="og:site_name" content="Connect-CMS">')
+                    ->assertSourceHas('<meta property="og:title" content="Connect-CMS テストサイト">')
+                    ->assertSourceHas('<meta property="og:description" content="Webサイトを簡単に作成できるコンテンツ管理システム">')
+                    ->assertSourceHas('<meta property="og:type" content="website">')
+                    ->assertSourceHas('<meta property="og:url"');
         });
     }
 
