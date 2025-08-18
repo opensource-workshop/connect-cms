@@ -208,6 +208,7 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["deleteLanguages"]  = array('admin_site');
         $role_ckeck_table["meta"]             = array('admin_site');
         $role_ckeck_table["saveMeta"]         = array('admin_site');
+        $role_ckeck_table["deleteOgImage"]    = array('admin_site');
         $role_ckeck_table["pageError"]        = array('admin_site');
         $role_ckeck_table["savePageError"]    = array('admin_site');
         $role_ckeck_table["deleteNoImage"]    = array('admin_site');
@@ -780,7 +781,106 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->description]
         );
 
+        // OG画像ファイルのアップロード処理
+        if ($request->hasFile('og_image_file')) {
+            // ファイルの基礎情報
+            $extension = $request->file('og_image_file')->getClientOriginalExtension();
+            
+            // 拡張子チェック
+            $allowed_extensions = ['jpg', 'jpeg', 'png'];
+            if (!in_array(mb_strtolower($extension), $allowed_extensions)) {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('og_image_file', '画像ファイル（jpg, jpeg, png）以外はアップロードできません。');
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+
+            // 既存のOG画像ファイルを削除
+            $existing_og_image = Configs::where('name', 'og_image')->where('category', 'meta')->first();
+            if (!empty($existing_og_image) && !empty($existing_og_image->value)) {
+                $existing_file = public_path() . '/uploads/ogp/' . $existing_og_image->value;
+                File::delete($existing_file);
+            }
+
+            // ファイルの保存
+            $filename = 'og_image_' . time() . '.' . $extension;
+            $request->file('og_image_file')->storeAs('tmp', $filename);
+
+            // ファイルパス
+            $src_file = storage_path() . '/app/tmp/' . $filename;
+            $dst_dir  = public_path() . '/uploads/ogp';
+            $dst_file = $dst_dir . '/' . $filename;
+
+            // ディレクトリの存在チェック
+            if (!File::isDirectory($dst_dir)) {
+                $result = File::makeDirectory($dst_dir, 0755, true);
+            }
+
+            // OGP ディレクトリへファイルの移動
+            if (!rename($src_file, $dst_file)) {
+                die("Couldn't rename file");
+            }
+
+            // OG画像のファイル名設定
+            Configs::updateOrCreate(
+                ['name'     => 'og_image'],
+                ['category' => 'meta',
+                 'value'    => $filename]
+            );
+        }
+
+        // その他のOGP設定の保存
+        $ogp_fields = [
+            'og_site_name',
+            'og_title',
+            'og_description',
+            'og_type'
+        ];
+
+        foreach ($ogp_fields as $field) {
+            Configs::updateOrCreate(
+                ['name'     => $field],
+                ['category' => 'meta',
+                 'value'    => $request->$field ?? '']
+            );
+        }
+
+        // メタ情報の更新完了メッセージ
+        session()->flash('flash_message', 'メタ情報を更新しました。');
+
         // ページ管理画面に戻る
+        return redirect("/manage/site/meta");
+    }
+
+    /**
+     * OG画像 削除
+     *
+     * @method_title OG画像削除
+     * @method_desc OG画像を削除します。
+     */
+    public function deleteOgImage($request)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // OG画像設定を取得
+        $og_image = Configs::where('name', 'og_image')->where('category', 'meta')->first();
+        if (empty($og_image) || empty($og_image->value)) {
+            // メタ情報管理画面に戻る
+            return redirect("/manage/site/meta");
+        }
+
+        // ファイル削除
+        $dst_file = public_path() . '/uploads/ogp/' . $og_image->value;
+        File::delete($dst_file);
+
+        // データベース削除
+        $og_image->delete();
+
+        session()->flash('flash_message', 'OG画像を削除しました。');
+
+        // メタ情報管理画面に戻る
         return redirect("/manage/site/meta");
     }
 
