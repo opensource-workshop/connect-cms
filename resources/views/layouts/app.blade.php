@@ -41,6 +41,25 @@ if (! isset($cc_configs)) {
 @if (Configs::getConfigsValue($cc_configs, 'description'))
     <meta name="description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'description')) }}">
 @endif
+
+    {{-- OGP Settings --}}
+@if (Configs::getConfigsValue($cc_configs, 'og_site_name'))
+    <meta property="og:site_name" content="{{ Configs::getConfigsValue($cc_configs, 'og_site_name') }}">
+@endif
+@if (Configs::getConfigsValue($cc_configs, 'og_title'))
+    <meta property="og:title" content="{{ Configs::getConfigsValue($cc_configs, 'og_title') }}">
+@endif
+@if (Configs::getConfigsValue($cc_configs, 'og_description'))
+    <meta property="og:description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'og_description')) }}">
+@endif
+@if (Configs::getConfigsValue($cc_configs, 'og_image'))
+    <meta property="og:image" content="{{ url('/uploads/ogp/' . Configs::getConfigsValue($cc_configs, 'og_image')) }}">
+@endif
+@if (Configs::getConfigsValue($cc_configs, 'og_type'))
+    <meta property="og:type" content="{{ Configs::getConfigsValue($cc_configs, 'og_type') }}">
+@endif
+    <meta property="og:url" content="{{ url()->current() }}">
+
     {{-- Page --}}
 @if (isset($page))
     <meta name="_page_id" content="{{$page->id}}">
