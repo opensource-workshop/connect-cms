@@ -172,6 +172,23 @@
         </div>
     </div>
 
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">年月の絞り込み機能表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            @foreach (BlogNarrowingDownTypeForPostedMonth::getMembers() as $enum_value => $enum_label)
+                <div class="custom-control custom-radio custom-control-inline">
+                    @php $narrowing_down_type_for_posted_month = $blog->narrowing_down_type_for_posted_month ?? BlogNarrowingDownTypeForPostedMonth::getDefault(); @endphp
+                    @if (old('narrowing_down_type_for_posted_month', $narrowing_down_type_for_posted_month) == $enum_value)
+                        <input type="radio" value="{{$enum_value}}" id="narrowing_down_type_for_posted_month_{{$enum_value}}" name="narrowing_down_type_for_posted_month" class="custom-control-input" checked="checked">
+                    @else
+                        <input type="radio" value="{{$enum_value}}" id="narrowing_down_type_for_posted_month_{{$enum_value}}" name="narrowing_down_type_for_posted_month" class="custom-control-input">
+                    @endif
+                    <label class="custom-control-label" for="narrowing_down_type_for_posted_month_{{$enum_value}}">{{$enum_label}}</label>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
     {{-- Submitボタン --}}
     <div class="form-group text-center">
         <div class="row">

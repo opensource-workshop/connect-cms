@@ -331,6 +331,7 @@ $app_array = [
         'WebsiteType' => \App\Enums\WebsiteType::class,
         'BlogNarrowingDownType' => \App\Enums\BlogNarrowingDownType::class,
         'BlogNarrowingDownTypeForCreatedId' => \App\Enums\BlogNarrowingDownTypeForCreatedId::class,
+        'BlogNarrowingDownTypeForPostedMonth' => \App\Enums\BlogNarrowingDownTypeForPostedMonth::class,
         'FormAccessLimitType' => \App\Enums\FormAccessLimitType::class,
         'EditType' => \App\Enums\EditType::class,
         'SmartphoneMenuTemplateType' => \App\Enums\SmartphoneMenuTemplateType::class,

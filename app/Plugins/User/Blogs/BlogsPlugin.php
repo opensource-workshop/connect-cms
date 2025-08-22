@@ -26,6 +26,7 @@ use App\Plugins\User\UserPluginBase;
 use App\Enums\BlogFrameConfig;
 use App\Enums\BlogFrameScope;
 use App\Enums\BlogNarrowingDownTypeForCreatedId;
+use App\Enums\BlogNarrowingDownTypeForPostedMonth;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\NoticeEmbeddedTag;
 use App\Enums\StatusType;
@@ -245,9 +246,52 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
+     *  投稿年月の一覧取得
+     *  投稿日時から年月（YYYY-MM）形式のリストを取得する。年月絞り込み用のドロップダウンリストで使用する
+     *
+     * @param $blog_frame
+     * @return Collection
+     */
+    private function getPostedMonths($blog_frame)
+    {
+        // 権限とフレーム設定を考慮した投稿記事から年月を抽出
+        return BlogsPosts::
+            select(
+                // 投稿日時から年月（YYYY-MM）形式を生成（絞り込み用）
+                DB::raw('DATE_FORMAT(posted_at, "%Y-%m") as posted_month'),
+                // 投稿日時から年月（YYYY年MM月）形式を生成（表示用）
+                DB::raw('DATE_FORMAT(posted_at, "%Y年%m月") as posted_month_label'),
+                // 同じ年月の投稿数をカウント
+                DB::raw('COUNT(*) as post_count')
+            )
+            // 権限に応じた記事のみを対象（履歴含む最新レコードのみ）
+            ->whereIn('id', function ($query) use ($blog_frame) {
+                $query->select(DB::raw('MAX(id) As id'))
+                    ->from('blogs_posts')
+                    ->where('blogs_id', $blog_frame->blogs_id)
+                    ->where('deleted_at', null)
+                    // 権限チェック（閲覧可能な記事のみ）
+                    ->where(function ($query_auth) {
+                        $query_auth = $this->appendAuthWhere($query_auth);
+                    })
+                    // contents_id でグループ化して最新履歴のみ取得
+                    ->groupBy('contents_id');
+            })
+            // フレーム設定による表示条件を適用
+            ->where(function ($query_setting) use ($blog_frame) {
+                $query_setting = $this->appendSettingWhere($query_setting, $blog_frame);
+            })
+            // 年月でグループ化（同じ年月の記事をまとめる）
+            ->groupBy(DB::raw('DATE_FORMAT(posted_at, "%Y-%m")'), DB::raw('DATE_FORMAT(posted_at, "%Y年%m月")'))
+            // 新しい年月を上位に表示
+            ->orderBy('posted_month', 'desc')
+            ->get();
+    }
+
+    /**
      *  ブログ記事一覧取得
      */
-    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null, ?int $created_id = null, ?bool $is_paginate = true)
+    private function getPosts($blog_frame, $option_count = null, ?int $categories_id = null, ?int $created_id = null, ?string $posted_month = null, ?bool $is_paginate = true)
     {
         $count = $option_count;
         if ($count < 0) {
@@ -296,6 +340,11 @@ class BlogsPlugin extends UserPluginBase
         // 投稿者検索
         if ($created_id) {
             $blogs_query->where('blogs_posts.created_id', $created_id);
+        }
+
+        // 年月絞り込み
+        if ($posted_month) {
+            $blogs_query->where(DB::raw('DATE_FORMAT(blogs_posts.posted_at, "%Y-%m")'), $posted_month);
         }
 
         // いいねのleftJoin
@@ -595,13 +644,25 @@ WHERE status = 0
             $created_id = session('created_id_'. $this->frame->id);
 
             // 投稿者絞込用リスト
-            $tmp_blogs_posts = $this->getPosts($blog_frame, null, null, null, false);
+            $tmp_blogs_posts = $this->getPosts($blog_frame, null, null, null, null, false);
             $created_ids = $tmp_blogs_posts->groupBy('created_id')->keys();
             $created_users = User::select('id', 'name')->whereIn('id', $created_ids)->get();
         }
 
+        // 年月絞り込み
+        $posted_month = null;
+        $posted_months = collect();
+
+        if ($blog_frame->narrowing_down_type_for_posted_month == BlogNarrowingDownTypeForPostedMonth::dropdown) {
+            // 年月の絞り込み機能ありなら、年月検索. sessionなしなら年月検索しない(null)
+            $posted_month = session('posted_month_'. $this->frame->id);
+
+            // 年月絞込用リスト
+            $posted_months = $this->getPostedMonths($blog_frame);
+        }
+
         // ブログデータ一覧の取得
-        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id, $created_id);
+        $blogs_posts = $this->getPosts($blog_frame, $view_count, $categories_id, $created_id, $posted_month);
 
         // タグ：タグデータをポストデータに紐づけ
         $blogs_posts = BlogsPostsTags::stringTags($blogs_posts);
@@ -616,6 +677,7 @@ WHERE status = 0
             'blog_frame_setting' => BlogsFrames::where('frames_id', $frame_id)->firstOrNew([]),
             'blogs_categories'   => $blogs_categories,
             'created_users'      => $created_users,
+            'posted_months'      => $posted_months,
             'count'              => $count,
         ]);
     }
@@ -654,6 +716,17 @@ WHERE status = 0
             } else {
                 // 絞り込み条件で空を選択
                 session()->forget('created_id_'. $this->frame->id);
+            }
+        }
+
+        if ($request->has('posted_month')) {
+            $posted_month = $request->posted_month;
+            if ($posted_month) {
+                // 絞り込み条件あり
+                session(['posted_month_'. $frame_id => $posted_month]);
+            } else {
+                // 絞り込み条件で空を選択
+                session()->forget('posted_month_'. $this->frame->id);
             }
         }
 
@@ -1267,6 +1340,7 @@ WHERE status = 0
         $blogs->use_view_count_spectator = $request->use_view_count_spectator;
         $blogs->narrowing_down_type = $request->narrowing_down_type;
         $blogs->narrowing_down_type_for_created_id = $request->narrowing_down_type_for_created_id;
+        $blogs->narrowing_down_type_for_posted_month = $request->narrowing_down_type_for_posted_month;
         //$blogs->approval_flag = $request->approval_flag;
 
         // データ保存
