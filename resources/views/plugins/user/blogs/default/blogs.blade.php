@@ -63,6 +63,14 @@
     {{-- floatの回り込み解除 --}}
     <div class="clearfix"></div>
 
+    {{-- 絞り込み機能が設定されている場合のみマージンを設定 --}}
+    @if ($blog_frame->use_view_count_spectator == 1 || 
+        !empty($blog_frame->narrowing_down_type) || 
+        $blog_frame->narrowing_down_type_for_created_id === BlogNarrowingDownTypeForCreatedId::dropdown || 
+        $blog_frame->narrowing_down_type_for_posted_month === BlogNarrowingDownTypeForPostedMonth::dropdown)
+        <div class="mt-3"></div>
+    @endif
+
     @if (isset($is_template_titleindex))
     {{-- titleindexテンプレート --}}
     <div class="titleindex">
