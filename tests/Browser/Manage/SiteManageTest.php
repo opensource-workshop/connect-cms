@@ -136,7 +136,7 @@ class SiteManageTest extends DuskTestCase
 
         // OGP設定セクションのスクロール表示
         $this->browse(function (Browser $browser) {
-            $browser->scrollIntoView('h5:contains("OGP設定")')
+            $browser->scrollIntoView('#ogp_settings')
                     ->screenshot('manage/site/meta/images/meta_ogp');
         });
 

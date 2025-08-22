@@ -45,7 +45,7 @@
 
         {{-- OGP設定 --}}
         <hr class="mt-4 mb-3">
-        <h5>OGP設定</h5>
+        <h5 id="ogp_settings">OGP設定</h5>
         <div class="alert alert-info mb-3">
             <small>
                 <strong><i class="fas fa-info-circle"></i> OGP（Open Graph Protocol）とは</strong><br>
