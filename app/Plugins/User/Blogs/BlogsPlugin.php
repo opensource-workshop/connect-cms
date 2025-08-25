@@ -246,6 +246,37 @@ class BlogsPlugin extends UserPluginBase
     }
 
     /**
+     * 一覧画面上部の絞り込み機能が有効かを判定 ※いずれかの機能が有効な場合にtrueを返す
+     *
+     * @param $blog_frame
+     * @return boolean
+     */
+    private function hasNarrowingDownFeatures($blog_frame) : bool
+    {
+        // 表示件数リストが有効
+        if ($blog_frame->use_view_count_spectator == 1) {
+            return true;
+        }
+
+        // カテゴリ絞り込みが有効
+        if (!empty($blog_frame->narrowing_down_type)) {
+            return true;
+        }
+
+        // 投稿者絞り込みが有効
+        if ($blog_frame->narrowing_down_type_for_created_id === BlogNarrowingDownTypeForCreatedId::dropdown) {
+            return true;
+        }
+
+        // 年月絞り込みが有効
+        if ($blog_frame->narrowing_down_type_for_posted_month === BlogNarrowingDownTypeForPostedMonth::dropdown) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      *  投稿年月の一覧取得
      *  投稿日時から年月（YYYY-MM）形式のリストを取得する。年月絞り込み用のドロップダウンリストで使用する
      *
@@ -678,6 +709,7 @@ WHERE status = 0
             'blogs_categories'   => $blogs_categories,
             'created_users'      => $created_users,
             'posted_months'      => $posted_months,
+            'has_narrowing_down' => $this->hasNarrowingDownFeatures($blog_frame),
             'count'              => $count,
         ]);
     }
