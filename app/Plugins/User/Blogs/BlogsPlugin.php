@@ -704,7 +704,7 @@ WHERE status = 0
                 session(['categories_id_'. $frame_id => $categories_id]);
             } else {
                 // 絞り込み条件で空を選択
-                session()->forget('categories_id_'. $this->frame->id);
+                session()->forget('categories_id_'. $frame_id);
             }
         }
 
@@ -715,7 +715,7 @@ WHERE status = 0
                 session(['created_id_'. $frame_id => $created_id]);
             } else {
                 // 絞り込み条件で空を選択
-                session()->forget('created_id_'. $this->frame->id);
+                session()->forget('created_id_'. $frame_id);
             }
         }
 
@@ -726,7 +726,7 @@ WHERE status = 0
                 session(['posted_month_'. $frame_id => $posted_month]);
             } else {
                 // 絞り込み条件で空を選択
-                session()->forget('posted_month_'. $this->frame->id);
+                session()->forget('posted_month_'. $frame_id);
             }
         }
 
