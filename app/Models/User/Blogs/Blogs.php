@@ -19,6 +19,7 @@ class Blogs extends Model
         'use_view_count_spectator',
         'narrowing_down_type',
         'narrowing_down_type_for_created_id',
+        'narrowing_down_type_for_posted_month',
     ];
 
     /**
@@ -39,6 +40,7 @@ class Blogs extends Model
                 'blogs.use_view_count_spectator',
                 'blogs.narrowing_down_type',
                 'blogs.narrowing_down_type_for_created_id',
+                'blogs.narrowing_down_type_for_posted_month',
                 'blogs_frames.scope',
                 'blogs_frames.scope_value',
                 'blogs_frames.important_view',
