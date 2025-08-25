@@ -52,12 +52,21 @@
         {{-- カテゴリ絞り込み機能 --}}
         @include('plugins.user.blogs.default.include_narrowing_down')
     </div>
+    <div class="float-right ml-2">
+        {{-- 年月絞り込み機能 --}}
+        @include('plugins.user.blogs.default.include_narrowing_down_for_posted_month')
+    </div>
     <div class="float-right">
         {{-- 投稿者絞り込み機能 --}}
         @include('plugins.user.blogs.default.include_narrowing_down_for_created_id')
     </div>
     {{-- floatの回り込み解除 --}}
     <div class="clearfix"></div>
+
+    {{-- 絞り込み機能が設定されている場合のみマージンを設定 --}}
+    @if ($has_narrowing_down)
+        <div class="mt-3"></div>
+    @endif
 
     @if (isset($is_template_titleindex))
     {{-- titleindexテンプレート --}}
