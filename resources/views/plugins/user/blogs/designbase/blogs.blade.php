@@ -50,6 +50,10 @@
     {{-- 絞り込み機能 --}}
     @include('plugins.user.blogs.default.include_narrowing_down')
 </div>
+<div class="float-right ml-2">
+    {{-- 年月絞り込み機能 --}}
+    @include('plugins.user.blogs.default.include_narrowing_down_for_posted_month')
+</div>
 <div class="float-right">
     {{-- 投稿者絞り込み機能 --}}
     @include('plugins.user.blogs.default.include_narrowing_down_for_created_id')
