@@ -19,6 +19,11 @@ use App\Models\Core\UsersColumns;
 @endphp
 
 <script>
+    $(function () {
+        /** ツールチップ有効化 */
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
     /** 項目セット変更submit */
     function changeColumnsSetIdAction(columns_set_id) {
         @if (Auth::user() && Auth::user()->can('admin_user'))
@@ -263,7 +268,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="base[role_article_admin]" value="1" type="checkbox" class="custom-control-input" id="role_article_admin">
                     @endif
-                    <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">コンテンツ管理者</label>
+                    <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">
+                        コンテンツ管理者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="プラグイン管理者・モデレータ・承認者・編集者すべての権限を含む記事の管理者権限"></i>
+                    </label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_arrangement"]) && $users_roles["base"]["role_arrangement"] == 1) ||
@@ -272,7 +280,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="base[role_arrangement]" value="1" type="checkbox" class="custom-control-input" id="role_arrangement">
                     @endif
-                    <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">プラグイン管理者</label>
+                    <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">
+                        プラグイン管理者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="ページにプラグインを配置し、プラグインの設定画面を操作できる権限"></i>
+                    </label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_article"]) && $users_roles["base"]["role_article"] == 1) ||
@@ -281,7 +292,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="base[role_article]" value="1" type="checkbox" class="custom-control-input" id="role_article">
                     @endif
-                    <label class="custom-control-label" for="role_article" id="label_role_article">モデレータ（他ユーザの記事も更新）</label>
+                    <label class="custom-control-label" for="role_article" id="label_role_article">
+                        モデレータ
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="記事の投稿が可能。他者の記事の変更も可能。"></i>
+                    </label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_approval"]) && $users_roles["base"]["role_approval"] == 1) ||
@@ -290,7 +304,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="base[role_approval]" value="1" type="checkbox" class="custom-control-input" id="role_approval">
                     @endif
-                    <label class="custom-control-label" for="role_approval" id="label_role_approval">承認者</label>
+                    <label class="custom-control-label" for="role_approval" id="label_role_approval">
+                        承認者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="記事の承認が可能"></i>
+                    </label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["base"]) && isset($users_roles["base"]["role_reporter"]) && $users_roles["base"]["role_reporter"] == 1) ||
@@ -299,7 +316,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="base[role_reporter]" value="1" type="checkbox" class="custom-control-input" id="role_reporter">
                     @endif
-                    <label class="custom-control-label" for="role_reporter" id="label_role_reporter">編集者</label>
+                    <label class="custom-control-label" for="role_reporter" id="label_role_reporter">
+                        編集者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="記事の投稿が可能"></i>
+                    </label>
                 </div>
                 <small class="text-muted">
                     ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br />
@@ -323,7 +343,10 @@ use App\Models\Core\UsersColumns;
                         @else
                             <input name="manage[admin_system]" value="1" type="checkbox" class="custom-control-input" id="admin_system">
                         @endif
-                        <label class="custom-control-label" for="admin_system" id="label_admin_system">システム管理者</label>
+                        <label class="custom-control-label" for="admin_system" id="label_admin_system">
+                            システム管理者
+                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="管理機能をすべて操作できる権限"></i>
+                        </label>
                     </div>
                 @endif
                 <div class="custom-control custom-checkbox">
@@ -333,7 +356,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="manage[admin_site]" value="1" type="checkbox" class="custom-control-input" id="admin_site">
                     @endif
-                    <label class="custom-control-label" for="admin_site" id="label_admin_site">サイト管理者</label>
+                    <label class="custom-control-label" for="admin_site" id="label_admin_site">
+                        サイト管理者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="サイト管理を中心にWebサイトの設定を行うメニューが操作できる権限"></i>
+                    </label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_page"]) && $users_roles["manage"]["admin_page"] == 1) ||
@@ -342,7 +368,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="manage[admin_page]" value="1" type="checkbox" class="custom-control-input" id="admin_page">
                     @endif
-                    <label class="custom-control-label" for="admin_page" id="label_admin_page">ページ管理者</label>
+                    <label class="custom-control-label" for="admin_page" id="label_admin_page">
+                        ページ管理者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="ページ管理が操作できる権限"></i>
+                    </label>
                 </div>
                 <div class="custom-control custom-checkbox">
                     @if ((isset($users_roles["manage"]) && isset($users_roles["manage"]["admin_user"]) && $users_roles["manage"]["admin_user"] == 1) ||
@@ -351,7 +380,10 @@ use App\Models\Core\UsersColumns;
                     @else
                         <input name="manage[admin_user]" value="1" type="checkbox" class="custom-control-input" id="admin_user">
                     @endif
-                    <label class="custom-control-label" for="admin_user" id="label_admin_user">ユーザ管理者</label>
+                    <label class="custom-control-label" for="admin_user" id="label_admin_user">
+                        ユーザ管理者
+                        <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="ユーザ管理が操作できる権限"></i>
+                    </label>
                 </div>
             </div>
         </div>
