@@ -23,18 +23,18 @@ if ($frame->isExpandNarrow()) {
         <div class="card mt-3 shadow-sm">
         @if ($photoalbum_content->upload->is_image)
             <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
-                 id="photo_{{$loop->iteration}}"
+                 id="photo_{{$frame_id}}_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_{{$loop->iteration}}"
+                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_{{$frame_id}}_{{$loop->iteration}}"
             >
-            <div class="modal fade" id="image_Modal_{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_{{$loop->iteration}}">
+            <div class="modal fade" id="image_Modal_{{$frame_id}}_{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_{{$frame_id}}_{{$loop->iteration}}">
                 <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
                     <div class="modal-content pb-3">
                         <div class="modal-body mx-auto">
                             {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
                             <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                                  style="object-fit: scale-down;"
-                                 id="popup_photo_{{$loop->iteration}}"
+                                 id="popup_photo_{{$frame_id}}_{{$loop->iteration}}"
                                  class="img-fluid"/>
                         </div>
                         <div class="modal-img_footer">
@@ -47,8 +47,8 @@ if ($frame->isExpandNarrow()) {
             </div>
             <script>
             {{-- サムネイル枠のクリックで、実寸画像を読み込む。一覧表示時のネットワーク通信量の軽減対応 --}}
-            $("#photo_{{$loop->iteration}}").on("click", function() {
-               $("#popup_photo_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
+            $("#photo_{{$frame_id}}_{{$loop->iteration}}").on("click", function() {
+               $("#popup_photo_{{$frame_id}}_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
             });
             </script>
         @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype))
