@@ -1,5 +1,5 @@
 # ワークフローの名前
-name: Semantic Release on Merge
+name: Semantic Release on Manual
 
 # ワークフローが実行されるトリガー
 on:
