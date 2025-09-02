@@ -1,0 +1,94 @@
+# ワークフローの名前
+name: Semantic Release on Merge
+
+# ワークフローが実行されるトリガー
+on:
+  pull_request:
+    types:
+      - closed # PRがクローズされた時
+
+# 実行されるジョブを定義
+jobs:
+  release:
+    # PRがマージされ、かつ対象ブランチがmasterの場合のみ実行
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'master'
+    runs-on: ubuntu-latest
+    # contents: write はコミット＆プッシュとリリース作成に必要
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      # 1. リポジトリのコードをチェックアウトする
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # 2. 最新のセマンティックバージョンのタグを取得する
+      - name: Get previous tag
+        id: previous_tag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+          fallback: v0.0.0 # タグが一つも無い場合は v0.0.0 とする
+
+      # 3. PRのラベルからバージョンアップのレベルを決定する
+      - name: Determine version bump
+        id: semver_bump
+        run: |
+          labels='${{ toJSON(github.event.pull_request.labels.*.name) }}'
+          if echo "$labels" | grep -q -e "new feature" -e "enhancement"; then
+            echo "level=minor" >> $GITHUB_OUTPUT
+            echo "run_release=true" >> $GITHUB_OUTPUT
+          elif echo "$labels" | grep -q -e "bug" -e "developer update"; then
+            echo "level=patch" >> $GITHUB_OUTPUT
+            echo "run_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "run_release=false" >> $GITHUB_OUTPUT
+            echo "No relevant label found. Skipping release."
+          fi
+
+      # 4. 新しいバージョン番号を計算する
+      - name: Calculate new version
+        if: steps.semver_bump.outputs.run_release == 'true'
+        id: new_version
+        run: |
+          npm install semver
+          new_tag=$(node -e "console.log('v' + require('semver').inc('${{ steps.previous_tag.outputs.tag }}', '${{ steps.semver_bump.outputs.level }}'))")
+          echo "tag=$new_tag" >> $GITHUB_OUTPUT
+          echo "version_number=$(echo $new_tag | sed 's/v//')" >> $GITHUB_OUTPUT
+          echo "New tag is: $new_tag"
+
+      # 5. config/version.php ファイルを更新する
+      - name: Update version file
+        if: steps.semver_bump.outputs.run_release == 'true'
+        run: |
+          sed -i "s/'cc_version' => '.*',/'cc_version' => '${{ steps.new_version.outputs.version_number }}',/" config/version.php
+          echo "Updated config/version.php"
+          cat config/version.php
+
+      # 6. 変更をコミットしてプッシュする
+      - name: Commit and push changes
+        if: steps.semver_bump.outputs.run_release == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add config/version.php
+          git commit -m "chore: Bump version to ${{ steps.new_version.outputs.tag }}"
+          git push
+
+      # 7. ★(ここを変更) GitHub Releaseを作成する
+      - name: Create GitHub Release
+        if: steps.semver_bump.outputs.run_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ steps.new_version.outputs.tag }}
+          name: Release ${{ steps.new_version.outputs.tag }}
+          # bodyを手動で設定する代わりに、リリースノートを自動生成する
+          generate_release_notes: true
+          # このリリースを "Latest" として設定する (デフォルト動作ですが明記)
+          make_latest: true
+          draft: false
+          prerelease: false
