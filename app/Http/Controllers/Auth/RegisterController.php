@@ -109,14 +109,8 @@ class RegisterController extends Controller
             }
         }
 
-        foreach ($users_columns as $users_column) {
-            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
-                // 既に入力チェックセット済みのため、ここではチェックしない
-                continue;
-            }
-            // バリデータールールをセット
-            $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $columns_set_id, null);
-        }
+        // デフォルト項目とカスタム項目のバリデーション配列構築
+        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id, null);
 
         // 入力値チェック
         $validator = Validator::make($data, $validator_array['column']);
