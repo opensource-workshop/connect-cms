@@ -74,13 +74,23 @@ jobs:
             fi
           fi
 
-      # 3. 最新のセマンティックバージョンのタグを取得する
-      - name: Get previous tag
+      # 3. 最新のv1系タグを取得する
+      - name: Get previous v1 tag
         if: steps.skip_check.outputs.should_skip != 'true'
         id: previous_tag
-        uses: WyriHaximus/github-action-get-previous-tag@v1
-        with:
-          fallback: v0.0.0 # タグが一つも無い場合は v0.0.0 とする
+        run: |
+          # v1系のタグのみを取得（v1.X.Y形式）
+          latest_v1_tag=$(git tag -l "v1.*" | sort -V | tail -1)
+          
+          if [ -z "$latest_v1_tag" ]; then
+            # v1系のタグが存在しない場合はv0.0.0にフォールバック
+            latest_v1_tag="v0.0.0"
+            echo "No v1 tags found, using fallback: $latest_v1_tag"
+          else
+            echo "Latest v1 tag found: $latest_v1_tag"
+          fi
+          
+          echo "tag=$latest_v1_tag" >> $GITHUB_OUTPUT
 
       # 3. 前回タグから現在までのマージPRを取得してラベルを解析する
       - name: Analyze merged PRs since last tag
@@ -144,8 +154,25 @@ jobs:
         if: steps.analyze_prs.outputs.run_release == 'true'
         id: new_version
         run: |
+          previous_tag="${{ steps.previous_tag.outputs.tag }}"
+          
+          # previous_tagが取得できているかチェック
+          if [ -z "$previous_tag" ] || [ "$previous_tag" = "" ]; then
+            echo "Error: Failed to get previous v1 tag. Cannot calculate new version."
+            exit 1
+          fi
+          
+          echo "Previous tag: $previous_tag"
+          
           npm install semver
-          new_tag=$(node -e "console.log('v' + require('semver').inc('${{ steps.previous_tag.outputs.tag }}', '${{ steps.analyze_prs.outputs.level }}'))")
+          new_tag=$(node -e "console.log('v' + require('semver').inc('$previous_tag', '${{ steps.analyze_prs.outputs.level }}'))")
+          
+          # 新しいタグが正しく生成されたかチェック
+          if [ -z "$new_tag" ] || [ "$new_tag" = "vnull" ] || [ "$new_tag" = "vundefined" ]; then
+            echo "Error: Failed to calculate new version from tag '$previous_tag'"
+            exit 1
+          fi
+          
           echo "tag=$new_tag" >> $GITHUB_OUTPUT
           echo "version_number=$(echo $new_tag | sed 's/v//')" >> $GITHUB_OUTPUT
           echo "New tag is: $new_tag"
