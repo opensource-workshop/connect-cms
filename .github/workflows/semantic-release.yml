@@ -328,8 +328,8 @@ jobs:
           while [ $attempt -le $max_attempts ]; do
             echo "Laravel Dusk Test attempt $attempt of $max_attempts"
             
-            # Laravel Duskテストワークフローを実行
-            if gh workflow run "Laravel Dusk Connect-cms-test" --ref 2; then
+            # Laravel Duskテストワークフローを実行（PHP 8.1指定）
+            if gh workflow run "Laravel Dusk Connect-cms-test" --ref 2 -f php_version=8.1; then
               echo "Triggered Laravel Dusk test workflow (attempt $attempt)"
               
               # ワークフローの完了を待機
