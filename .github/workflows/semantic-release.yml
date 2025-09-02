@@ -4,15 +4,27 @@ name: Semantic Release on Manual
 # ワークフローが実行されるトリガー
 on:
   workflow_dispatch: # 手動実行のみ
+    inputs:
+      skip_v1:
+        description: 'Skip v1 release (for retry v2 only)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 # 実行されるジョブを定義
 jobs:
-  release:
+  v1-release:
     runs-on: ubuntu-latest
     # contents: write はコミット＆プッシュとリリース作成に必要
     permissions:
       contents: write
       pull-requests: read
+    outputs:
+      run_release: ${{ steps.skip_check.outputs.should_skip == 'true' && 'true' || steps.analyze_prs.outputs.run_release }}
+      version_number: ${{ steps.skip_check.outputs.should_skip == 'true' && steps.skip_check.outputs.existing_version_number || steps.new_version.outputs.version_number }}
 
     steps:
       # 1. リポジトリのコードをチェックアウトする
@@ -22,8 +34,49 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      # 2. 最新のセマンティックバージョンのタグを取得する
+      # 2. v1スキップ条件を確認（手動指定または既存タグチェック）
+      - name: Check if v1 should be skipped
+        id: skip_check
+        run: |
+          skip_v1="${{ inputs.skip_v1 }}"
+          echo "Manual skip_v1 input: $skip_v1"
+          
+          if [ "$skip_v1" = "true" ]; then
+            echo "v1 release will be skipped (manual input)"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=manual" >> $GITHUB_OUTPUT
+          else
+            # 最新のv1タグを取得
+            latest_v1_tag=$(git tag -l "v1.*" | sort -V | tail -1)
+            echo "Latest v1 tag: $latest_v1_tag"
+            
+            if [ -n "$latest_v1_tag" ]; then
+              # 最新タグから現在までにマージPRがあるかチェック
+              merge_commits=$(git log --merges --pretty=format:"%H %s" ${latest_v1_tag}..HEAD)
+              
+              if [ -z "$merge_commits" ]; then
+                echo "No new merge commits since $latest_v1_tag. Skipping v1 release."
+                echo "should_skip=true" >> $GITHUB_OUTPUT
+                echo "skip_reason=no_changes" >> $GITHUB_OUTPUT
+                # v1.2.3 から 1.2.3 を抽出
+                version_number=$(echo $latest_v1_tag | sed 's/^v//')
+                echo "existing_tag=$latest_v1_tag" >> $GITHUB_OUTPUT
+                echo "existing_version_number=$version_number" >> $GITHUB_OUTPUT
+              else
+                echo "Found new merge commits since $latest_v1_tag. Proceeding with v1 release."
+                echo "should_skip=false" >> $GITHUB_OUTPUT
+                echo "skip_reason=none" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "No existing v1 tags found. Proceeding with v1 release."
+              echo "should_skip=false" >> $GITHUB_OUTPUT
+              echo "skip_reason=none" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      # 3. 最新のセマンティックバージョンのタグを取得する
       - name: Get previous tag
+        if: steps.skip_check.outputs.should_skip != 'true'
         id: previous_tag
         uses: WyriHaximus/github-action-get-previous-tag@v1
         with:
@@ -125,5 +178,188 @@ jobs:
           name: Release ${{ steps.new_version.outputs.tag }}
           generate_release_notes: true
           make_latest: true
+          draft: false
+          prerelease: false
+
+  # v2リリース用ジョブ
+  v2-release:
+    needs: v1-release
+    if: needs.v1-release.outputs.run_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      # 1. リポジトリのコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # 2. v2リリースの事前チェック
+      - name: Check v2 release prerequisites
+        id: v2_check
+        run: |
+          # v1のバージョン番号を取得
+          v1_version="${{ needs.v1-release.outputs.version_number }}"
+          v2_version="2.$(echo $v1_version | cut -d. -f2-)"
+          v2_tag="v$v2_version"
+          
+          echo "Expected v2 version: $v2_version"
+          echo "Expected v2 tag: $v2_tag"
+          
+          # 既存のv2タグをチェック
+          if git tag -l | grep -q "^$v2_tag$"; then
+            echo "Warning: v2 tag $v2_tag already exists!"
+            echo "This appears to be a retry run."
+            echo "is_retry=true" >> $GITHUB_OUTPUT
+            
+            # ブランチ「2」の現在のversion.phpをチェック
+            git checkout 2
+            current_version=$(grep "'cc_version'" config/version.php | sed "s/.*'cc_version' => '\\([^']*\\)'.*/\\1/")
+            echo "Current version.php in branch 2: $current_version"
+            
+            if [ "$current_version" = "$v2_version" ]; then
+              echo "version.php is already correct ($v2_version)"
+              echo "need_version_update=false" >> $GITHUB_OUTPUT
+            else
+              echo "version.php needs update: $current_version -> $v2_version"
+              echo "need_version_update=true" >> $GITHUB_OUTPUT
+            fi
+            
+            # masterとブランチ「2」の差分をチェック
+            git checkout master
+            if git merge-base --is-ancestor master 2; then
+              echo "Branch 2 is already up to date with master"
+              echo "need_merge=false" >> $GITHUB_OUTPUT
+            else
+              echo "Branch 2 needs to merge master"
+              echo "need_merge=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "New v2 release (tag $v2_tag does not exist)"
+            echo "is_retry=false" >> $GITHUB_OUTPUT
+            echo "need_version_update=true" >> $GITHUB_OUTPUT
+            echo "need_merge=true" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "v2_version=$v2_version" >> $GITHUB_OUTPUT
+          echo "v2_tag=$v2_tag" >> $GITHUB_OUTPUT
+
+      # 3. ブランチ「2」に切り替えてmasterをマージ（必要な場合のみ）
+      - name: Merge master to branch 2
+        if: steps.v2_check.outputs.need_merge == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # ブランチ「2」をチェックアウト
+          git checkout 2
+          git pull origin 2
+          
+          # masterをマージ（競合が発生する可能性あり）
+          git merge master || echo "Merge conflict detected, will resolve..."
+
+      # 3. v2系の最新タグを取得
+      - name: Get previous v2 tag
+        id: previous_v2_tag
+        uses: WyriHaximus/github-action-get-previous-tag@v1
+        with:
+          fallback: v2.0.0
+          prefix: v2
+
+      # 4. version.phpの競合解決（v2バージョンに更新、必要な場合のみ）
+      - name: Resolve version.php conflict for v2
+        if: steps.v2_check.outputs.need_version_update == 'true'
+        run: |
+          # ブランチ「2」にいることを確認
+          git checkout 2 2>/dev/null || echo "Already on branch 2"
+          
+          # version.phpをv2バージョンに更新
+          sed -i "s/'cc_version' => '.*',/'cc_version' => '${{ steps.v2_check.outputs.v2_version }}',/" config/version.php
+          echo "Updated config/version.php for v2"
+          cat config/version.php
+          
+          # マージの続行
+          git add config/version.php
+          git commit -m "chore: Update version to ${{ steps.v2_check.outputs.v2_tag }} for v2 branch"
+
+      # 5. 変更をプッシュ（変更があった場合のみ）
+      - name: Push v2 branch changes
+        if: steps.v2_check.outputs.need_merge == 'true' || steps.v2_check.outputs.need_version_update == 'true'
+        run: |
+          git push origin 2
+
+      # 7. Laravel Duskテストを実行（最大10回リトライ）
+      - name: Run Laravel Dusk Tests with Retry
+        run: |
+          max_attempts=10
+          attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "Laravel Dusk Test attempt $attempt of $max_attempts"
+            
+            # Laravel Duskテストワークフローを実行
+            if gh workflow run "Laravel Dusk Connect-cms-test" --ref 2; then
+              echo "Triggered Laravel Dusk test workflow (attempt $attempt)"
+              
+              # ワークフローの完了を待機
+              sleep 30
+              
+              # 最新の実行結果を確認
+              run_id=$(gh run list --workflow="Laravel Dusk Connect-cms-test" --branch=2 --limit=1 --json databaseId --jq '.[0].databaseId')
+              
+              # 実行完了まで待機
+              while true; do
+                status=$(gh run view $run_id --json status --jq '.status')
+                if [ "$status" = "completed" ]; then
+                  break
+                fi
+                echo "Waiting for test completion... (status: $status)"
+                sleep 30
+              done
+              
+              # 実行結果を確認
+              conclusion=$(gh run view $run_id --json conclusion --jq '.conclusion')
+              echo "Test conclusion: $conclusion"
+              
+              if [ "$conclusion" = "success" ]; then
+                echo "Laravel Dusk tests passed on attempt $attempt"
+                break
+              else
+                echo "Laravel Dusk tests failed on attempt $attempt"
+                if [ $attempt -eq $max_attempts ]; then
+                  echo "All $max_attempts attempts failed. Stopping v2 release process."
+                  exit 1
+                fi
+              fi
+            else
+              echo "Failed to trigger Laravel Dusk test workflow on attempt $attempt"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "Failed to trigger tests after $max_attempts attempts. Stopping v2 release process."
+                exit 1
+              fi
+            fi
+            
+            attempt=$((attempt + 1))
+            echo "Waiting 60 seconds before next attempt..."
+            sleep 60
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 8. v2 GitHub Releaseを作成（リトライ時はタグが既存の場合スキップ）
+      - name: Create v2 GitHub Release
+        if: steps.v2_check.outputs.is_retry != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ steps.v2_check.outputs.v2_tag }}
+          target_commitish: "2"
+          name: Release ${{ steps.v2_check.outputs.v2_tag }}
+          generate_release_notes: true
+          make_latest: false  # v1をlatestに保つ
           draft: false
           prerelease: false
