@@ -18,3 +18,4 @@
 # チェックリスト
 
 - [ ] プルリクエストにわかりやすいタイトルとラベルを付けました。https://github.com/opensource-workshop/connect-cms/wiki/Pull-requests-Rule
+1
