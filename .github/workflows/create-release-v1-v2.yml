@@ -1,12 +1,12 @@
 # ワークフローの名前
-name: Semantic Release on Manual
+name: Create Release (v1 and v2)
 
 # ワークフローが実行されるトリガー
 on:
   workflow_dispatch: # 手動実行のみ
     inputs:
       skip_v1:
-        description: 'Skip v1 release (for retry v2 only)'
+        description: 'Skip v1 release (for v2 only)'
         required: false
         default: 'false'
         type: choice
@@ -34,7 +34,33 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      # 2. v1スキップ条件を確認（手動指定または既存タグチェック）
+      # 2. 最新のv1系タグを取得とマージPRの解析
+      - name: Get v1 tag and analyze merge commits
+        id: tag_and_commits
+        run: |
+          # 最新のv1タグを取得
+          latest_v1_tag=$(git tag -l "v1.*" | sort -V | tail -1)
+          echo "Latest v1 tag: $latest_v1_tag"
+          
+          if [ -z "$latest_v1_tag" ]; then
+            echo "Error: No v1 tags found. Cannot proceed without existing v1 release."
+            exit 1
+          fi
+          
+          # 最新タグから現在までのマージコミットを取得
+          merge_commits=$(git log --merges --pretty=format:"%H %s" ${latest_v1_tag}..HEAD)
+          echo "Merge commits since $latest_v1_tag:"
+          echo "$merge_commits"
+          
+          # 結果をoutputsに設定
+          echo "latest_tag=$latest_v1_tag" >> $GITHUB_OUTPUT
+          echo "has_merge_commits=$([ -n "$merge_commits" ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+          
+          # マージコミットをファイルに保存（複数行対応）
+          echo "$merge_commits" > /tmp/merge_commits.txt
+          echo "merge_commits_file=/tmp/merge_commits.txt" >> $GITHUB_OUTPUT
+
+      # 3. v1スキップ条件を確認（手動指定または新規PRなしを自動判定）
       - name: Check if v1 should be skipped
         id: skip_check
         run: |
@@ -45,67 +71,34 @@ jobs:
             echo "v1 release will be skipped (manual input)"
             echo "should_skip=true" >> $GITHUB_OUTPUT
             echo "skip_reason=manual" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.tag_and_commits.outputs.has_merge_commits }}" = "false" ]; then
+            echo "No new merge commits since ${{ steps.tag_and_commits.outputs.latest_tag }}. Skipping v1 release."
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=no_changes" >> $GITHUB_OUTPUT
+            # タグ形式(v1.2.3)からバージョン番号(1.2.3)を抽出
+            version_number=$(echo ${{ steps.tag_and_commits.outputs.latest_tag }} | sed 's/^v//')
+            echo "existing_tag=${{ steps.tag_and_commits.outputs.latest_tag }}" >> $GITHUB_OUTPUT
+            echo "existing_version_number=$version_number" >> $GITHUB_OUTPUT
           else
-            # 最新のv1タグを取得
-            latest_v1_tag=$(git tag -l "v1.*" | sort -V | tail -1)
-            echo "Latest v1 tag: $latest_v1_tag"
-            
-            if [ -n "$latest_v1_tag" ]; then
-              # 最新タグから現在までにマージPRがあるかチェック
-              merge_commits=$(git log --merges --pretty=format:"%H %s" ${latest_v1_tag}..HEAD)
-              
-              if [ -z "$merge_commits" ]; then
-                echo "No new merge commits since $latest_v1_tag. Skipping v1 release."
-                echo "should_skip=true" >> $GITHUB_OUTPUT
-                echo "skip_reason=no_changes" >> $GITHUB_OUTPUT
-                # v1.2.3 から 1.2.3 を抽出
-                version_number=$(echo $latest_v1_tag | sed 's/^v//')
-                echo "existing_tag=$latest_v1_tag" >> $GITHUB_OUTPUT
-                echo "existing_version_number=$version_number" >> $GITHUB_OUTPUT
-              else
-                echo "Found new merge commits since $latest_v1_tag. Proceeding with v1 release."
-                echo "should_skip=false" >> $GITHUB_OUTPUT
-                echo "skip_reason=none" >> $GITHUB_OUTPUT
-              fi
-            else
-              echo "No existing v1 tags found. Proceeding with v1 release."
-              echo "should_skip=false" >> $GITHUB_OUTPUT
-              echo "skip_reason=none" >> $GITHUB_OUTPUT
-            fi
+            echo "Found new merge commits since ${{ steps.tag_and_commits.outputs.latest_tag }}. Proceeding with v1 release."
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+            echo "skip_reason=none" >> $GITHUB_OUTPUT
           fi
 
-      # 3. 最新のv1系タグを取得する
-      - name: Get previous v1 tag
+      # 4. PRラベルを解析してバージョンレベルを決定
+      - name: Analyze PR labels and determine version bump
         if: steps.skip_check.outputs.should_skip != 'true'
-        id: previous_tag
-        run: |
-          # v1系のタグのみを取得（v1.X.Y形式）
-          latest_v1_tag=$(git tag -l "v1.*" | sort -V | tail -1)
-          
-          if [ -z "$latest_v1_tag" ]; then
-            # v1系のタグが存在しない場合はv0.0.0にフォールバック
-            latest_v1_tag="v0.0.0"
-            echo "No v1 tags found, using fallback: $latest_v1_tag"
-          else
-            echo "Latest v1 tag found: $latest_v1_tag"
-          fi
-          
-          echo "tag=$latest_v1_tag" >> $GITHUB_OUTPUT
-
-      # 3. 前回タグから現在までのマージPRを取得してラベルを解析する
-      - name: Analyze merged PRs since last tag
         id: analyze_prs
         run: |
           # 前回タグから現在までのコミット範囲を取得
-          previous_tag="${{ steps.previous_tag.outputs.tag }}"
+          previous_tag="${{ steps.tag_and_commits.outputs.latest_tag }}"
           echo "Previous tag: $previous_tag"
           
-          # 前回タグから現在までのマージコミットを取得
-          merge_commits=$(git log --merges --pretty=format:"%H %s" $previous_tag..HEAD)
-          echo "Merge commits since $previous_tag:"
-          echo "$merge_commits"
+          # マージコミットファイルから読み込み
+          merge_commits_file="${{ steps.tag_and_commits.outputs.merge_commits_file }}"
+          merge_commits=$(cat "$merge_commits_file")
           
-          # マージPRが存在しない場合は処理終了
+          # マージPRが存在しない場合は処理終了（念のためのチェック）
           if [[ -z "$merge_commits" ]]; then
             echo "No merged PRs found since $previous_tag. Skipping release."
             echo "run_release=false" >> $GITHUB_OUTPUT
@@ -129,7 +122,7 @@ jobs:
                 
                 # ラベルをチェック
                 if echo "$labels" | grep -q -E "(new feature|enhancement|breaking change)"; then
-                  echo "Found major/minor label in PR #$pr_number"
+                  echo "Found minor version label in PR #$pr_number"
                   has_minor=true
                 fi
               fi
@@ -149,12 +142,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 4. 新しいバージョン番号を計算する
+      # 5. 新しいバージョン番号を計算する
       - name: Calculate new version
         if: steps.analyze_prs.outputs.run_release == 'true'
         id: new_version
         run: |
-          previous_tag="${{ steps.previous_tag.outputs.tag }}"
+          previous_tag="${{ steps.tag_and_commits.outputs.latest_tag }}"
           
           # previous_tagが取得できているかチェック
           if [ -z "$previous_tag" ] || [ "$previous_tag" = "" ]; then
@@ -177,7 +170,7 @@ jobs:
           echo "version_number=$(echo $new_tag | sed 's/v//')" >> $GITHUB_OUTPUT
           echo "New tag is: $new_tag"
 
-      # 5. config/version.php ファイルを更新する
+      # 6. config/version.php ファイルを更新する
       - name: Update version file
         if: steps.analyze_prs.outputs.run_release == 'true'
         run: |
@@ -185,7 +178,7 @@ jobs:
           echo "Updated config/version.php"
           cat config/version.php
 
-      # 6. 変更をコミットしてプッシュする
+      # 7. 変更をコミットしてプッシュする
       - name: Commit and push changes
         if: steps.analyze_prs.outputs.run_release == 'true'
         run: |
@@ -195,7 +188,7 @@ jobs:
           git commit -m "chore: Bump version to ${{ steps.new_version.outputs.tag }}"
           git push
 
-      # 7. GitHub Releaseを作成する
+      # 8. GitHub Releaseを作成する
       - name: Create GitHub Release
         if: steps.analyze_prs.outputs.run_release == 'true'
         uses: softprops/action-gh-release@v2
@@ -289,14 +282,6 @@ jobs:
           # masterをマージ（競合が発生する可能性あり）
           git merge master || echo "Merge conflict detected, will resolve..."
 
-      # 3. v2系の最新タグを取得
-      - name: Get previous v2 tag
-        id: previous_v2_tag
-        uses: WyriHaximus/github-action-get-previous-tag@v1
-        with:
-          fallback: v2.0.0
-          prefix: v2
-
       # 4. version.phpの競合解決（v2バージョンに更新、必要な場合のみ）
       - name: Resolve version.php conflict for v2
         if: steps.v2_check.outputs.need_version_update == 'true'
@@ -319,65 +304,7 @@ jobs:
         run: |
           git push origin 2
 
-      # 7. Laravel Duskテストを実行（最大10回リトライ）
-      - name: Run Laravel Dusk Tests with Retry
-        run: |
-          max_attempts=10
-          attempt=1
-          
-          while [ $attempt -le $max_attempts ]; do
-            echo "Laravel Dusk Test attempt $attempt of $max_attempts"
-            
-            # Laravel Duskテストワークフローを実行（PHP 8.1指定）
-            if gh workflow run "Laravel Dusk Connect-cms-test" --ref 2 -f php_version=8.1; then
-              echo "Triggered Laravel Dusk test workflow (attempt $attempt)"
-              
-              # ワークフローの完了を待機
-              sleep 30
-              
-              # 最新の実行結果を確認
-              run_id=$(gh run list --workflow="Laravel Dusk Connect-cms-test" --branch=2 --limit=1 --json databaseId --jq '.[0].databaseId')
-              
-              # 実行完了まで待機
-              while true; do
-                status=$(gh run view $run_id --json status --jq '.status')
-                if [ "$status" = "completed" ]; then
-                  break
-                fi
-                echo "Waiting for test completion... (status: $status)"
-                sleep 30
-              done
-              
-              # 実行結果を確認
-              conclusion=$(gh run view $run_id --json conclusion --jq '.conclusion')
-              echo "Test conclusion: $conclusion"
-              
-              if [ "$conclusion" = "success" ]; then
-                echo "Laravel Dusk tests passed on attempt $attempt"
-                break
-              else
-                echo "Laravel Dusk tests failed on attempt $attempt"
-                if [ $attempt -eq $max_attempts ]; then
-                  echo "All $max_attempts attempts failed. Stopping v2 release process."
-                  exit 1
-                fi
-              fi
-            else
-              echo "Failed to trigger Laravel Dusk test workflow on attempt $attempt"
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to trigger tests after $max_attempts attempts. Stopping v2 release process."
-                exit 1
-              fi
-            fi
-            
-            attempt=$((attempt + 1))
-            echo "Waiting 60 seconds before next attempt..."
-            sleep 60
-          done
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # 8. v2 GitHub Releaseを作成（リトライ時はタグが既存の場合スキップ）
+      # 6. v2 GitHub Releaseを作成（リトライ時はタグが既存の場合スキップ）
       - name: Create v2 GitHub Release
         if: steps.v2_check.outputs.is_retry != 'true'
         uses: softprops/action-gh-release@v2

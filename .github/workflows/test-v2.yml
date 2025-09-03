@@ -1,0 +1,130 @@
+# ワークフローの名前
+name: Test v2 Release (with Retry)
+
+# ワークフローが実行されるトリガー
+on:
+  workflow_dispatch: # 手動実行のみ
+
+# 実行されるジョブを定義
+jobs:
+  v2-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      # 1. リポジトリのコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # 2. ブランチ「2」が存在することを確認
+      - name: Check if branch 2 exists
+        run: |
+          if ! git show-ref --verify --quiet refs/remotes/origin/2; then
+            echo "Error: Branch '2' does not exist. Please create v2 release first."
+            exit 1
+          fi
+          echo "Branch '2' exists. Proceeding with tests."
+
+      # 3. Laravel Duskテストを実行（最大10回リトライ）
+      - name: Run Laravel Dusk Tests with Retry
+        run: |
+          max_attempts=10
+          attempt=1
+          
+          while [ $attempt -le $max_attempts ]; do
+            echo "=========================================="
+            echo "Laravel Dusk Test attempt $attempt of $max_attempts"
+            echo "=========================================="
+            
+            # Laravel Duskテストワークフローを実行（PHP 8.1指定、ブランチ2）
+            if gh workflow run "Laravel Dusk Connect-cms-test" --ref 2 -f php_version=8.1; then
+              echo "✓ Triggered Laravel Dusk test workflow (attempt $attempt)"
+              echo "  - Branch: 2"
+              echo "  - PHP Version: 8.1"
+              
+              # ワークフローの完了を待機
+              echo "Waiting 30 seconds for workflow to start..."
+              sleep 30
+              
+              # 最新の実行結果を確認
+              run_id=$(gh run list --workflow="Laravel Dusk Connect-cms-test" --branch=2 --limit=1 --json databaseId --jq '.[0].databaseId')
+              
+              if [ -z "$run_id" ] || [ "$run_id" = "null" ]; then
+                echo "❌ Failed to get workflow run ID"
+                if [ $attempt -eq $max_attempts ]; then
+                  echo "All $max_attempts attempts failed. Could not get workflow run ID."
+                  exit 1
+                fi
+              else
+                echo "Workflow run ID: $run_id"
+                
+                # 実行完了まで待機
+                echo "Waiting for test completion..."
+                while true; do
+                  status=$(gh run view $run_id --json status --jq '.status')
+                  conclusion=$(gh run view $run_id --json conclusion --jq '.conclusion')
+                  
+                  echo "  Status: $status, Conclusion: $conclusion"
+                  
+                  if [ "$status" = "completed" ]; then
+                    break
+                  fi
+                  
+                  echo "  Still running... waiting 30 seconds"
+                  sleep 30
+                done
+                
+                # 実行結果を確認
+                echo "=========================================="
+                echo "Test Results for attempt $attempt:"
+                echo "  Status: $status"
+                echo "  Conclusion: $conclusion"
+                echo "=========================================="
+                
+                if [ "$conclusion" = "success" ]; then
+                  echo "🎉 Laravel Dusk tests PASSED on attempt $attempt!"
+                  echo ""
+                  echo "✅ v2 testing completed successfully!"
+                  echo "   You can now proceed with confidence that the v2 release is working correctly."
+                  exit 0
+                else
+                  echo "❌ Laravel Dusk tests FAILED on attempt $attempt"
+                  echo "   Conclusion: $conclusion"
+                  
+                  if [ $attempt -eq $max_attempts ]; then
+                    echo ""
+                    echo "💥 All $max_attempts test attempts failed!"
+                    echo "   Please check the test logs and fix issues before retrying."
+                    echo "   You can run this workflow again after fixing the problems."
+                    exit 1
+                  fi
+                fi
+              fi
+            else
+              echo "❌ Failed to trigger Laravel Dusk test workflow on attempt $attempt"
+              if [ $attempt -eq $max_attempts ]; then
+                echo "Failed to trigger tests after $max_attempts attempts."
+                exit 1
+              fi
+            fi
+            
+            attempt=$((attempt + 1))
+            echo ""
+            echo "⏳ Waiting 60 seconds before next attempt..."
+            echo "   Attempt $attempt of $max_attempts will start soon..."
+            sleep 60
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. 成功時の後処理（将来の拡張用）
+      - name: Test Success Notification
+        if: success()
+        run: |
+          echo "🎉 All v2 tests completed successfully!"
+          echo "The v2 release is ready for production use."
