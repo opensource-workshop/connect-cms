@@ -316,8 +316,6 @@
                     $('#zip_deploy').prop('checked', false);
                 });
 
-
-
                 // ファイル選択時の処理（jQuery版）
                 $('.custom-file-input').on('change', function(){
                     let filename = $(this)[0].files[0].name;
@@ -450,12 +448,12 @@
 
                 // ボタンの有効/無効制御
                 const hasSelection = checkedBoxes.length > 0;
-                const downloadBtn = document.querySelector('#app_{{$frame_id}} .btn-download');
-                if (downloadBtn) downloadBtn.disabled = !hasSelection;
+                const downloadBtns = document.querySelectorAll('#app_{{$frame_id}} .btn-download');
+                if (downloadBtns) downloadBtns.forEach(dlbtn => dlbtn.disabled = !hasSelection);
 
                 @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-                const deleteBtn = document.querySelector('#app_{{$frame_id}} .btn-delete');
-                if (deleteBtn) deleteBtn.disabled = !hasSelection;
+                const deleteBtns = document.querySelectorAll('#app_{{$frame_id}} .btn-delete');
+                if (deleteBtns) deleteBtns.forEach(delbtn => delbtn.disabled = !hasSelection);
                 @endcan
 
                 // 選択リストの更新
