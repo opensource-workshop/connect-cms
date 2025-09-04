@@ -279,9 +279,12 @@ jobs:
           # ブランチ「2」にいることを確認
           git checkout 2 2>/dev/null || echo "Already on branch 2"
           
-          # version.phpをv2バージョンに更新
+          # version.phpの競合マーカーを完全に削除してからv2バージョンに更新
+          # 競合マーカー（<<<<<<<, =======, >>>>>>>）を含む行を削除
+          sed -i '/^<<<<<<< /d; /^=======/d; /^>>>>>>> /d' config/version.php
+          # その後、バージョンを更新
           sed -i "s/'cc_version' => '.*',/'cc_version' => '${{ steps.v2_check.outputs.v2_version }}',/" config/version.php
-          echo "Updated config/version.php for v2"
+          echo "Updated config/version.php for v2 (removed conflict markers)"
           cat config/version.php
           
           # マージの続行（変更がある場合のみコミット）
