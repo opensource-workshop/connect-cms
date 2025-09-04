@@ -365,9 +365,7 @@
                 this.currentItemId = itemId;
                 this.currentItemType = itemType;
                 this.currentItemName = itemName;
-                const modalElement = document.getElementById('contextModal{{$frame_id}}');
-                const modal = new bootstrap.Modal(modalElement);
-                modal.show();
+                $('#contextModal{{$frame_id}}').modal('show');
             },
 
             /**
@@ -376,16 +374,12 @@
              */
             renameItem() {
                 // 現在のモーダルを閉じる
-                const contextModalElement = document.getElementById('contextModal{{$frame_id}}');
-                const contextModal = bootstrap.Modal.getInstance(contextModalElement);
-                if (contextModal) contextModal.hide();
+                $('#contextModal{{$frame_id}}').modal('hide');
 
                 this.newItemName = this.currentItemName;
 
                 // リネームモーダルを表示
-                const renameModalElement = document.getElementById('renameModal{{$frame_id}}');
-                const renameModal = new bootstrap.Modal(renameModalElement);
-                renameModal.show();
+                $('#renameModal{{$frame_id}}').modal('show');
             },
 
             /**
@@ -401,9 +395,7 @@
                 }
 
                 if (newName === this.currentItemName) {
-                    const modalElement = document.getElementById('renameModal{{$frame_id}}');
-                    const modal = bootstrap.Modal.getInstance(modalElement);
-                    if (modal) modal.hide();
+                    $('#renameModal{{$frame_id}}').modal('hide');
                     return;
                 }
 
@@ -417,9 +409,7 @@
 
                     // レスポンスが成功ステータスで、かつサーバー側で処理が成功した場合
                     if (response.status === 200 && response.data && response.data.message) {
-                        const modalElement = document.getElementById('renameModal{{$frame_id}}');
-                        const modal = bootstrap.Modal.getInstance(modalElement);
-                        if (modal) modal.hide();
+                        $('#renameModal{{$frame_id}}').modal('hide');
                         // 成功メッセージを表示してからリロード
                         alert(response.data.message);
                         window.location.reload();
@@ -507,9 +497,7 @@
              */
             downloadSingleItem() {
                 // モーダルを閉じる
-                const modalElement = document.getElementById('contextModal{{$frame_id}}');
-                const modal = bootstrap.Modal.getInstance(modalElement);
-                if (modal) modal.hide();
+                $('#contextModal{{$frame_id}}').modal('hide');
 
                 // 単一アイテムダウンロード用の一時フォームを作成
                 const form = document.createElement('form');
