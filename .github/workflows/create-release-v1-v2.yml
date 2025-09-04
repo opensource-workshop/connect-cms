@@ -297,7 +297,7 @@ jobs:
           # マージの続行（変更がある場合のみコミット）
           git add config/version.php
           if ! git diff --cached --quiet; then
-            git commit -m "chore: Update version to ${{ steps.v2_check.outputs.v2_tag }} for v2 branch"
+            git commit -m "chore: Bump version to ${{ steps.v2_check.outputs.v2_tag }}"
           else
             echo "No changes to commit (version.php already up to date)"
           fi
