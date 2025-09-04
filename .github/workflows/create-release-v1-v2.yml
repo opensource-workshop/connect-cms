@@ -195,7 +195,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ steps.new_version.outputs.tag }}
-          name: Release ${{ steps.new_version.outputs.tag }}
+          name: ${{ steps.new_version.outputs.tag }}
           generate_release_notes: true
           make_latest: true
           draft: false
@@ -304,7 +304,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ steps.v2_check.outputs.v2_tag }}
           target_commitish: "2"
-          name: Release ${{ steps.v2_check.outputs.v2_tag }}
+          name: ${{ steps.v2_check.outputs.v2_tag }}
           generate_release_notes: true
           make_latest: false  # v1をlatestに保つ
           draft: false
