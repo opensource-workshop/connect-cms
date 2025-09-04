@@ -555,15 +555,6 @@ class CabinetsPlugin extends UserPluginBase
             return response()->json(['message' => 'ファイルまたはフォルダが見つかりません。'], 404);
         }
 
-        // 権限チェック
-        if ($cabinet_content->upload_id) {
-            // ファイルの場合、アップロードファイルの権限をチェック
-            $cabinet_contents = collect([$cabinet_content]);
-            if (!$this->canTouch($request, $cabinet_contents)) {
-                return response()->json(['message' => '権限がありません。'], 403);
-            }
-        }
-
         // 同じ親の下で同じ名前のファイル/フォルダが存在しないかチェック
         $exists = CabinetContent::where('parent_id', $cabinet_content->parent_id)
             ->where('name', $request->new_name)
