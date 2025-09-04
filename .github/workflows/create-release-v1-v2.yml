@@ -294,9 +294,13 @@ jobs:
           echo "Updated config/version.php for v2"
           cat config/version.php
           
-          # マージの続行
+          # マージの続行（変更がある場合のみコミット）
           git add config/version.php
-          git commit -m "chore: Update version to ${{ steps.v2_check.outputs.v2_tag }} for v2 branch"
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: Update version to ${{ steps.v2_check.outputs.v2_tag }} for v2 branch"
+          else
+            echo "No changes to commit (version.php already up to date)"
+          fi
 
       # 5. 変更をプッシュ（変更があった場合のみ）
       - name: Push v2 branch changes
