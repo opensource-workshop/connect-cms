@@ -297,9 +297,8 @@ jobs:
         run: |
           git push origin 2
 
-      # 6. v2 GitHub Releaseを作成（リトライ時はタグが既存の場合スキップ）
+      # 6. v2 GitHub Releaseを作成
       - name: Create v2 GitHub Release
-        if: steps.v2_check.outputs.is_retry != 'true'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
