@@ -550,7 +550,7 @@ class CabinetsPlugin extends UserPluginBase
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $cabinet_content = CabinetContent::find($request->cabinet_content_id);
+        $cabinet_content = CabinetContent::with('upload')->find($request->cabinet_content_id);
         if (!$cabinet_content) {
             return response()->json(['message' => 'ファイルまたはフォルダが見つかりません。'], 404);
         }
