@@ -235,10 +235,11 @@ jobs:
             echo "Warning: v2 tag $v2_tag already exists!"
             echo "This appears to be a retry run. Skipping all v2 release processes."
             echo "v2 release has already been completed. No further action required."
-            exit 0
+            echo "skip_all=true" >> $GITHUB_OUTPUT
           else
             echo "New v2 release (tag $v2_tag does not exist)"
             echo "Proceeding with v2 release creation."
+            echo "skip_all=false" >> $GITHUB_OUTPUT
           fi
           
           # masterとブランチ「2」の差分をチェック
@@ -259,7 +260,7 @@ jobs:
 
       # 3. ブランチ「2」に切り替えてmasterをマージ（必要な場合のみ）
       - name: Merge master to branch 2
-        if: steps.v2_check.outputs.need_merge == 'true'
+        if: steps.v2_check.outputs.skip_all != 'true' && steps.v2_check.outputs.need_merge == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -273,7 +274,7 @@ jobs:
 
       # 4. version.phpの競合解決（v2バージョンに更新、必要な場合のみ）
       - name: Resolve version.php conflict for v2
-        if: steps.v2_check.outputs.need_version_update == 'true'
+        if: steps.v2_check.outputs.skip_all != 'true' && steps.v2_check.outputs.need_version_update == 'true'
         run: |
           # ブランチ「2」にいることを確認
           git checkout 2 2>/dev/null || echo "Already on branch 2"
@@ -293,12 +294,13 @@ jobs:
 
       # 5. 変更をプッシュ（変更があった場合のみ）
       - name: Push v2 branch changes
-        if: steps.v2_check.outputs.need_merge == 'true' || steps.v2_check.outputs.need_version_update == 'true'
+        if: steps.v2_check.outputs.skip_all != 'true' && (steps.v2_check.outputs.need_merge == 'true' || steps.v2_check.outputs.need_version_update == 'true')
         run: |
           git push origin 2
 
       # 6. v2 GitHub Releaseを作成
       - name: Create v2 GitHub Release
+        if: steps.v2_check.outputs.skip_all != 'true'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
