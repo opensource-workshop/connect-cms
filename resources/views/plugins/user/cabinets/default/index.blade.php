@@ -256,14 +256,25 @@
                 </button>
             </div>
             <div class="modal-body">
+                {{-- メッセージ表示エリア --}}
+                <div id="renameMessage{{$frame_id}}" class="alert" style="display: none; margin-bottom: 1rem;" role="alert">
+                    <i class="mr-2"></i>
+                    <span class="message-text"></span>
+                </div>
+                
                 <div class="form-group">
                     <label for="newItemName{{$frame_id}}">新しい名前</label>
-                    <input type="text" class="form-control" id="newItemName{{$frame_id}}" v-model="newItemName" maxlength="100" @keyup.enter="confirmRename">
+                    <input type="text" class="form-control" id="newItemName{{$frame_id}}" v-model="newItemName" maxlength="100" @keyup.enter="!isRenameInProgress && confirmRename()" :disabled="isRenameInProgress">
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
-                <button type="button" class="btn btn-primary" @click="confirmRename">変更</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" @click="cancelRename">キャンセル</button>
+                <button type="button" class="btn btn-primary" @click="confirmRename" :disabled="isRenameInProgress">
+                    <span v-if="isRenameInProgress">
+                        <i class="fas fa-spinner fa-spin mr-1"></i>処理中...
+                    </span>
+                    <span v-else>変更</span>
+                </button>
             </div>
         </div>
     </div>
@@ -282,7 +293,8 @@
                 currentItemName: null,
                 newItemName: '',
                 selectedContents: [],
-                isAllSelected: false
+                isAllSelected: false,
+                isRenameInProgress: false
             }
         },
         mounted() {
@@ -290,6 +302,68 @@
             this.updateSelectedContents();
         },
         methods: {
+            /**
+             * モーダル内にメッセージを表示
+             * @param {string} message - 表示するメッセージ
+             * @param {string} type - メッセージタイプ ('success', 'error', 'warning', 'info')
+             */
+            showModalMessage(message, type = 'info') {
+                const messageElement = document.getElementById('renameMessage{{$frame_id}}');
+                if (!messageElement) return;
+
+                // アイコンとクラスの設定
+                const iconMap = {
+                    'success': 'fas fa-check-circle',
+                    'error': 'fas fa-exclamation-triangle',
+                    'warning': 'fas fa-exclamation-triangle',
+                    'info': 'fas fa-info-circle'
+                };
+
+                const classMap = {
+                    'success': 'alert-success',
+                    'error': 'alert-danger',
+                    'warning': 'alert-warning',
+                    'info': 'alert-info'
+                };
+
+                // メッセージ表示を更新
+                const iconClass = iconMap[type] || iconMap['info'];
+                const alertClass = classMap[type] || classMap['info'];
+
+                // 既存のクラスをクリアして新しいクラスを追加
+                messageElement.className = `alert ${alertClass}`;
+                messageElement.querySelector('i').className = iconClass + ' mr-2';
+                messageElement.querySelector('.message-text').textContent = message;
+                messageElement.style.display = 'block';
+
+                // 成功メッセージの場合、一定時間後に自動で非表示
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageElement.style.display = 'none';
+                    }, 3000);
+                }
+            },
+
+            /**
+             * モーダル内のメッセージを非表示
+             */
+            hideModalMessage() {
+                const messageElement = document.getElementById('renameMessage{{$frame_id}}');
+                if (messageElement) {
+                    messageElement.style.display = 'none';
+                }
+            },
+
+            /**
+             * 名前変更のキャンセル処理
+             * 処理状態やメッセージをリセット
+             */
+            cancelRename() {
+                this.isRenameInProgress = false;
+                this.hideModalMessage();
+                // モーダルが閉じられるので、状態をリセット
+            },
+
             /**
              * イベントリスナーを初期化
              * コラプス制御、ファイル選択、チェックボックス等のイベントを設定
@@ -374,10 +448,19 @@
                 // 現在のモーダルを閉じる
                 $('#contextModal{{$frame_id}}').modal('hide');
 
+                // 状態を初期化
                 this.newItemName = this.currentItemName;
+                this.isRenameInProgress = false;
+                this.hideModalMessage();
 
                 // リネームモーダルを表示
                 $('#renameModal{{$frame_id}}').modal('show');
+
+                // モーダルが閉じられた時のイベントリスナーを追加（重複防止のため一度削除）
+                $('#renameModal{{$frame_id}}').off('hidden.bs.modal').on('hidden.bs.modal', () => {
+                    this.isRenameInProgress = false;
+                    this.hideModalMessage();
+                });
             },
 
             /**
@@ -387,8 +470,12 @@
             async confirmRename() {
                 const newName = this.newItemName.trim();
 
+                if (this.isRenameInProgress) {
+                    return; // 処理中の場合は何もしない
+                }
+
                 if (newName === '') {
-                    alert('名前を入力してください。');
+                    this.showModalMessage('名前を入力してください。', 'warning');
                     return;
                 }
 
@@ -396,6 +483,9 @@
                     $('#renameModal{{$frame_id}}').modal('hide');
                     return;
                 }
+
+                this.isRenameInProgress = true;
+                this.hideModalMessage();
 
                 try {
                     const formData = new FormData();
@@ -407,13 +497,16 @@
 
                     // レスポンスが成功ステータスで、かつサーバー側で処理が成功した場合
                     if (response.status === 200 && response.data && response.data.message) {
-                        $('#renameModal{{$frame_id}}').modal('hide');
                         // 成功メッセージを表示してからリロード
-                        alert(response.data.message);
-                        window.location.reload();
+                        this.showModalMessage(response.data.message, 'success');
+                        setTimeout(() => {
+                            $('#renameModal{{$frame_id}}').modal('hide');
+                            window.location.reload();
+                        }, 2000);
                     } else {
                         // 予期しないレスポンス形式
-                        alert('名前の変更処理で予期しないエラーが発生しました。');
+                        this.showModalMessage('名前の変更処理で予期しないエラーが発生しました。', 'error');
+                        this.isRenameInProgress = false;
                     }
                 } catch (error) {
                     let message = '名前の変更に失敗しました。';
@@ -431,7 +524,8 @@
                         message = error.message;
                     }
 
-                    alert(message);
+                    this.showModalMessage(message, 'error');
+                    this.isRenameInProgress = false;
                 }
             },
 
