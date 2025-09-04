@@ -233,37 +233,26 @@ jobs:
           # 既存のv2タグをチェック
           if git tag -l | grep -q "^$v2_tag$"; then
             echo "Warning: v2 tag $v2_tag already exists!"
-            echo "This appears to be a retry run."
-            echo "is_retry=true" >> $GITHUB_OUTPUT
-            
-            # ブランチ「2」の現在のversion.phpをチェック
-            git checkout 2
-            current_version=$(grep "'cc_version'" config/version.php | sed "s/.*'cc_version' => '\\([^']*\\)'.*/\\1/")
-            echo "Current version.php in branch 2: $current_version"
-            
-            if [ "$current_version" = "$v2_version" ]; then
-              echo "version.php is already correct ($v2_version)"
-              echo "need_version_update=false" >> $GITHUB_OUTPUT
-            else
-              echo "version.php needs update: $current_version -> $v2_version"
-              echo "need_version_update=true" >> $GITHUB_OUTPUT
-            fi
-            
-            # masterとブランチ「2」の差分をチェック
-            git checkout master
-            if git merge-base --is-ancestor master 2; then
-              echo "Branch 2 is already up to date with master"
-              echo "need_merge=false" >> $GITHUB_OUTPUT
-            else
-              echo "Branch 2 needs to merge master"
-              echo "need_merge=true" >> $GITHUB_OUTPUT
-            fi
+            echo "This appears to be a retry run. Skipping all v2 release processes."
+            echo "v2 release has already been completed. No further action required."
+            exit 0
           else
             echo "New v2 release (tag $v2_tag does not exist)"
-            echo "is_retry=false" >> $GITHUB_OUTPUT
-            echo "need_version_update=true" >> $GITHUB_OUTPUT
+            echo "Proceeding with v2 release creation."
+          fi
+          
+          # masterとブランチ「2」の差分をチェック
+          git checkout master
+          if git merge-base --is-ancestor master 2; then
+            echo "Branch 2 is already up to date with master"
+            echo "need_merge=false" >> $GITHUB_OUTPUT
+          else
+            echo "Branch 2 needs to merge master"
             echo "need_merge=true" >> $GITHUB_OUTPUT
           fi
+          
+          # 新規v2リリースなので常にversion.php更新が必要
+          echo "need_version_update=true" >> $GITHUB_OUTPUT
           
           echo "v2_version=$v2_version" >> $GITHUB_OUTPUT
           echo "v2_tag=$v2_tag" >> $GITHUB_OUTPUT
