@@ -565,6 +565,16 @@ class CabinetsPlugin extends UserPluginBase
             return response()->json(['message' => '同じ名前のファイルまたはフォルダが既に存在します。'], 422);
         }
 
+        // ファイルの場合は拡張子が変更されないことをチェック
+        if ($cabinet_content->upload_id) {
+            $original_extension = pathinfo($cabinet_content->name, PATHINFO_EXTENSION);
+            $new_extension = pathinfo($request->new_name, PATHINFO_EXTENSION);
+
+            if ($original_extension !== $new_extension) {
+                return response()->json(['message' => 'ファイルの拡張子は変更できません。'], 422);
+            }
+        }
+
         // 名前変更
         $cabinet_content->name = $request->new_name;
         $cabinet_content->save();
