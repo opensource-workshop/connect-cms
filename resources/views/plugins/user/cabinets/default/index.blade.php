@@ -209,7 +209,7 @@
                             <i class="fas fa-times"></i> キャンセル
                         </button>
                         {{-- 削除ボタン --}}
-                        <button type="button" class="btn btn-danger" onclick="deleteContents{{$frame_id}}()"><i class="fas fa-check"></i> 本当に削除する</button>
+                        <button type="button" class="btn btn-danger" @click="deleteContents"><i class="fas fa-check"></i> 本当に削除する</button>
                     </div>
                 </div>
             </div>
@@ -546,12 +546,6 @@
     });
 
     cabinetApp{{$frame_id}}.mount('#app_{{$frame_id}}');
-
-    @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
-    window.deleteContents{{$frame_id}} = () => {
-        cabinetApp{{$frame_id}}.deleteContents();
-    };
-    @endcan
 </script>
 
 
