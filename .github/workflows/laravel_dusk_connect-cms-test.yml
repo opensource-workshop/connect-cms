@@ -22,10 +22,6 @@ on:
       #   type: boolean
       #   description: 'マニュアル出力'
       #   default: 'false'
-  # pushトリガ（限定ブランチ）
-  push:
-    branches:
-      - chore/dusk-stability-flags
 env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.4'
