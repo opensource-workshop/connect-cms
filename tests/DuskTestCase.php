@@ -105,6 +105,9 @@ abstract class DuskTestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // Extend default wait timeout for CI stability
+        \Laravel\Dusk\Browser::$waitSeconds = 10;
+
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
             $this->browse(function (Browser $browser) {
