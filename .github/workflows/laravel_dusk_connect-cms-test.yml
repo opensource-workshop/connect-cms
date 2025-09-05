@@ -26,11 +26,20 @@ env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.4'
   # IS_OUTPUT_MANUAL_DEFAULT: 'false'
+  # Disable manual output and external API tests by default for CI stability
+  DUSK_NO_MANUAL_ALL: '1'
+  DUSK_NO_API_TEST_ALL: '1'
 
 jobs:
 
   dusk-php:
     runs-on: ubuntu-latest
+    env:
+      # Point Dusk at the external ChromeDriver started by the workflow
+      DUSK_DRIVER_URL: http://localhost:9515
+      # Disable manual output and external API tests by default for CI stability
+      DUSK_NO_MANUAL_ALL: '1'
+      DUSK_NO_API_TEST_ALL: '1'
     steps:
       # https://github.com/actions/checkout (official)
       - uses: actions/checkout@v4

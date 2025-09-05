@@ -182,10 +182,16 @@ class FaqsPluginTest extends DuskTestCase
             $browser->pause(500);
 
             $browser->visit('/plugin/faqs/listCategories/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
-                    ->pause(500)
                     ->assertPathBeginsWith('/')
-                    ->click('#div_general_view_flag_1')  // カスタムチェックボックスのインプットとラベルをくくるdivは自動テスト時、ラベルが空の場合にクリックできないための対応
-                    ->press('変更')
+                    ->waitFor('input[name="add_category"]');
+
+            // 共通カテゴリ行が存在する場合のみクリック（SiteManageTestの結果に依存しないように）
+            $exists = $browser->script("return document.querySelector('#div_general_view_flag_1') !== null;")[0];
+            if ($exists) {
+                $browser->click('#div_general_view_flag_1');
+            }
+
+            $browser->press('変更')
                     ->screenshot('user/faqs/listCategories/images/listCategories');
         });
 
