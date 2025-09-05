@@ -68,6 +68,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->screenshot('user/photoalbums/index/images/index1');
 
             $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/2#frame-' . $this->test_frame->id)
+                    ->waitFor('#photo_1')
                     ->screenshot('user/photoalbums/index/images/index2');
 
             $browser->click('#photo_1')
@@ -75,6 +76,7 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->screenshot('user/photoalbums/index/images/index3');
 
             $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/3#frame-' . $this->test_frame->id)
+                    ->waitFor('#a_embed_code_check10')
                     ->click('#a_embed_code_check10')
                     ->pause(1000)
                     ->screenshot('user/photoalbums/index/images/index4');
