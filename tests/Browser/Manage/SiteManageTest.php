@@ -113,6 +113,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/update/images/update');
         });
@@ -160,6 +161,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->assertSee('メタ情報を更新しました。')
                     ->screenshot('manage/site/meta/images/saveMeta');
@@ -205,6 +207,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/layout/images/saveLayout');
         });
@@ -242,6 +245,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/categories/images/saveCategories');
         });
@@ -277,6 +281,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('変更')
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/languages/images/saveLanguages');
         });
@@ -311,6 +316,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/pageError/images/savePageError');
         });
@@ -344,7 +350,7 @@ class SiteManageTest extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->press('更新')
-                    ->pause(500)
+                    ->waitForReload()
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/site/analytics/images/saveAnalytics');
         });
