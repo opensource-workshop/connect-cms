@@ -22,10 +22,17 @@ on:
       #   type: boolean
       #   description: 'マニュアル出力'
       #   default: 'false'
+  # pushトリガ（限定ブランチ）
+  push:
+    branches:
+      - chore/dusk-stability-flags
 env:
   # schedule用
   PHP_VERSION_DEFAULT: '7.4'
   # IS_OUTPUT_MANUAL_DEFAULT: 'false'
+  # Disable manual output and external API tests by default for CI stability
+  DUSK_NO_MANUAL_ALL: '1'
+  DUSK_NO_API_TEST_ALL: '1'
 
 jobs:
 
