@@ -396,7 +396,7 @@ class CabinetsPlugin extends UserPluginBase
         $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         $parent->children()->create([
-            'cabinet_id' => $upload->id,
+            'cabinet_id' => $parent->cabinet_id,
             'upload_id' => $upload->id,
             'name' => $file->getClientOriginalName(),
             'is_folder' => CabinetContent::is_folder_off,
@@ -460,7 +460,7 @@ class CabinetsPlugin extends UserPluginBase
         Storage::move($file, $this->getDirectory($upload->id) . '/' . $this->getContentsFileName($upload));
 
         $parent->children()->create([
-            'cabinet_id' => $upload->id,
+            'cabinet_id' => $parent->cabinet_id,
             'upload_id' => $upload->id,
             'name' => basename($file),
             'is_folder' => CabinetContent::is_folder_off,
