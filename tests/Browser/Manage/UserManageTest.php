@@ -291,7 +291,7 @@ class UserManageTest extends DuskTestCase
                     ->attach('users_csv', __DIR__.'/users.csv')
                     ->press('インポート')
                     ->acceptDialog()
-                    ->waitFor('input[name="users_csv"]')
+                    ->waitForLocation('/manage/user/import')
                     ->assertDontSee('500')        // "500" 文字がない事
                     ->screenshot('manage/user/import/images/submitImport');
         });
