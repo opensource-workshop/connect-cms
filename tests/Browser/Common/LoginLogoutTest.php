@@ -117,7 +117,7 @@ class LoginLogoutTest extends DuskTestCase
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('common/index/logout/images/logout1');
 
-            $browser->click('#dropdown_auth')
+            $browser->waitFor('#dropdown_auth')->click('#dropdown_auth')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('common/index/logout/images/logout2');
 

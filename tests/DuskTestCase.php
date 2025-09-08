@@ -108,6 +108,9 @@ abstract class DuskTestCase extends BaseTestCase
         // Extend default wait timeout for CI stability
         \Laravel\Dusk\Browser::$waitSeconds = 10;
 
+        // Extend default wait timeout for CI stability
+        \Laravel\Dusk\Browser::$waitSeconds = 10;
+
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
             $this->browse(function (Browser $browser) {
@@ -330,12 +333,12 @@ abstract class DuskTestCase extends BaseTestCase
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
             $browser->clickLink('プラグイン追加')
                     ->assertPathBeginsWith('/')
-                    ->pause(1000);
+                    ->waitFor('#form_add_plugin' . $area);
             if ($screenshot) {
                 $browser->screenshot('common/admin_link/plugin/images/add_plugin2');
             }
 
-            $browser->click('#form_add_plugin' . $area);
+            $browser->waitFor('#form_add_plugin' . $area)->click('#form_add_plugin' . $area);
             if ($screenshot) {
                 $browser->screenshot('common/admin_link/plugin/images/add_plugin3');
             }

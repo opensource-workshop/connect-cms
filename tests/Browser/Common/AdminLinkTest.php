@@ -46,6 +46,7 @@ class AdminLinkTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
                     ->assertTitleContains('Connect-CMS')
+                    ->waitFor('#dropdown_manage')
                     ->screenshot('common/admin_link/index/images/admin_link1');
 
             $browser->click('#dropdown_manage')
