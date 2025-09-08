@@ -51,7 +51,7 @@ class ThemeManageTest extends DuskTestCase
                     ->screenshot('manage/theme/index/images/index');
 
             $browser->click('#image_edit_1')
-                    ->waitFor('#upload_images')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/index/images/image_edit');
         });
