@@ -130,10 +130,8 @@ class ReservationManageTest extends DuskTestCase
                     $reservations_category = '3';
                 }
 
-                // ループの連続実行で画面表示がおいついてないので、ちょっと待つ
-                $browser->pause(500);
-
                 $browser->visit('/manage/reservation/regist')
+                        ->waitFor("input[name='facility_name']")
                         ->type('facility_name', $name)
                         ->select('reservations_categories_id', $reservations_category)
                         ->select('columns_set_id', '1')
@@ -262,7 +260,7 @@ class ReservationManageTest extends DuskTestCase
         });
         $this->browse(function (Browser $browser) {
             $browser->click('#app_reservation_search_condition')
-                    ->pause(500)
+                    ->waitForText('施設名')
                     ->screenshot('manage/reservation/bookings/images/bookings2');
         });
 

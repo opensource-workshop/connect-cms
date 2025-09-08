@@ -132,7 +132,7 @@ class WysiwygTest extends DuskTestCase
 
             // 固定記事のページを開く
             $browser->visit('/plugin/contents/edit/' . $frame->page_id . '/' . $frame->id . '/' . $this->content->id . '#frame-' . $frame->id)
-                    ->pause(500)
+                    ->waitFor('.tox-tinymce')
                     ->assertPathBeginsWith('/')
                     ->screenshot('common/wysiwyg/index/images/index');
         });
@@ -167,7 +167,7 @@ class WysiwygTest extends DuskTestCase
 
             // 固定記事のページを開く
             $browser->visit('/plugin/contents/edit/' . $frame->page_id . '/' . $frame->id . '/' . $this->content->id . '#frame-' . $frame->id)
-                    ->pause(500)
+                    ->waitFor('.tox-tinymce')
                     ->assertPathBeginsWith('/')
                     ->screenshot('common/wysiwyg/decoration/images/decoration');
         });
@@ -200,8 +200,9 @@ class WysiwygTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // 段落
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->waitFor('.tox-tinymce')
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(3) button')
-                    ->pause(500)
+                    ->waitFor('.tox-collection')
                     ->screenshot('common/wysiwyg/paragraph/images/paragraph');
         });
 
@@ -233,13 +234,14 @@ class WysiwygTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             // 文字色のカラーパネル
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
+                    ->waitFor('.tox-tinymce')
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(4) div:nth-child(1) span:nth-child(2)')
-                    ->pause(500)
+                    ->waitFor('.tox-collection')
                     ->screenshot('common/wysiwyg/color/images/colorPickerFont');
 
             // 背景色のカラーパネル
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(4) div:nth-child(2) span:nth-child(2)')
-                    ->pause(500)
+                    ->waitFor('.tox-collection')
                     ->screenshot('common/wysiwyg/color/images/colorPickerBackground');
         });
 
@@ -289,11 +291,12 @@ class WysiwygTest extends DuskTestCase
             $content->save();
 
             // 記事をデータベースから変更したので、一度開きなおす。
-            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id);
+            $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id)
+                    ->waitFor('.tox-tinymce');
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
-                    ->pause(500)
+                    ->waitFor('.tox-collection')
                     ->screenshot('common/wysiwyg/table/images/table');
 
             // 表のドロップダウン ＞ 表
@@ -336,43 +339,42 @@ class WysiwygTest extends DuskTestCase
 
             // 表のドロップダウン ＞ 行 ＞ 行の詳細設定
             $browser->click('.tox-collection--list:nth-child(2) .tox-collection__item:nth-child(4)')
-                    ->pause(500)
+                    ->waitFor('.tox-dialog')
                     ->screenshot('common/wysiwyg/table/images/table_row_detail');
 
             // 表のドロップダウン ＞ 行 ＞ 行の詳細設定 ＞ 詳細設定
             $browser->click('.tox-tab:nth-child(2)')
-                    ->pause(500)
+                    ->waitFor('.tox-dialog')
                     ->screenshot('common/wysiwyg/table/images/table_row_detail_detail');
 
             // 一度開きなおす。
-            $browser->visit('/')
-                    ->pause(500);
+            $browser->visit('/');
 
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $content->id . '#frame-' . $this->frame->id)
-                    ->pause(500)
+                    ->waitFor('.tox-tinymce')
                     ->screenshot('common/wysiwyg/table/images/edit_reopen2');
 
             // 表のドロップダウン
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(6) button:nth-child(1) div')
-                    ->pause(500);
+                    ->waitFor('.tox-collection');
 
             // 表のドロップダウン ＞ 列
             $browser->mouseover('.tox-collection__group:nth-child(2) .tox-collection__item:nth-child(3)')
-                    ->pause(500)
+                    ->waitFor('.tox-collection')
                     ->screenshot('common/wysiwyg/table/images/table_col');
 
             // 表のドロップダウン ＞ 表の詳細設定
             $browser->mouseover('.tox-collection__group:nth-child(3) .tox-collection__item:nth-child(1)')
-                    ->pause(500)
+                    ->waitFor('.tox-collection')
                     ->screenshot('common/wysiwyg/table/images/table_detail_mouse');
 
             $browser->click('.tox-collection__group:nth-child(3) .tox-collection__item:nth-child(1)')
-                    ->pause(500)
+                    ->waitFor('.tox-dialog')
                     ->screenshot('common/wysiwyg/table/images/table_detail_click');
 
             // 表のドロップダウン ＞ 表の詳細設定 ＞ 詳細設定
             $browser->click('.tox-tab:nth-child(2)')
-                    ->pause(500)
+                    ->waitFor('.tox-dialog')
                     ->screenshot('common/wysiwyg/table/images/table_detail_detail');
         });
 
