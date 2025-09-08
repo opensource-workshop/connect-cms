@@ -47,7 +47,7 @@ class PasswordPageTest extends DuskTestCase
                     ->screenshot('common/password_page/index/images/setPassword')
                     ->scrollIntoView('footer')
                     ->press('ページ更新')
-                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
+                    ->waitForText('ページを更新しました。');
         });
 
         // マニュアル用データ出力
@@ -86,7 +86,7 @@ class PasswordPageTest extends DuskTestCase
                     ->type('password', 'pass123')
                     ->screenshot('common/password_page/viewPage/images/inputPassword')
                     ->press('ページ閲覧')
-                    ->pause(500);    // github actionsの安定性のためにpress後に少し待つ
+                    ->waitForLocation('/password');
         });
 
         // *** データクリア

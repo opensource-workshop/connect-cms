@@ -39,10 +39,8 @@ class LogManageTest extends DuskTestCase
             $browser->visit('/manage/edit')
                     ->visit('/manage/log')
                     ->click('#app_log_search_condition_button')
-                    ->assertTitleContains('Connect-CMS');
-
-            // collapseが表示されるまで、ちょっと待つ
-            $browser->pause(500)
+                    ->assertTitleContains('Connect-CMS')
+                    ->waitFor('#app_log_search_condition')
                     ->screenshot('manage/log/index/images/index3');
         });
 
