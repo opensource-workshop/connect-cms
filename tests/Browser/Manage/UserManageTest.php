@@ -83,7 +83,7 @@ class UserManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->click('#user_search_condition')
                     ->assertTitleContains('Connect-CMS')
-                    ->pause(500)
+                    ->waitFor('#user_search_condition_status')
                     ->screenshot('manage/user/index/images/user_search_condition');
         });
         $this->browse(function (Browser $browser) {
@@ -219,9 +219,9 @@ class UserManageTest extends DuskTestCase
                     ->pause(500)
                     ->screenshot('manage/user/regist/images/regist2')
                     ->press('ユーザ登録')
-                    ->pause(500)
+                    ->waitFor('#label_group_role_1_1')
                     ->click('#label_group_role_1_1') // ここでは、group_user->id を 1 で想定。（順番に実行してきたらそうなるはず）
-                    ->pause(500)
+                    ->waitForText('変更')
                     ->screenshot('manage/user/regist/images/regist3')
                     ->press('変更')
                     ->screenshot('manage/user/regist/images/regist4')
@@ -291,7 +291,7 @@ class UserManageTest extends DuskTestCase
                     ->attach('users_csv', __DIR__.'/users.csv')
                     ->press('インポート')
                     ->acceptDialog()
-                    ->pause(500)
+                    ->waitFor('input[name="users_csv"]')
                     ->assertDontSee('500')        // "500" 文字がない事
                     ->screenshot('manage/user/import/images/submitImport');
         });
@@ -305,7 +305,6 @@ class UserManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/user?page=2')
                 ->assertSee('ユーザ一覧')
-                ->pause(500)
                 ->assertDontSee('500')        // "500" 文字がない事
                 ->screenshot('manage/user/import/images/import2');
         });
