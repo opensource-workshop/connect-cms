@@ -61,7 +61,7 @@ class CabinetsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory'];
-        $functions['post'] = ['makeFolder', 'upload', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'upload', 'deleteContents', 'rename'];
         return $functions;
     }
 
@@ -75,6 +75,7 @@ class CabinetsPlugin extends UserPluginBase
         $role_check_table["upload"] = array('posts.create');
         $role_check_table["makeFolder"] = array('posts.create');
         $role_check_table["deleteContents"] = array('posts.delete');
+        $role_check_table["rename"] = array('posts.update');
         return $role_check_table;
     }
 
@@ -533,6 +534,61 @@ class CabinetsPlugin extends UserPluginBase
     }
 
     /**
+     *  名前変更処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @method_title 名前変更
+     * @method_desc ファイルやフォルダの名前を変更できます。
+     * @method_detail
+     */
+    public function rename($request, $page_id, $frame_id)
+    {
+        $validator = $this->getRenameValidator($request);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $cabinet_content = CabinetContent::with('upload')->find($request->cabinet_content_id);
+        if (!$cabinet_content) {
+            return response()->json(['message' => 'ファイルまたはフォルダが見つかりません。'], 404);
+        }
+
+        // 同じ親の下で同じ名前のファイル/フォルダが存在しないかチェック
+        $exists = CabinetContent::where('parent_id', $cabinet_content->parent_id)
+            ->where('name', $request->new_name)
+            ->where('id', '!=', $cabinet_content->id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => '同じ名前のファイルまたはフォルダが既に存在します。'], 422);
+        }
+
+        // ファイルの場合は拡張子が変更されないことをチェック
+        if ($cabinet_content->upload_id) {
+            $original_extension = pathinfo($cabinet_content->name, PATHINFO_EXTENSION);
+            $new_extension = pathinfo($request->new_name, PATHINFO_EXTENSION);
+
+            if ($original_extension !== $new_extension) {
+                return response()->json(['message' => 'ファイルの拡張子は変更できません。'], 422);
+            }
+        }
+
+        // 名前変更
+        $cabinet_content->name = $request->new_name;
+        $cabinet_content->save();
+        if ($cabinet_content->upload_id) {
+            // アップロードファイルの名前も変更
+            $upload = $cabinet_content->upload;
+            $upload->client_original_name = $request->new_name;
+            $upload->save();
+        }
+
+        return response()->json(['message' => '名前を変更しました。']);
+    }
+
+    /**
      * キャビネットコンテンツを再帰的に削除する
      *
      * @param int $cabinet_content_id キャビネットコンテンツID
@@ -944,6 +1000,34 @@ class CabinetsPlugin extends UserPluginBase
         return $validator;
     }
 
+    /**
+     * 名前変更のバリデーターを取得する。
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getRenameValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'cabinet_content_id' => [
+                'required',
+                'exists:cabinet_contents,id',
+            ],
+            'new_name' => [
+                'required',
+                'max:255',
+                // ファイル名として使用できない文字をチェック
+                'regex:/^[^\\\\\/\:\*\?\"\<\>\|]+$/',
+            ],
+        ]);
+        $validator->setAttributeNames([
+            'cabinet_content_id' => 'コンテンツID',
+            'new_name' => '新しい名前',
+        ]);
+
+        return $validator;
+    }
 
     /**
      * キャビネットを登録する。
