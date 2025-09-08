@@ -92,6 +92,9 @@
 @endphp
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
+    @can('posts.update', [[null, $frame->plugin_name, $buckets]])
+    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fas fa-arrows-alt"></i><span class="d-none d-sm-inline"> 移動</span></button>
+    @endcan
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame->id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
@@ -738,16 +741,18 @@
     (function() {
         const appRoot = document.getElementById('app_{{$frame_id}}');
         if (!appRoot) return;
-        const moveBtn = appRoot.querySelector('.btn-move');
-        if (moveBtn) {
-            moveBtn.addEventListener('click', () => {
-                const select = document.getElementById('move_destination_{{$frame_id}}');
-                if (select) {
-                    // 現在のディレクトリをデフォルト選択
-                    const currentId = '{{$parent_id}}';
-                    if (currentId) select.value = currentId;
-                }
-                $('#moveModal{{$frame_id}}').modal('show');
+        const moveBtnsTopBottom = document.querySelectorAll('#app_{{$frame_id}} .btn-move');
+        if (moveBtnsTopBottom && moveBtnsTopBottom.length) {
+            moveBtnsTopBottom.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const select = document.getElementById('move_destination_{{$frame_id}}');
+                    if (select) {
+                        // 現在のディレクトリをデフォルト選択
+                        const currentId = '{{$parent_id}}';
+                        if (currentId) select.value = currentId;
+                    }
+                    $('#moveModal{{$frame_id}}').modal('show');
+                });
             });
         }
         // confirm は Vue メソッドにバインド済み (@click="confirmMove")

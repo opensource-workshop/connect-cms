@@ -620,6 +620,7 @@ class CabinetsPlugin extends UserPluginBase
         $cabinet = $this->getPluginBucket($this->frame->bucket_id);
         $destination = CabinetContent::find($request->destination_id);
 
+        $moved_count = 0;
         foreach ((array) $request->cabinet_content_id as $cabinet_content_id) {
             $node = CabinetContent::find($cabinet_content_id);
             if (empty($node)) {
@@ -629,10 +630,13 @@ class CabinetsPlugin extends UserPluginBase
             // 移動実施
             $node->parent_id = $destination->id;
             $node->save();
+            $moved_count++;
         }
 
-        // フレーム用フラッシュメッセージ
-        session()->flash("flash_message_for_frame{$frame_id}", '移動しました。');
+        // フレーム用フラッシュメッセージ（件数と移動先を案内）
+        $dest_name = e($destination->name);
+        $message = "選択した{$moved_count}件の項目を「{$dest_name}」へ移動しました。";
+        session()->flash("flash_message_for_frame{$frame_id}", $message);
 
         // リダイレクトはビューからの redirect_path を使用するため、ここでは指定しない
         return;
