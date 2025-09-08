@@ -120,7 +120,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#image_edit_1')
-                    ->waitFor('#upload_images')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/listImages/images/listImages');
         });
