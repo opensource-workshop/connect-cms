@@ -93,7 +93,7 @@
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.update', [[null, $frame->plugin_name, $buckets]])
-    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fas fa-arrows-alt"></i><span class="d-none d-sm-inline"> 移動</span></button>
+    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fa-solid fa-folder-tree"></i><span class="d-none d-sm-inline"> 移動</span></button>
     @endcan
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame->id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
@@ -196,7 +196,7 @@
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.update', [[null, $frame->plugin_name, $buckets]])
-    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fas fa-arrows-alt"></i><span class="d-none d-sm-inline"> 移動</span></button>
+    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fa-solid fa-folder-tree"></i><span class="d-none d-sm-inline"> 移動</span></button>
     @endcan
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame_id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
@@ -310,7 +310,7 @@
                     <i class="mr-2"></i>
                     <span class="message-text"></span>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="newItemName{{$frame_id}}">新しい名前</label>
                     <input type="text" class="form-control" id="newItemName{{$frame_id}}" v-model="newItemName" maxlength="100" @keyup.enter="!isRenameInProgress && confirmRename()" :disabled="isRenameInProgress">
