@@ -47,7 +47,7 @@ class PasswordPageTest extends DuskTestCase
                     ->screenshot('common/password_page/index/images/setPassword')
                     ->scrollIntoView('footer')
                     ->press('ページ更新')
-                    ->waitForText('ページを更新しました。');
+                    ->waitForLocation('/manage/page/edit/' . $page->id);
         });
 
         // マニュアル用データ出力

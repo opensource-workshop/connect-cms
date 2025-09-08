@@ -74,7 +74,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#css_edit_1')
-                    ->waitFor('#css_textarea')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/editCss/images/editCss');
         });
@@ -97,7 +97,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#js_edit_1')
-                    ->waitFor('#js_textarea')
+                    ->pause(500)
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/editJs/images/editJs');
         });

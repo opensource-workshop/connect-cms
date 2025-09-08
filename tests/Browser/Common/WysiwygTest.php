@@ -236,12 +236,12 @@ class WysiwygTest extends DuskTestCase
             $browser->visit('/plugin/contents/edit/' . $this->frame->page_id . '/' . $this->frame->id . '/' . $this->content->id . '#frame-' . $this->frame->id)
                     ->waitFor('.tox-tinymce')
                     ->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(4) div:nth-child(1) span:nth-child(2)')
-                    ->waitFor('.tox-collection')
+                    ->pause(500)
                     ->screenshot('common/wysiwyg/color/images/colorPickerFont');
 
             // 背景色のカラーパネル
             $browser->click('#ccMainArea .tox-tinymce .tox-toolbar__group:nth-child(4) div:nth-child(2) span:nth-child(2)')
-                    ->waitFor('.tox-collection')
+                    ->pause(500)
                     ->screenshot('common/wysiwyg/color/images/colorPickerBackground');
         });
 

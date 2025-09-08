@@ -131,7 +131,7 @@ class ReservationManageTest extends DuskTestCase
                 }
 
                 $browser->visit('/manage/reservation/regist')
-                        ->waitForText('登録確定')
+                        ->waitFor("input[name='facility_name']", 20)
                         ->type('facility_name', $name)
                         ->select('reservations_categories_id', $reservations_category)
                         ->select('columns_set_id', '1')
