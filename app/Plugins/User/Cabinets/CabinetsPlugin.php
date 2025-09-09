@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
@@ -621,17 +622,19 @@ class CabinetsPlugin extends UserPluginBase
         $destination = CabinetContent::find($request->destination_id);
 
         $moved_count = 0;
-        foreach ((array) $request->cabinet_content_id as $cabinet_content_id) {
-            $node = CabinetContent::find($cabinet_content_id);
-            if (empty($node)) {
-                // exists で弾かれている想定
-                continue;
+        DB::transaction(function () use ($request, $destination, &$moved_count) {
+            foreach ((array) $request->cabinet_content_id as $cabinet_content_id) {
+                $node = CabinetContent::find($cabinet_content_id);
+                if (empty($node)) {
+                    // exists で弾かれている想定
+                    continue;
+                }
+                // 移動実施
+                $node->parent_id = $destination->id;
+                $node->save();
+                $moved_count++;
             }
-            // 移動実施
-            $node->parent_id = $destination->id;
-            $node->save();
-            $moved_count++;
-        }
+        });
 
         // フレーム用フラッシュメッセージ（件数と移動先を案内）
         $dest_name = e($destination->name);
