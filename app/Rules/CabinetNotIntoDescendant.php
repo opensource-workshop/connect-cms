@@ -44,4 +44,3 @@ class CabinetNotIntoDescendant implements Rule
         return $this->message ?: '不正な移動先です。';
     }
 }
-

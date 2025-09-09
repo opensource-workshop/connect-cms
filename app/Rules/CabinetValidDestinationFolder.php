@@ -56,4 +56,3 @@ class CabinetValidDestinationFolder implements Rule
         return $this->message ?: '移動先が不正です。';
     }
 }
-

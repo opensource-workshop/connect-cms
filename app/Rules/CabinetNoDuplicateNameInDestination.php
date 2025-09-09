@@ -45,4 +45,3 @@ class CabinetNoDuplicateNameInDestination implements Rule
         return $this->message ?: '移動先に同名があります。';
     }
 }
-
