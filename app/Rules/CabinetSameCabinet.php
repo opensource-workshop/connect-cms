@@ -8,14 +8,14 @@ use App\Models\User\Cabinets\CabinetContent;
 class CabinetSameCabinet implements Rule
 {
     /** @var int */
-    private $expectedCabinetId;
+    private $expected_cabinet_id;
 
     /** @var string */
     private $message = '';
 
-    public function __construct($expectedCabinetId)
+    public function __construct($expected_cabinet_id)
     {
-        $this->expectedCabinetId = $expectedCabinetId;
+        $this->expected_cabinet_id = $expected_cabinet_id;
     }
 
     public function passes($attribute, $value)
@@ -27,7 +27,7 @@ class CabinetSameCabinet implements Rule
             return false;
         }
 
-        if ($node->cabinet_id != $this->expectedCabinetId) {
+        if ($node->cabinet_id != $this->expected_cabinet_id) {
             $this->message = '移動対象とキャビネットが一致しません。';
             return false;
         }

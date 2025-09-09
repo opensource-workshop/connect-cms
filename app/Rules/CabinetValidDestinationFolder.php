@@ -8,17 +8,17 @@ use App\Models\User\Cabinets\CabinetContent;
 class CabinetValidDestinationFolder implements Rule
 {
     /** @var int|null */
-    private $expectedCabinetId;
+    private $expected_cabinet_id;
 
     /** @var string */
     private $message = '';
 
     /**
-     * @param int|null $expectedCabinetId 同一であるべきキャビネットID
+     * @param int|null $expected_cabinet_id 同一であるべきキャビネットID
      */
-    public function __construct($expectedCabinetId)
+    public function __construct($expected_cabinet_id)
     {
-        $this->expectedCabinetId = $expectedCabinetId;
+        $this->expected_cabinet_id = $expected_cabinet_id;
     }
 
     /**
@@ -38,7 +38,7 @@ class CabinetValidDestinationFolder implements Rule
         }
 
         // キャビネット一致チェック
-        if ($this->expectedCabinetId !== null && $destination->cabinet_id != $this->expectedCabinetId) {
+        if ($this->expected_cabinet_id !== null && $destination->cabinet_id != $this->expected_cabinet_id) {
             $this->message = '移動先フォルダのキャビネットが一致しません。';
             return false;
         }
