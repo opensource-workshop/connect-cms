@@ -9,6 +9,7 @@
 
 @section("plugin_contents_$frame->id")
 <div id="app_{{$frame_id}}">
+@include('plugins.common.flash_message_for_frame')
 @can('posts.create', [[null, $frame->plugin_name, $buckets]])
 <div class="p-2 text-right mb-2">
     <button class="btn btn-primary" data-toggle="collapse" data-target="#collapse_mkdir{{$frame->id}}"><i class="fas fa-folder-plus"></i><span class="d-none d-sm-inline"> フォルダ作成</span></button>
@@ -76,8 +77,22 @@
 {{csrf_field()}}
 <input type="hidden" name="parent_id" value="{{$parent_id}}">
 @include('plugins.common.errors_inline', ['name' => 'cabinet_content_id'])
+@include('plugins.common.errors_inline', ['name' => 'destination_id'])
+{{-- cabinet_content_id.* のエラー（個別要素に紐づくバリデーション）も一覧の上でまとめて表示 --}}
+@if ($errors)
+    @foreach ($errors->getMessages() as $key => $messages)
+        @if (strpos($key, 'cabinet_content_id.') === 0)
+            @foreach ($messages as $msg)
+                <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{ $msg }}</div>
+            @endforeach
+        @endif
+    @endforeach
+@endif
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
+    @can('posts.update', [[null, $frame->plugin_name, $buckets]])
+    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fa-solid fa-folder-tree"></i><span class="d-none d-sm-inline"> 移動</span></button>
+    @endcan
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame->id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
@@ -178,6 +193,9 @@
 </table>
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
+    @can('posts.update', [[null, $frame->plugin_name, $buckets]])
+    <button class="btn btn-secondary btn-sm btn-move" type="button" disabled><i class="fa-solid fa-folder-tree"></i><span class="d-none d-sm-inline"> 移動</span></button>
+    @endcan
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame_id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
@@ -216,6 +234,35 @@
         </div>
     </div>
 </div>
+@endcan
+
+@can('posts.update', [[null, $frame->plugin_name, $buckets]])
+{{-- 移動モーダル --}}
+<div class="modal" id="moveModal{{$frame_id}}" tabindex="-1" role="dialog" aria-labelledby="move-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="move-title">移動先フォルダの選択</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="move_destination_{{$frame_id}}">移動先</label>
+                    <select id="move_destination_{{$frame_id}}" class="form-control" name="destination_id">
+                        @include('plugins.user.cabinets.default.folder_options', ['nodes' => $folders_tree, 'depth' => 0])
+                    </select>
+                    @include('plugins.common.errors_inline', ['name' => 'destination_id'])
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-move-{{$frame_id}}" @click="confirmMove">移動</button>
+            </div>
+        </div>
+    </div>
+    </div>
 @endcan
 
 {{-- ケバブメニューモーダル for frame {{$frame_id}} --}}
@@ -261,7 +308,7 @@
                     <i class="mr-2"></i>
                     <span class="message-text"></span>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="newItemName{{$frame_id}}">新しい名前</label>
                     <input type="text" class="form-control" id="newItemName{{$frame_id}}" v-model="newItemName" maxlength="100" @keyup.enter="!isRenameInProgress && confirmRename()" :disabled="isRenameInProgress">
@@ -550,6 +597,11 @@
                 if (deleteBtns) deleteBtns.forEach(delbtn => delbtn.disabled = !hasSelection);
                 @endcan
 
+                @can('posts.update', [[null, $frame->plugin_name, $buckets]])
+                const moveBtns = document.querySelectorAll('#app_{{$frame_id}} .btn-move');
+                if (moveBtns) moveBtns.forEach(mvbtn => mvbtn.disabled = !hasSelection);
+                @endcan
+
                 // 選択リストの更新
                 const selectedList = document.getElementById('selected-contents{{$frame_id}}');
                 if (selectedList) {
@@ -636,10 +688,74 @@
                 }
             }
             @endcan
+
+            @can('posts.update', [[null, $frame->plugin_name, $buckets]])
+            ,
+            /**
+             * 移動確定
+             */
+            confirmMove() {
+                const destSelect = document.getElementById('move_destination_{{$frame_id}}');
+                const destId = destSelect ? destSelect.value : '';
+                if (!destId) {
+                    alert('移動先フォルダを選択してください。');
+                    return;
+                }
+                const form = document.getElementById('form-cabinet-contents{{$frame_id}}');
+                form.action = '{{url('/')}}/redirect/plugin/cabinets/move/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}';
+                form.method = 'POST';
+
+                // redirect_path を設定
+                let redirectInput = form.querySelector('input[name="redirect_path"][data-for="move"]');
+                if (!redirectInput) {
+                    redirectInput = document.createElement('input');
+                    redirectInput.type = 'hidden';
+                    redirectInput.name = 'redirect_path';
+                    redirectInput.setAttribute('data-for', 'move');
+                    form.appendChild(redirectInput);
+                }
+                redirectInput.value = '{{url('/')}}/plugin/cabinets/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$parent_id}}/#frame-{{$frame->id}}';
+
+                // destination_id を設定
+                let destInput = form.querySelector('input[name="destination_id"]');
+                if (!destInput) {
+                    destInput = document.createElement('input');
+                    destInput.type = 'hidden';
+                    destInput.name = 'destination_id';
+                    form.appendChild(destInput);
+                }
+                destInput.value = destId;
+
+                form.submit();
+            }
+            @endcan
         }
     });
 
     cabinetApp{{$frame_id}}.mount('#app_{{$frame_id}}');
+
+    // 非Vueイベント: 移動ボタンクリック、モーダル内ボタン
+    @can('posts.update', [[null, $frame->plugin_name, $buckets]])
+    (function() {
+        const appRoot = document.getElementById('app_{{$frame_id}}');
+        if (!appRoot) return;
+        const moveBtnsTopBottom = document.querySelectorAll('#app_{{$frame_id}} .btn-move');
+        if (moveBtnsTopBottom && moveBtnsTopBottom.length) {
+            moveBtnsTopBottom.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const select = document.getElementById('move_destination_{{$frame_id}}');
+                    if (select) {
+                        // 現在のディレクトリをデフォルト選択
+                        const currentId = '{{$parent_id}}';
+                        if (currentId) select.value = currentId;
+                    }
+                    $('#moveModal{{$frame_id}}').modal('show');
+                });
+            });
+        }
+        // confirm は Vue メソッドにバインド済み (@click="confirmMove")
+    })();
+    @endcan
 </script>
 
 
