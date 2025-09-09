@@ -78,18 +78,16 @@
 <input type="hidden" name="parent_id" value="{{$parent_id}}">
 @include('plugins.common.errors_inline', ['name' => 'cabinet_content_id'])
 @include('plugins.common.errors_inline', ['name' => 'destination_id'])
-@php
-    // cabinet_content_id.* のエラー（個別要素に紐づくバリデーション）も一覧の上でまとめて表示
-    if ($errors) {
-        foreach ($errors->getMessages() as $key => $messages) {
-            if (strpos($key, 'cabinet_content_id.') === 0) {
-                foreach ($messages as $msg) {
-                    echo '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> ' . e($msg) . '</div>';
-                }
-            }
-        }
-    }
-@endphp
+{{-- cabinet_content_id.* のエラー（個別要素に紐づくバリデーション）も一覧の上でまとめて表示 --}}
+@if ($errors)
+    @foreach ($errors->getMessages() as $key => $messages)
+        @if (strpos($key, 'cabinet_content_id.') === 0)
+            @foreach ($messages as $msg)
+                <div class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{ $msg }}</div>
+            @endforeach
+        @endif
+    @endforeach
+@endif
 <div class="bg-light p-2 text-right">
     <span class="mr-2">チェックした項目を</span>
     @can('posts.update', [[null, $frame->plugin_name, $buckets]])
