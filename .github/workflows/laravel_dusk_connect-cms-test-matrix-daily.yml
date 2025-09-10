@@ -16,6 +16,12 @@ jobs:
 
   dusk-php:
     runs-on: ubuntu-latest
+    env:
+      # Point Dusk at the external ChromeDriver started by the workflow
+      DUSK_DRIVER_URL: http://localhost:9515
+      # Disable manual output and external API tests for CI stability
+      DUSK_NO_MANUAL_ALL: '1'
+      DUSK_NO_API_TEST_ALL: '1'
 
     strategy:
       fail-fast: false

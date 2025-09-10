@@ -64,7 +64,9 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public static function prepare()
     {
-        if (! static::runningInSail()) {
+        // Avoid starting a local ChromeDriver when an external driver is provided.
+        // CI sets DUSK_DRIVER_URL and starts chromedriver separately.
+        if (! static::runningInSail() && empty(env('DUSK_DRIVER_URL'))) {
             static::startChromeDriver();
         }
     }
@@ -80,6 +82,9 @@ abstract class DuskTestCase extends BaseTestCase
             '--disable-gpu',
             '--headless',
             '--window-size=1920,1080',
+            // Improve stability in CI containers
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
         ]);
 
         return RemoteWebDriver::create(
@@ -99,6 +104,12 @@ abstract class DuskTestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Extend default wait timeout for CI stability
+        \Laravel\Dusk\Browser::$waitSeconds = 10;
+
+        // Extend default wait timeout for CI stability
+        \Laravel\Dusk\Browser::$waitSeconds = 10;
 
         // テスト実行のタイミングで一度だけ実行する
         if (! self::$migrated) {
@@ -182,10 +193,10 @@ abstract class DuskTestCase extends BaseTestCase
      */
     public function screenshot($browser)
     {
-        // ウィンドウ高さ
-        $height = $browser->script('return window.innerWidth')[0];
         // ウィンドウ幅
-        $width = $browser->script('return window.innerHeight')[0];
+        $width = $browser->script('return window.innerWidth')[0];
+        // ウィンドウ高さ
+        $height = $browser->script('return window.innerHeight')[0];
         // ウィンドウスクロール量取得
         $allHeight = $browser->script('return document.documentElement.scrollHeight')[0];
 
@@ -322,12 +333,12 @@ abstract class DuskTestCase extends BaseTestCase
             // 早すぎると、プラグイン追加ダイアログが表示しきれないので、1秒待つ。
             $browser->clickLink('プラグイン追加')
                     ->assertPathBeginsWith('/')
-                    ->pause(1000);
+                    ->waitFor('#form_add_plugin' . $area);
             if ($screenshot) {
                 $browser->screenshot('common/admin_link/plugin/images/add_plugin2');
             }
 
-            $browser->click('#form_add_plugin' . $area);
+            $browser->waitFor('#form_add_plugin' . $area)->click('#form_add_plugin' . $area);
             if ($screenshot) {
                 $browser->screenshot('common/admin_link/plugin/images/add_plugin3');
             }

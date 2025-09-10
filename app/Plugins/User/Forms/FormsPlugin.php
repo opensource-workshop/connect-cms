@@ -1651,6 +1651,9 @@ class FormsPlugin extends UserPluginBase
         $validator_values['forms_name'] = ['required'];
         $validator_attributes['forms_name'] = 'フォーム名';
 
+        $validator_values['after_message'] = ['required'];
+        $validator_attributes['after_message'] = '本登録後のメッセージ';
+
         $validator_values['entry_limit'] = ['nullable', 'numeric', 'min:0'];
         $validator_attributes['entry_limit'] = '登録制限数';
 

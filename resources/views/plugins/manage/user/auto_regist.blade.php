@@ -307,35 +307,50 @@
                             @if (in_array('role_article_admin', $base_roles)) checked="checked" @endif
                             @if ($use_base_role_env) disabled="disabled" @endif
                         >
-                        <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">コンテンツ管理者</label>
+                        <label class="custom-control-label" for="role_article_admin" id="label_role_article_admin">
+                            コンテンツ管理者
+                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="プラグイン管理者・モデレータ・承認者・編集者すべての権限を含む記事の管理者権限"></i>
+                        </label>
                     </div>
                     <div class="custom-control custom-checkbox">
                         <input name="base_roles[]" value="role_arrangement" type="checkbox" class="custom-control-input" id="role_arrangement"
                             @if (in_array('role_arrangement', $base_roles))  checked="checked" @endif
                             @if ($use_base_role_env) disabled="disabled" @endif
                         >
-                        <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">プラグイン管理者</label>
+                        <label class="custom-control-label" for="role_arrangement" id="label_role_arrangement">
+                            プラグイン管理者
+                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="ページにプラグインを配置し、プラグインの設定画面を操作できる権限"></i>
+                        </label>
                     </div>
                     <div class="custom-control custom-checkbox">
                         <input name="base_roles[]" value="role_article" type="checkbox" class="custom-control-input" id="role_article"
                             @if (in_array('role_article', $base_roles))  checked="checked" @endif
                             @if ($use_base_role_env) disabled="disabled" @endif
                         >
-                        <label class="custom-control-label" for="role_article" id="label_role_article">モデレータ（他ユーザの記事も更新）</label>
+                        <label class="custom-control-label" for="role_article" id="label_role_article">
+                            モデレータ
+                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="記事の投稿が可能。他者の記事の変更も可能。"></i>
+                        </label>
                     </div>
                     <div class="custom-control custom-checkbox">
                         <input name="base_roles[]" value="role_approval" type="checkbox" class="custom-control-input" id="role_approval"
                             @if (in_array('role_approval', $base_roles))  checked="checked" @endif
                             @if ($use_base_role_env) disabled="disabled" @endif
                         >
-                        <label class="custom-control-label" for="role_approval" id="label_role_approval">承認者</label>
+                        <label class="custom-control-label" for="role_approval" id="label_role_approval">
+                            承認者
+                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="記事の承認が可能"></i>
+                        </label>
                     </div>
                     <div class="custom-control custom-checkbox">
                         <input name="base_roles[]" value="role_reporter" type="checkbox" class="custom-control-input" id="role_reporter"
                             @if (in_array('role_reporter', $base_roles))  checked="checked" @endif
                             @if ($use_base_role_env) disabled="disabled" @endif
                         >
-                        <label class="custom-control-label" for="role_reporter" id="label_role_reporter">編集者</label>
+                        <label class="custom-control-label" for="role_reporter" id="label_role_reporter">
+                            編集者
+                            <i class="fas fa-info-circle text-muted ml-1" data-toggle="tooltip" data-placement="right" title="記事の投稿が可能"></i>
+                        </label>
                     </div>
                     <small class="text-muted">
                         ※「編集者」、「モデレータ」の記事投稿については、各プラグイン側の権限設定も必要です。<br />
@@ -367,6 +382,11 @@
 
 {{-- 初期状態で開くもの --}}
 <script>
+    $(function () {
+        /** ツールチップ有効化 */
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
     @if (Configs::getConfigsValueAndOld($configs, "user_register_temporary_regist_mail_flag") == "1")
         // 仮登録メール件名・本文
         $('#collapse_register_temporary').collapse('show')

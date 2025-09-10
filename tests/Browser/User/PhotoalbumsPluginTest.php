@@ -15,6 +15,10 @@ use Tests\DuskTestCase;
  */
 class PhotoalbumsPluginTest extends DuskTestCase
 {
+    /** @var int|null 写真用アルバムのフォルダID */
+    private $photoFolderId = null;
+    /** @var int|null 動画用アルバムのフォルダID */
+    private $movieFolderId = null;
     /**
      * フォトアルバムテスト
      *
@@ -67,14 +71,18 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->assertPathBeginsWith('/')
                     ->screenshot('user/photoalbums/index/images/index1');
 
-            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/2#frame-' . $this->test_frame->id)
+            $targetFolder = $this->photoFolderId ?? 2;
+            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $targetFolder . '#frame-' . $this->test_frame->id)
+                    ->waitFor('[id^="photo_"]')
                     ->screenshot('user/photoalbums/index/images/index2');
 
-            $browser->click('#photo_1')
+            $browser->click('[id^="photo_"]')
                     ->pause(500)
                     ->screenshot('user/photoalbums/index/images/index3');
 
-            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/3#frame-' . $this->test_frame->id)
+            $targetMovieFolder = $this->movieFolderId ?? 3;
+            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $targetMovieFolder . '#frame-' . $this->test_frame->id)
+                    ->waitFor('#a_embed_code_check10')
                     ->click('#a_embed_code_check10')
                     ->pause(1000)
                     ->screenshot('user/photoalbums/index/images/index4');
@@ -123,6 +131,24 @@ class PhotoalbumsPluginTest extends DuskTestCase
                     ->screenshot('user/photoalbums/makeFolder/images/makeFolder2');
         });
 
+        // 作成したフォルダのIDを取得
+        $bucket = Buckets::where('plugin_name', 'photoalbums')->orderBy('id', 'desc')->first();
+        if ($bucket) {
+            $album = Photoalbum::where('bucket_id', $bucket->id)->first();
+            if ($album) {
+                $photoFolder = PhotoalbumContent::where('photoalbum_id', $album->id)
+                    ->where('is_folder', PhotoalbumContent::is_folder_on)
+                    ->where('name', '写真用アルバム')
+                    ->orderBy('id', 'desc')->first();
+                $movieFolder = PhotoalbumContent::where('photoalbum_id', $album->id)
+                    ->where('is_folder', PhotoalbumContent::is_folder_on)
+                    ->where('name', '動画用アルバム')
+                    ->orderBy('id', 'desc')->first();
+                $this->photoFolderId = optional($photoFolder)->id;
+                $this->movieFolderId = optional($movieFolder)->id;
+            }
+        }
+
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/photoalbums/makeFolder/images/makeFolder1",
@@ -141,7 +167,8 @@ class PhotoalbumsPluginTest extends DuskTestCase
     private function uploadOne(&$browser, ...$filenames)
     {
         foreach ($filenames as $filename) {
-            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/2#frame-' . $this->test_frame->id)
+            $targetFolder = $this->photoFolderId ?? 2;
+            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $targetFolder . '#frame-' . $this->test_frame->id)
                     ->press('画像ファイル追加')
                     ->pause(500)
                     ->attach('upload_file[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/'.$filename)
@@ -155,7 +182,8 @@ class PhotoalbumsPluginTest extends DuskTestCase
     private function uploadMovieOne(&$browser, ...$base_filenames)
     {
         foreach ($base_filenames as $base_filename) {
-            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/3#frame-' . $this->test_frame->id)
+            $targetMovieFolder = $this->movieFolderId ?? 3;
+            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $targetMovieFolder . '#frame-' . $this->test_frame->id)
                     ->press('動画ファイル追加')
                     ->pause(500)
                     ->attach('upload_video[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/' . $base_filename . '.mp4')
@@ -173,7 +201,8 @@ class PhotoalbumsPluginTest extends DuskTestCase
     {
         // 実行
         $this->browse(function (Browser $browser) {
-            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/2#frame-' . $this->test_frame->id)
+            $targetFolder = $this->photoFolderId ?? 2;
+            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $targetFolder . '#frame-' . $this->test_frame->id)
                     ->press('画像ファイル追加')
                     ->pause(500)
                     ->attach('upload_file[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/Ariake_Arena.jpg')
@@ -185,7 +214,8 @@ class PhotoalbumsPluginTest extends DuskTestCase
 
             $this->uploadOne($browser, "Bonito_and_Myoga.jpg", "Bonito_and_Olive.jpg", "Bonito_and_Onion.jpg", "じと目あんず.jpg");
 
-            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/3#frame-' . $this->test_frame->id)
+            $targetMovieFolder = $this->movieFolderId ?? 3;
+            $browser->visit('/plugin/photoalbums/changeDirectory/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '/' . $targetMovieFolder . '#frame-' . $this->test_frame->id)
                     ->press('動画ファイル追加')
                     ->pause(500)
                     ->attach('upload_video[' . $this->test_frame->id . ']', __DIR__.'/photoalbum/あんず伏せ.mp4')

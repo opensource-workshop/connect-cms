@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
@@ -23,6 +24,10 @@ use App\Enums\CabinetSort;
 
 use App\Plugins\User\UserPluginBase;
 use App\Utilities\Zip\UnzipUtils;
+use App\Rules\CabinetValidDestinationFolder;
+use App\Rules\CabinetSameCabinet;
+use App\Rules\CabinetNotIntoDescendant;
+use App\Rules\CabinetNoDuplicateNameInDestination;
 
 // use function PHPUnit\Framework\isEmpty;
 
@@ -61,7 +66,7 @@ class CabinetsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory'];
-        $functions['post'] = ['makeFolder', 'upload', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'upload', 'deleteContents', 'rename', 'move'];
         return $functions;
     }
 
@@ -75,6 +80,8 @@ class CabinetsPlugin extends UserPluginBase
         $role_check_table["upload"] = array('posts.create');
         $role_check_table["makeFolder"] = array('posts.create');
         $role_check_table["deleteContents"] = array('posts.delete');
+        $role_check_table["rename"] = array('posts.update');
+        $role_check_table["move"] = array('posts.update');
         return $role_check_table;
     }
 
@@ -115,6 +122,13 @@ class CabinetsPlugin extends UserPluginBase
         }
 
         // 表示テンプレートを呼び出す。
+        // フォルダ一覧（移動先選択用）
+        $folders_tree = CabinetContent::where('cabinet_id', $cabinet->id)
+            ->where('is_folder', CabinetContent::is_folder_on)
+            ->defaultOrder()
+            ->get()
+            ->toTree();
+
         return $this->view('index', [
             'cabinet' => $cabinet,
             'cabinet_contents' => $parent->children()->get()->sort(function ($first, $second) {
@@ -153,6 +167,7 @@ class CabinetsPlugin extends UserPluginBase
             }),
             'breadcrumbs' => $this->fetchBreadCrumbs($cabinet->id, $parent->id),
             'parent_id' =>  $parent->id,
+            'folders_tree' => $folders_tree,
         ]);
     }
 
@@ -395,7 +410,7 @@ class CabinetsPlugin extends UserPluginBase
         $file->storeAs($this->getDirectory($upload->id), $this->getContentsFileName($upload));
 
         $parent->children()->create([
-            'cabinet_id' => $upload->id,
+            'cabinet_id' => $parent->cabinet_id,
             'upload_id' => $upload->id,
             'name' => $file->getClientOriginalName(),
             'is_folder' => CabinetContent::is_folder_off,
@@ -459,7 +474,7 @@ class CabinetsPlugin extends UserPluginBase
         Storage::move($file, $this->getDirectory($upload->id) . '/' . $this->getContentsFileName($upload));
 
         $parent->children()->create([
-            'cabinet_id' => $upload->id,
+            'cabinet_id' => $parent->cabinet_id,
             'upload_id' => $upload->id,
             'name' => basename($file),
             'is_folder' => CabinetContent::is_folder_off,
@@ -530,6 +545,104 @@ class CabinetsPlugin extends UserPluginBase
 
         // 登録後はリダイレクトして初期表示。
         return new Collection(['redirect_path' => url('/') . "/plugin/cabinets/changeDirectory/" . $page_id . "/" . $frame_id . "/" . $request->parent_id . "/#frame-" . $frame_id ]);
+    }
+
+    /**
+     *  名前変更処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @method_title 名前変更
+     * @method_desc ファイルやフォルダの名前を変更できます。
+     * @method_detail
+     */
+    public function rename($request, $page_id, $frame_id)
+    {
+        $validator = $this->getRenameValidator($request);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $cabinet_content = CabinetContent::with('upload')->find($request->cabinet_content_id);
+        if (!$cabinet_content) {
+            return response()->json(['message' => 'ファイルまたはフォルダが見つかりません。'], 404);
+        }
+
+        // 同じ親の下で同じ名前のファイル/フォルダが存在しないかチェック
+        $exists = CabinetContent::where('parent_id', $cabinet_content->parent_id)
+            ->where('name', $request->new_name)
+            ->where('id', '!=', $cabinet_content->id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => '同じ名前のファイルまたはフォルダが既に存在します。'], 422);
+        }
+
+        // ファイルの場合は拡張子が変更されないことをチェック
+        if ($cabinet_content->upload_id) {
+            $original_extension = pathinfo($cabinet_content->name, PATHINFO_EXTENSION);
+            $new_extension = pathinfo($request->new_name, PATHINFO_EXTENSION);
+
+            if ($original_extension !== $new_extension) {
+                return response()->json(['message' => 'ファイルの拡張子は変更できません。'], 422);
+            }
+        }
+
+        // 名前変更
+        $cabinet_content->name = $request->new_name;
+        $cabinet_content->save();
+        if ($cabinet_content->upload_id) {
+            // アップロードファイルの名前も変更
+            $upload = $cabinet_content->upload;
+            $upload->client_original_name = $request->new_name;
+            $upload->save();
+        }
+
+        return response()->json(['message' => '名前を変更しました。']);
+    }
+
+    /**
+     * コンテンツ移動処理
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @method_title 移動
+     * @method_desc ファイルやフォルダを別フォルダへ移動できます。
+     */
+    public function move($request, $page_id, $frame_id)
+    {
+        $validator = $this->getMoveValidator($request);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $cabinet = $this->getPluginBucket($this->frame->bucket_id);
+        $destination = CabinetContent::find($request->destination_id);
+
+        $moved_count = 0;
+        DB::transaction(function () use ($request, $destination, &$moved_count) {
+            foreach ((array) $request->cabinet_content_id as $cabinet_content_id) {
+                $node = CabinetContent::find($cabinet_content_id);
+                if (empty($node)) {
+                    // exists で弾かれている想定
+                    continue;
+                }
+                // 移動実施
+                $node->parent_id = $destination->id;
+                $node->save();
+                $moved_count++;
+            }
+        });
+
+        // フレーム用フラッシュメッセージ（件数と移動先を案内）
+        $dest_name = e($destination->name);
+        $message = "選択した{$moved_count}件の項目を「{$dest_name}」へ移動しました。";
+        session()->flash("flash_message_for_frame{$frame_id}", $message);
+
+        // リダイレクトはビューからの redirect_path を使用するため、ここでは指定しない
+        return;
     }
 
     /**
@@ -944,6 +1057,66 @@ class CabinetsPlugin extends UserPluginBase
         return $validator;
     }
 
+    /**
+     * 名前変更のバリデーターを取得する。
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getRenameValidator($request)
+    {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'cabinet_content_id' => [
+                'required',
+                'exists:cabinet_contents,id',
+            ],
+            'new_name' => [
+                'required',
+                'max:255',
+                // ファイル名として使用できない文字をチェック
+                'regex:/^[^\\\\\/\:\*\?\"\<\>\|]+$/',
+            ],
+        ]);
+        $validator->setAttributeNames([
+            'cabinet_content_id' => 'コンテンツID',
+            'new_name' => '新しい名前',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * 移動のバリデーターを取得する。
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Contracts\Validation\Validator バリデーター
+     */
+    private function getMoveValidator($request)
+    {
+        $cabinet = $this->getPluginBucket($this->frame->bucket_id);
+
+        $validator = Validator::make($request->all(), [
+            'cabinet_content_id' => ['required'],
+            'cabinet_content_id.*' => [
+                'exists:cabinet_contents,id',
+                new CabinetSameCabinet($cabinet->id),
+                new CabinetNotIntoDescendant($request->destination_id),
+                new CabinetNoDuplicateNameInDestination($request->destination_id),
+            ],
+            'destination_id' => [
+                'required',
+                new CabinetValidDestinationFolder($cabinet->id),
+            ],
+        ]);
+
+        $validator->setAttributeNames([
+            'cabinet_content_id' => '移動対象',
+            'destination_id' => '移動先フォルダ',
+        ]);
+
+        return $validator;
+    }
 
     /**
      * キャビネットを登録する。
