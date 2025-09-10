@@ -1118,8 +1118,9 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function input($request, $page_id, $frame_id, $id = null, $errors = null)
     {
-        // セッション初期化などのLaravel 処理。
-        // $request->flash();
+        // セッション初期化（戻る時に入力値を保持するため）
+        // 確認画面からの「前へ」ではアップロードファイルは含まれないため、flash可能。
+        $request->flash();
 
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
