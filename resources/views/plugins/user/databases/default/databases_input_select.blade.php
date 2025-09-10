@@ -12,22 +12,23 @@
     if (!empty($value_obj)) {
         $value = $value_obj->value;
     }
+    // 現在値の決定（リクエスト優先 → old → 既存値）
+    $current = null;
+    if (isset($request->databases_columns_value) &&
+        array_key_exists($database_obj->id, $request->databases_columns_value)) {
+        $current = $request->databases_columns_value[$database_obj->id];
+    } elseif (!is_null(old('databases_columns_value.' . $database_obj->id))) {
+        $current = old('databases_columns_value.' . $database_obj->id);
+    } else {
+        $current = $value;
+    }
 @endphp
 @if (array_key_exists($database_obj->id, $databases_columns_id_select))
     <select id="databases_columns_value[{{$database_obj->id}}]_{{$loop->iteration}}" name="databases_columns_value[{{$database_obj->id}}]" class="custom-select @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border-danger @endif">
         <option value=""></option>
         @foreach($databases_columns_id_select[$database_obj->id] as $select)
 
-            @if (old('databases_columns_value.'.$database_obj->id) == $select['value'] ||
-                $select['value'] == $value ||
-                (isset($request->databases_columns_value) &&
-                    array_key_exists($database_obj->id, $request->databases_columns_value) &&
-                    $request->databases_columns_value[$database_obj->id] == $select['value'])
-            )
-                <option value="{{$select['value']}}" selected>{{$select['value']}}</option>
-            @else
-                <option value="{{$select['value']}}">{{$select['value']}}</option>
-            @endif
+            <option value="{{$select['value']}}" @if($current === $select['value']) selected @endif>{{$select['value']}}</option>
         @endforeach
     </select>
     @include('plugins.common.errors_inline', ['name' => "databases_columns_value.$database_obj->id"])
