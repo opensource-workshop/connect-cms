@@ -162,6 +162,10 @@ class Configs extends Model
 
         // Configs. app\Http\Middleware\ConnectInit.php でセットした全Configs
         $configs = $request->attributes->get('configs');
+        // 例外経路などでミドルウェア未実行の場合にnullのままになるため、空コレクションでフォールバック
+        if (is_null($configs)) {
+            $configs = collect();
+        }
         // dd($request->attributes->get('configs'));
 
         if ($format == 'array') {
