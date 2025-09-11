@@ -35,8 +35,14 @@ class CustomValiRequiredFileKeepTest extends TestCase
         // ルート風のスタブを用意し、parameter('id') を返す
         $route = new class($row_id) {
             private $row_id;
-            public function __construct($row_id) { $this->row_id = $row_id; }
-            public function parameter($key) { return $key === 'id' ? $this->row_id : null; }
+            public function __construct($row_id)
+            {
+                $this->row_id = $row_id;
+            }
+            public function parameter($key)
+            {
+                return $key === 'id' ? $this->row_id : null;
+            }
         };
         $request->setRouteResolver(fn () => $route);
 
