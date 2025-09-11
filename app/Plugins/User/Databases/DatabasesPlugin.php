@@ -1131,8 +1131,7 @@ class DatabasesPlugin extends UserPluginBase
         $databases_columns = $this->removeRegistEditHideColumns($databases_columns);
 
         // セッション初期化（戻る時に入力値を保持するため）
-        // アップロードファイル（UploadedFile）はシリアライズ不可のため、ファイル型の入力はフラッシュ対象から除外する。
-        // ファイル項目は old セッションに含めないようにフラッシュ
+        // アップロードファイル（UploadedFile）はシリアライズ不可のため、ファイル項目はフラッシュ対象から除外する。
         $flash_excepts = [];
         foreach ($databases_columns as $databases_column) {
             if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
