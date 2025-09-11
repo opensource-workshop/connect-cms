@@ -35,6 +35,7 @@ use App\Rules\CustomValiDatesYm;
 use App\Rules\CustomValiCsvImage;
 use App\Rules\CustomValiCsvExtensions;
 use App\Rules\CustomValiWysiwygMax;
+use App\Rules\CustomValiRequiredFileKeep;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -1202,7 +1203,12 @@ class DatabasesPlugin extends UserPluginBase
         $validator_rule = null;
         // 必須チェック
         if ($databases_column->required) {
-            $validator_rule[] = 'required';
+            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                // ファイル系の必須は「既存ファイルが残るなら再アップ不要」の独自ルール
+                $validator_rule[] = new CustomValiRequiredFileKeep($databases_column->id);
+            } else {
+                $validator_rule[] = 'required';
+            }
         }
         // メールアドレスチェック
         if ($databases_column->column_type == DatabaseColumnType::mail) {
@@ -1263,12 +1269,16 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 画像チェック
         if ($databases_column->column_type == DatabaseColumnType::image) {
-            $validator_rule[] = 'nullable';
+            if (!$databases_column->required) {
+                $validator_rule[] = 'nullable';
+            }
             $validator_rule[] = 'image';
         }
         // 動画チェック
         if ($databases_column->column_type == DatabaseColumnType::video) {
-            $validator_rule[] = 'nullable';
+            if (!$databases_column->required) {
+                $validator_rule[] = 'nullable';
+            }
             $validator_rule[] = 'mimes:mp4';
         }
         // wysiwygチェック
