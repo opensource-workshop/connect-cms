@@ -112,7 +112,7 @@
             <th>
                 {{-- 全選択チェック --}}
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="select_all_{{$frame_id}}">
+                    <input type="checkbox" class="custom-control-input" id="select_all_{{$frame_id}}" @click="toggleAllSelection">
                     <label class="custom-control-label" for="select_all_{{$frame_id}}"></label>
                 </div>
             </th>
@@ -141,7 +141,7 @@
                 <tr class="cabinet-item" data-id="{{$cabinet_content->id}}" data-type="@if($cabinet_content->is_folder) folder @else file @endif">
                     <td>
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck{{$cabinet_content->id}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->displayName}}">
+                            <input type="checkbox" class="custom-control-input" id="customCheck{{$cabinet_content->id}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->displayName}}" @change="updateSelectedContents">
                             <label class="custom-control-label" for="customCheck{{$cabinet_content->id}}"></label>
                         </div>
                     </td>
@@ -450,21 +450,6 @@
                     }
                 });
                 @endcan
-
-                // チェックボックスのイベント
-                const checkboxes = document.querySelectorAll('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]');
-                checkboxes.forEach(checkbox => {
-                    checkbox.addEventListener('change', () => {
-                        this.updateSelectedContents();
-                    });
-                });
-
-                const selectAllBox = document.getElementById('select_all_{{$frame_id}}');
-                if (selectAllBox) {
-                    selectAllBox.addEventListener('click', (e) => {
-                        this.toggleAllSelection(e.target.checked);
-                    });
-                }
             },
 
             /**
