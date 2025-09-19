@@ -335,6 +335,7 @@ $app_array = [
         'FormAccessLimitType' => \App\Enums\FormAccessLimitType::class,
         'EditType' => \App\Enums\EditType::class,
         'SmartphoneMenuTemplateType' => \App\Enums\SmartphoneMenuTemplateType::class,
+        'MenuFrameConfig' => \App\Enums\MenuFrameConfig::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,

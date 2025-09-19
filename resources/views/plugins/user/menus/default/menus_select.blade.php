@@ -5,14 +5,8 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category メニュープラグイン
  --}}
-@extends('core.cms_frame_base_setting')
-
-@section("core.cms_frame_edit_tab_$frame->id")
-    {{-- プラグイン側のフレームメニュー --}}
-    @include('plugins.user.menus.menus_frame_edit_tab')
-@endsection
-
-@section("plugin_setting_$frame->id")
+@extends('core.cms_frame_base')
+@section("plugin_contents_$frame->id")
 <form action="{{url('/')}}/plugin/menus/saveSelect/{{$page->id}}/{{$frame->frame_id}}#frame-{{$frame->id}}" name="contents_buckets_form" method="POST" class="mt-3">
     {{ csrf_field() }}
 
