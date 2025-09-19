@@ -96,7 +96,7 @@
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame->id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
-    <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
+    <button class="btn btn-primary btn-sm btn-download" type="button" disabled @click="downloadSelected"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 
 @php
@@ -199,7 +199,7 @@
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame_id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
-    <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
+    <button class="btn btn-primary btn-sm btn-download" type="button" disabled @click="downloadSelected"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 </form>
 @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
@@ -463,13 +463,6 @@
                 if (selectAllBox) {
                     selectAllBox.addEventListener('click', (e) => {
                         this.toggleAllSelection(e.target.checked);
-                    });
-                }
-
-                const downloadBtn = document.querySelector('#app_{{$frame_id}} .btn-download');
-                if (downloadBtn) {
-                    downloadBtn.addEventListener('click', () => {
-                        this.downloadSelected();
                     });
                 }
             },
