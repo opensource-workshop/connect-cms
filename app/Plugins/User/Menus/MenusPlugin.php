@@ -2,10 +2,12 @@
 
 namespace App\Plugins\User\Menus;
 
+use App\Enums\MenuFrameConfig;
 use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Page;
 use App\Models\Common\PageRole;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Menus\Menu;
 
 use App\Plugins\User\UserPluginBase;
@@ -43,8 +45,14 @@ class MenusPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['select'];
-        $functions['post'] = ['saveSelect'];
+        $functions['get']  = [
+            'select',
+            'editFrameRoles'
+        ];
+        $functions['post'] = [
+            'saveSelect',
+            'saveFrameRoles'
+        ];
         return $functions;
     }
 
@@ -55,11 +63,12 @@ class MenusPlugin extends UserPluginBase
     {
         // 標準権限以外で設定画面などから呼ばれる権限の定義
         // 標準権限は右記で定義 config/cc_role.php
-        //
-        // 権限チェックテーブル
+
+        // selectとsaveSelectはアクション内で権限チェックを行う
+        // →プラグイン管理者とモデレータの組み合わせで権限を付与する、特殊な組み合わせなため
         $role_check_table = [];
-        $role_check_table["select"]            = ['frames.edit'];
-        $role_check_table["saveSelect"]        = ['frames.create'];
+        $role_check_table["editFrameRoles"] = ['frames.edit'];
+        $role_check_table["saveFrameRoles"] = ['frames.create'];
 
         return $role_check_table;
     }
@@ -120,6 +129,7 @@ class MenusPlugin extends UserPluginBase
             'current_page' => $this->page,
             'menu'         => $menu,
             'page_roles'   => $page_roles,
+            'can_edit_menu' => $this->canEditMenu(),
             // 'ancestors_page_roles' => $ancestors_page_roles,
             // 'page'      => $this->page,
         ]);
@@ -134,6 +144,11 @@ class MenusPlugin extends UserPluginBase
      */
     public function select($request, $page_id, $frame_id)
     {
+        // 権限チェック
+        if (!$this->canEditMenu()) {
+            return $this->viewError('403_inframe', '権限がありません。');
+        }
+
         // ページデータ＆深さを全て取得
         // 表示順は入れ子集合モデルの順番
         $format = null;
@@ -152,6 +167,7 @@ class MenusPlugin extends UserPluginBase
             'current_pages' => $this->page,
             'frame'         => $this->frame,
             'menu'          => $menu,
+            'can_use_setting_menu' => $this->isCan('frames.edit', null, null, null, $this->frame),
         ]);
     }
 
@@ -160,6 +176,11 @@ class MenusPlugin extends UserPluginBase
      */
     public function saveSelect($request, $page_id, $frame_id)
     {
+        // 権限チェック
+        if (!$this->canEditMenu()) {
+            return $this->viewError('403_inframe', '権限がありません。');
+        }
+
         // メニューデータ作成 or 更新
         Menu::updateOrCreate(
             ['frame_id'          => $frame_id],
@@ -175,5 +196,56 @@ class MenusPlugin extends UserPluginBase
 
         // 画面へ
         return $this->select($request, $page_id, $frame_id);
+    }
+
+    /**
+     * 権限設定 変更画面
+     * メニューは、バケツを持たないので、editBucketsRoles は利用しない。
+     *
+     */
+    public function editFrameRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    {
+        return $this->view('menus_edit_roles', [
+            'frame_configs' => $this->frame_configs,
+        ]);
+    }
+
+    /**
+     * 権限設定 保存処理
+     * メニューは、バケツを持たないので、saveBucketsRoles は利用しない。
+     */
+    public function saveFrameRoles($request, $page_id, $frame_id, $id = null, $use_approval = true)
+    {
+        FrameConfig::saveFrameConfigs(
+            $request,
+            $frame_id,
+            MenuFrameConfig::getMemberKeys()
+        );
+
+        session()->flash("flash_message_for_frame{$frame_id}", '更新しました。');
+    }
+
+    /**
+     * モデレータ編集許可設定の取得
+     */
+    private function isModeratorEditAllowed(): bool
+    {
+        return (bool) FrameConfig::getConfigValue($this->frame_configs, MenuFrameConfig::menu_allow_moderator_edit, 0);
+    }
+
+    /**
+     * メニュー編集権限の判定
+     */
+    private function canEditMenu(): bool
+    {
+        if ($this->isCan('frames.edit', null, null, null, $this->frame)) {
+            return true;
+        }
+
+        if ($this->isModeratorEditAllowed() && $this->isCan('role_article')) {
+            return true;
+        }
+
+        return false;
     }
 }

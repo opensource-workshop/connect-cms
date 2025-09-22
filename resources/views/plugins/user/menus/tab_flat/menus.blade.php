@@ -9,6 +9,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+@include('plugins.user.menus.common.edit_button')
 @if ($pages)
 
     @php $active_page_id = \App\Models\Common\Page::getTabFlatActivePageId($pages, $ancestors, $page_roles); @endphp
