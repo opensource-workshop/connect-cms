@@ -149,6 +149,7 @@ class MenusModeratorEditFeatureTest extends TestCase
         $response->assertStatus(200);
         // ページ選択の画面が表示されることを確認
         $response->assertSee('ページの表示');
+        $response->assertDontSee('設定メニュー');
 
         $payload = [
             'select_flag' => 1,
@@ -182,6 +183,7 @@ class MenusModeratorEditFeatureTest extends TestCase
         $response->assertStatus(200);
         // ページ選択の画面が表示されることを確認
         $response->assertSee('ページの表示');
+        $response->assertSee('設定メニュー');
     }
 
     /**
@@ -266,5 +268,6 @@ class MenusModeratorEditFeatureTest extends TestCase
         $permitted_response = $this->actingAs($moderator)->get('/');
         $permitted_response->assertStatus(200);
         $permitted_response->assertSee('menu-edit-button');
+        $permitted_response->assertDontSee('設定メニュー');
     }
 }

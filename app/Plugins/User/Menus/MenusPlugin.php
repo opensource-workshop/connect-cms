@@ -167,6 +167,7 @@ class MenusPlugin extends UserPluginBase
             'current_pages' => $this->page,
             'frame'         => $this->frame,
             'menu'          => $menu,
+            'can_use_setting_menu' => $this->isCan('frames.edit', null, null, null, $this->frame),
         ]);
     }
 
