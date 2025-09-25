@@ -13,14 +13,7 @@ class CustomValiMetaRobots implements Rule
     /**
      * @var array<string>
      */
-    private $invalid_values = [];
-
-    /**
-     * Create a new rule instance.
-     */
-    public function __construct()
-    {
-    }
+    private $invalidValues = [];
 
     /**
      * Determine if the validation rule passes.
@@ -49,9 +42,9 @@ class CustomValiMetaRobots implements Rule
 
         $allowed = PageMetaRobots::getMemberKeys();
 
-        $this->invalid_values = array_diff($values, $allowed);
+        $this->invalidValues = array_diff($values, $allowed);
 
-        return empty($this->invalid_values);
+        return empty($this->invalidValues);
     }
 
     /**
@@ -59,10 +52,11 @@ class CustomValiMetaRobots implements Rule
      */
     public function message()
     {
-        if (!empty($this->invalid_values)) {
-            return ':attributeに不正な値（' . implode(', ', $this->invalid_values) . '）が含まれています。';
+        if (!empty($this->invalidValues)) {
+            return ':attributeに不正な値（' . implode(', ', $this->invalidValues) . '）が含まれています。';
         }
 
         return ':attributeに不正な値が含まれています。';
     }
 }
+

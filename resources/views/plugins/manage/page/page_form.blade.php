@@ -24,7 +24,7 @@ use App\Models\Common\Page;
     {{ csrf_field() }}
 
     @php
-    // 自分のページから親を遡って取得（＋トップページ）
+    // 検索避け設定で継承表示に使うため、自分自身から親ページを順に取得
     $page_tree = $page->getPageTreeByGoingBackParent(null);
     @endphp
 
