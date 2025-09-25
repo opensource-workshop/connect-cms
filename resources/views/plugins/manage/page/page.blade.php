@@ -6,6 +6,7 @@
  * @category ページ管理
 --}}
 @php
+use App\Enums\PageMetaRobots;
 use App\Models\Common\Page;
 @endphp
 
@@ -196,6 +197,7 @@ use App\Models\Common\Page;
                 <th nowrap><i class="fas fa-window-restore" title="新ウィンドウ"></i></th>
                 <th nowrap><i class="fas fa-network-wired" title="IPアドレス制限"></i></th>
                 <th nowrap><i class="fas fa-external-link-alt" title="外部リンク"></i></th>
+                <th nowrap><i class="fas fa-robot" title="検索避け設定"></i></th>
                 <th nowrap><i class="fas fa-swatchbook" title="クラス名"></i></th>
             </thead>
             <tbody>
@@ -419,6 +421,29 @@ use App\Models\Common\Page;
                     </td>
                     <td class="table-text p-1 text-center">
                         <div>@if($page_item->othersite_url)<i class="fas fa-external-link-alt" title="{{$page_item->othersite_url}}"></i>@endif</div>
+                    </td>
+                    <td class="table-text p-1 text-center">
+                        @if ($page_item->meta_robots)
+                            @php
+                            $meta_robots_descriptions = implode('、', PageMetaRobots::descriptions(explode(',', $page_item->meta_robots)));
+                            $meta_robots_tooltip = $meta_robots_descriptions ?: $page_item->meta_robots;
+                            @endphp
+                            <div><i class="fas fa-robot" title="{{$meta_robots_tooltip}}"></i></div>
+                        @else
+                            @php
+                            $meta_robots_parent = null;
+                            foreach ($page_tree as $page_tmp) {
+                                if ($page_tmp->meta_robots) {
+                                    $meta_robots_parent = $page_tmp->meta_robots;
+                                    break;
+                                }
+                            }
+                            $meta_robots_parent_description = $meta_robots_parent ? implode('、', PageMetaRobots::descriptions(explode(',', $meta_robots_parent))) : '';
+                            @endphp
+                            @if ($meta_robots_parent)
+                                <div><i class="fas fa-robot text-warning" title="{{$meta_robots_parent_description}}(親ページを継承)"></i></div>
+                            @endif
+                        @endif
                     </td>
                     <td class="table-text p-1 text-center">
                         <div>@if($page_item->class)<i class="fas fa-swatchbook" title="{{$page_item->class}}"></i>@endif</div>

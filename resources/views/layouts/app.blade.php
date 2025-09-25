@@ -41,6 +41,17 @@ if (! isset($cc_configs)) {
 @if (Configs::getConfigsValue($cc_configs, 'description'))
     <meta name="description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'description')) }}">
 @endif
+{{-- 検索避け設定 --}}
+@php
+    $meta_robots = null;
+    if (isset($page)) {
+        $page_tree = app('request')->attributes->get('page_tree');
+        $meta_robots = $page->getMetaRobots($page_tree);
+    }
+@endphp
+@if ($meta_robots)
+    <meta name="robots" content="{{$meta_robots}}">
+@endif
 
     {{-- OGP Settings --}}
 @if (Configs::getConfigsValue($cc_configs, 'og_site_name'))

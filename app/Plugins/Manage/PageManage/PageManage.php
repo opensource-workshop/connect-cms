@@ -3,6 +3,7 @@
 namespace App\Plugins\Manage\PageManage;
 
 use App\Enums\PageCvsIndex;
+use App\Enums\PageMetaRobots;
 use App\Enums\WebsiteType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
@@ -12,6 +13,7 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
 use App\Plugins\Manage\ManagePluginBase;
+use App\Rules\CustomValiMetaRobots;
 use App\Rules\CustomValiTextMax;
 use App\Rules\CustomValiUrlMax;
 use App\Traits\Migration\MigrationTrait;
@@ -183,6 +185,7 @@ class PageManage extends ManagePluginBase
             'ip_address'       => ['nullable', new CustomValiTextMax()],
             'othersite_url'    => ['nullable', new CustomValiUrlMax()],
             'class'            => ['nullable', 'max:255'],
+            'meta_robots'      => ['nullable', 'array', new CustomValiMetaRobots()],
         ]);
         $validator->setAttributeNames([
             'page_name'        => 'ページ名',
@@ -193,8 +196,44 @@ class PageManage extends ManagePluginBase
             'ip_address'       => 'IPアドレス制限',
             'othersite_url'    => '外部サイトURL',
             'class'            => 'メニュークラス名',
+            'meta_robots'      => '検索避け設定',
         ]);
         return $validator;
+    }
+
+    /**
+     * meta robotsの入力値を正規化
+     */
+    private function normalizeMetaRobots($request): ?string
+    {
+        $meta_robots = $request->input('meta_robots');
+
+        if (is_array($meta_robots)) {
+            $meta_robots = array_filter($meta_robots, function ($value) {
+                return $value !== null && $value !== '';
+            });
+
+            if (empty($meta_robots)) {
+                return null;
+            }
+
+            $meta_robots = array_unique($meta_robots);
+
+            $allowed = PageMetaRobots::getMemberKeys();
+            $meta_robots = array_values(array_intersect($allowed, $meta_robots));
+
+            if (empty($meta_robots)) {
+                return null;
+            }
+
+            return implode(',', $meta_robots);
+        }
+
+        if (is_string($meta_robots) && $meta_robots !== '') {
+            return in_array($meta_robots, PageMetaRobots::getMemberKeys(), true) ? $meta_robots : null;
+        }
+
+        return null;
     }
 
     /**
@@ -235,6 +274,8 @@ class PageManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $meta_robots = $this->normalizeMetaRobots($request);
+
         // ページデータの登録
         $page = new Page;
         $page->page_name            = $request->page_name;
@@ -251,6 +292,7 @@ class PageManage extends ManagePluginBase
         $page->othersite_url        = $request->othersite_url;
         $page->othersite_url_target = (isset($request->othersite_url_target) ? $request->othersite_url_target : 0);
         $page->transfer_lower_page_flag = $request->transfer_lower_page_flag ?? 0;
+        $page->meta_robots          = $meta_robots;
         $page->class                = $request->class;
         $page->save();
 
@@ -278,6 +320,8 @@ class PageManage extends ManagePluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $meta_robots = $this->normalizeMetaRobots($request);
+
         // ページデータの更新
         Page::where('id', $page_id)
             ->update([
@@ -295,6 +339,7 @@ class PageManage extends ManagePluginBase
                 'othersite_url'        => $request->othersite_url,
                 'othersite_url_target' => (isset($request->othersite_url_target) ? $request->othersite_url_target : 0),
                 'transfer_lower_page_flag' => $request->transfer_lower_page_flag ?? 0,
+                'meta_robots'          => $meta_robots,
                 'class'                => $request->class,
         ]);
 
