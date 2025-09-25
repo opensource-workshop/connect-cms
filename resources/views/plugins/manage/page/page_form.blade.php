@@ -9,6 +9,7 @@
  * @category ページ管理
 --}}
 @php
+use App\Enums\PageMetaRobots;
 use App\Models\Common\Page;
 @endphp
 
@@ -43,6 +44,57 @@ use App\Models\Common\Page;
             <small class="form-text text-muted">
                 ※ 固定リンクの先頭に / がない場合、追加します。<br />
             </small>
+        </div>
+    </div>
+    {{-- 検索避け設定 --}}
+    @php
+        // チェックボックスの候補と初期選択値を準備
+        $meta_robot_options = PageMetaRobots::getMembers();
+        $selected_meta_robots = old('meta_robots', $page->meta_robots ? explode(',', $page->meta_robots) : []);
+        if (!is_array($selected_meta_robots)) {
+            $selected_meta_robots = [$selected_meta_robots];
+        }
+        $selected_meta_robots = array_values(array_filter($selected_meta_robots, function ($value) {
+            return $value !== null && $value !== '';
+        }));
+        $selected_meta_robots = array_values(array_intersect(array_keys($meta_robot_options), $selected_meta_robots));
+
+        // 親ページから継承される検索避け設定を判定
+        $meta_robots_page_parent = new Page();
+        foreach ($page_tree as $page_tmp) {
+            if ($page_tmp->meta_robots) {
+                $meta_robots_page_parent = $page_tmp;
+                break;
+            }
+        }
+        $meta_robots_parent_description = '';
+        if ($meta_robots_page_parent->meta_robots) {
+            $meta_robots_parent_description = implode('、', PageMetaRobots::descriptions(explode(',', $meta_robots_page_parent->meta_robots)));
+        }
+    @endphp
+    <div class="form-group row">
+        <label class="col-md-3 col-form-label text-md-right">検索避け設定</label>
+        <div class="col-md-9">
+            <div class="alert alert-info small">
+                Google などの検索エンジンに「このページをどう扱ってほしいか」を伝えるための設定です。
+            </div>
+            @foreach ($meta_robot_options as $value => $label)
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" name="meta_robots[]" id="meta_robots_{{$loop->index}}" value="{{$value}}" class="custom-control-input" @if (in_array($value, $selected_meta_robots, true)) checked @endif>
+                    <label class="custom-control-label" for="meta_robots_{{$loop->index}}">{{$label}}</label>
+                </div>
+            @endforeach
+            @include('plugins.common.errors_inline', ['name' => 'meta_robots'])
+
+            @if (!$page->meta_robots && $meta_robots_page_parent->id)
+                <div class="alert alert-warning small mb-0">
+                    設定なしのため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$meta_robots_page_parent->id}}" target="_blank">{{$meta_robots_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」の検索避け設定を継承しています。<br />
+                    <strong>「{{$meta_robots_parent_description}}」</strong>
+                </div>
+            @endif
+
+            <small class="form-text text-muted">複数選択できます。チェックしない場合は親ページの設定を継承します。</small>
+            <small class="form-text text-muted">設定しても検索結果へすぐに反映されるわけではありません。検索エンジン側の再巡回と判断を待つ必要があります。</small>
         </div>
     </div>
 
