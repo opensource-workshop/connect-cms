@@ -59,4 +59,3 @@ class CustomValiMetaRobots implements Rule
         return ':attributeに不正な値が含まれています。';
     }
 }
-
