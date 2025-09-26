@@ -74,11 +74,12 @@ class SlideshowsPlugin extends UserPluginBase
     {
         // 権限チェックテーブル
         $role_check_table = [];
-        $role_check_table["addItem"]            = ['buckets.addColumn'];
-        $role_check_table["editItem"]           = ['buckets.editColumn'];
-        $role_check_table["updateItems"]        = ['buckets.saveColumn'];
-        $role_check_table["deleteItem"]         = ['buckets.deleteColumn'];
-        $role_check_table["updateItemSequence"] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
+        $role_check_table["addItem"]            = ['posts.create'];
+        $role_check_table["addPdf"]             = ['posts.create'];
+        $role_check_table["editItem"]           = ['posts.update'];
+        $role_check_table["updateItems"]        = ['posts.update'];
+        $role_check_table["updateItemSequence"] = ['posts.update'];
+        $role_check_table["deleteItem"]         = ['posts.delete'];
         return $role_check_table;
     }
 
@@ -141,11 +142,6 @@ class SlideshowsPlugin extends UserPluginBase
         } else {
             // フレームに紐づくスライドショー親データがない場合
             $setting_error_messages[] = 'フレームの設定画面から、使用するスライドショーを選択するか、作成してください。';
-        }
-
-        if ($slideshows_items->count() == 0) {
-            // フレームに紐づくスライドショー子データがない場合
-            $setting_error_messages[] = 'フレームの設定画面から、使用するスライドショーの項目を定義してください。';
         }
 
         if (empty($setting_error_messages)) {
@@ -744,11 +740,6 @@ class SlideshowsPlugin extends UserPluginBase
      */
     public function editItem($request, $page_id, $frame_id, $id = null, $message = null, $errors = null)
     {
-        // 権限チェック
-        if ($this->can('role_article_admin')) {
-            return $this->viewError(403);
-        }
-
         // フレームに紐づくスライドショーを取得
         $slideshow = $this->getSlideshows($frame_id);
 
@@ -841,5 +832,27 @@ class SlideshowsPlugin extends UserPluginBase
         ]);
 
         // リダイレクト設定はフォーム側で設定している為、return処理は省略
+    }
+
+    /**
+     * 権限設定　変更画面を表示する
+     *
+     * @see UserPluginBase::editBucketsRoles()
+     */
+    public function editBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false)
+    {
+        // 承認機能は使わない
+        return parent::editBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
+    }
+
+    /**
+     * 権限設定を保存する
+     *
+     * @see UserPluginBase::saveBucketsRoles()
+     */
+    public function saveBucketsRoles($request, $page_id, $frame_id, $id = null, $use_approval = false)
+    {
+        // 承認機能は使わない
+        return parent::saveBucketsRoles($request, $page_id, $frame_id, $id, $use_approval);
     }
 }

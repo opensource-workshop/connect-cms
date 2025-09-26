@@ -12,6 +12,15 @@
     {{-- 未設定エラーメッセージの表示等 --}}
     @include('plugins.common.errors_form_line')
 
+    {{-- 編集ボタン --}}
+    @can('posts.update', [[null, $frame->plugin_name, $buckets, $frame]])
+        <div class="text-right mb-2 slideshow-edit-button">
+            <a href="{{ url('/') }}/plugin/{{ $frame->plugin_name }}/editItem/{{ $page->id }}/{{ $frame_id }}#frame-{{ $frame_id }}" class="btn btn-success btn-sm">
+                <i class="far fa-edit"></i> <span class="d-none d-sm-inline">編集</span>
+            </a>
+        </div>
+    @endcan
+
     @if ($slideshows_items->count() > 0)
         {{-- インジケータの形状は標準だとクリックしづらいので、とりあえず丸型にしておきます。後々の改修でインジケータ形状のデザイン機能も入れられるといいと考えてます。 --}}
         <style>
