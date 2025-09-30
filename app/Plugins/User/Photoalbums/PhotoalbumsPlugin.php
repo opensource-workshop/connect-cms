@@ -262,18 +262,16 @@ class PhotoalbumsPlugin extends UserPluginBase
     /**
      * 指定した親の子要素をフレーム設定に合わせて並び替えて取得する
      */
-    private function getSortedChildren(PhotoalbumContent $parent, ?string $sort_folder, ?string $sort_file)
+    private function getSortedChildren(PhotoalbumContent $parent, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
     {
-        $is_manual_sort = $sort_folder == PhotoalbumSort::manual_order && $sort_file == PhotoalbumSort::manual_order;
+        $children = is_null($preloaded_children)
+            ? $parent->children()->get()
+            : $preloaded_children->get($parent->id, collect());
 
-        if ($is_manual_sort) {
-            return $parent->children()
-                ->orderBy('display_sequence')
-                ->orderBy('id')
-                ->get();
+        // 設定画面などで事前に読み込んだ子要素一覧を再利用し、追加クエリを避ける
+        if (!is_null($preloaded_children) && $children->isEmpty()) {
+            return collect();
         }
-
-        $children = $parent->children()->get();
 
         return $children->sort(function ($first, $second) use ($sort_folder, $sort_file) {
             return $this->comparePhotoalbumContents($first, $second, $sort_folder, $sort_file);
@@ -296,7 +294,8 @@ class PhotoalbumsPlugin extends UserPluginBase
                 case PhotoalbumSort::created_desc:
                     return $this->compareDates($second->created_at, $first->created_at);
                 case PhotoalbumSort::manual_order:
-                    return $first->display_sequence <=> $second->display_sequence;
+                    $sequence = $first->display_sequence <=> $second->display_sequence;
+                    return $sequence !== 0 ? $sequence : $first->id <=> $second->id;
                 default:
                     return strnatcasecmp($first->displayName, $second->displayName);
             }
@@ -335,24 +334,31 @@ class PhotoalbumsPlugin extends UserPluginBase
     /**
      * 並び替え済みの子要素マップを作成する
      */
-    private function buildSortedChildrenMap(PhotoalbumContent $root, ?string $sort_folder, ?string $sort_file)
+    private function buildSortedChildrenMap(PhotoalbumContent $root, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
     {
         $map = [];
-        $this->appendSortedChildrenToMap($root, $sort_folder, $sort_file, $map);
+        $this->appendSortedChildrenToMap($root, $sort_folder, $sort_file, $map, $preloaded_children);
         return $map;
     }
 
-    private function appendSortedChildrenToMap(PhotoalbumContent $node, ?string $sort_folder, ?string $sort_file, array &$map)
+    /**
+     * 事前取得済みデータを元に、各親IDの並び済み子リストをマップへ格納する
+     */
+    private function appendSortedChildrenToMap(PhotoalbumContent $node, ?string $sort_folder, ?string $sort_file, array &$map, ?Collection $preloaded_children = null)
     {
         if (isset($map[$node->id])) {
             return;
         }
 
-        $children = $this->getSortedChildren($node, $sort_folder, $sort_file);
+        $children = $this->getSortedChildren($node, $sort_folder, $sort_file, $preloaded_children);
         $map[$node->id] = $children;
 
         foreach ($children as $child) {
-            $this->appendSortedChildrenToMap($child, $sort_folder, $sort_file, $map);
+            if ($child->is_folder == PhotoalbumContent::is_folder_off) {
+                continue;
+            }
+
+            $this->appendSortedChildrenToMap($child, $sort_folder, $sort_file, $map, $preloaded_children);
         }
     }
 
@@ -1559,13 +1565,16 @@ class PhotoalbumsPlugin extends UserPluginBase
         $preview_root = null;
         $sorted_children_map = [];
         if (!empty($photoalbum->id)) {
-            $preview_root = PhotoalbumContent::where('photoalbum_id', $photoalbum->id)
-                ->whereNull('parent_id')
-                ->first();
+            $all_contents = PhotoalbumContent::with(['upload', 'posterUpload'])
+                ->where('photoalbum_id', $photoalbum->id)
+                ->get();
+
+            $preview_root = $all_contents->firstWhere('parent_id', null);
 
             if (!empty($preview_root)) {
                 // プレビュー／編集の双方で使えるよう、親IDごとの並び済みリストを構築
-                $sorted_children_map = $this->buildSortedChildrenMap($preview_root, $sort_folder, $sort_file);
+                $grouped_children = $all_contents->groupBy('parent_id');
+                $sorted_children_map = $this->buildSortedChildrenMap($preview_root, $sort_folder, $sort_file, $grouped_children);
             }
         }
         // 表示テンプレートを呼び出す。
