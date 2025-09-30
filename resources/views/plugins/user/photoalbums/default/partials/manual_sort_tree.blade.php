@@ -42,7 +42,7 @@
                         @if (!$is_folder && (!empty($preview_url) || $is_video))
                             <span class="photoalbum-manual-sort__thumb mr-2 {{ empty($preview_url) ? 'photoalbum-manual-sort__thumb--video' : '' }}">
                                 @if (!empty($preview_url))
-                                    <img src="{{ $preview_url }}" alt="{{ $child->displayName }}" class="photoalbum-manual-sort__thumb-image">
+                                    <img src="{{ $preview_url }}" alt="{{ $child->displayName }}" class="photoalbum-manual-sort__thumb-image" loading="lazy" decoding="async" width="64" height="64">
                                 @else
                                     <i class="fas fa-video"></i>
                                 @endif
