@@ -215,6 +215,37 @@ use App\Models\Core\UsersColumns;
                                 </div>
                             </div>
 
+                            {{-- 役割設定 --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right pt-0">役割設定</label>
+                                <div class="col-md-9">
+                                    @php
+                                        $values = (array) Session::get('user_search_condition.user_original_roles');
+                                    @endphp
+                                    <div class="container-fluid row">
+                                        @forelse($config_original_roles as $config_original_role)
+                                            @php
+                                                // チェック用変数
+                                                $column_checkbox_checked = "";
+
+                                                // 入力されたデータの中に選択肢が含まれているか否か
+                                                if (in_array($config_original_role->name, $values)) {
+                                                    $column_checkbox_checked = " checked";
+                                                }
+                                            @endphp
+
+                                            <div class="custom-control custom-checkbox custom-control-inline">
+                                                <input name="user_search_condition[user_original_roles][]" value="{{$config_original_role->name}}" type="checkbox" class="custom-control-input" id="user_search_condition[user_original_roles]_{{$loop->iteration}}"{{$column_checkbox_checked}}>
+                                                <label class="custom-control-label" for="user_search_condition[user_original_roles]_{{$loop->iteration}}"> {{$config_original_role->value}}</label>
+                                            </div>
+                                        @empty
+                                            役割設定なし
+                                        @endforelse
+                                    </div>
+                                    <small class="form-text text-muted">※ 複数チェックを付けると、いずれかに該当する内容で絞り込みます。（OR検索）</small>
+                                </div>
+                            </div>
+
                             {{-- 状態 --}}
                             <div class="form-group row">
                                 <label for="user_search_condition_status" class="col-md-3 col-form-label text-md-right">状態</label>
