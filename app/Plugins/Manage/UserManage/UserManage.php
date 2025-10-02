@@ -311,7 +311,6 @@ class UserManage extends ManagePluginBase
         if ($request->session()->has('user_search_condition.user_original_roles')) {
             // 役割設定複数チェックするとOR検索
             $user_original_roles = $request->session()->get('user_search_condition.user_original_roles');
-            // $in_group_users_query = GroupUser::select('group_users.user_id');
             $in_original_roles_query = UsersRoles::select('users_id');
 
             foreach ($user_original_roles as $user_original_role) {
