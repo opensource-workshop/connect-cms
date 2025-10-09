@@ -23,7 +23,7 @@ class PhotoalbumContent extends Model
     //use UserableNohistory;
 
     // 更新する項目の定義
-    protected $fillable = ['photoalbum_id', 'upload_id', 'poster_upload_id', 'name', 'width', 'height', 'description', 'is_folder', 'is_cover', 'mimetype'];
+    protected $fillable = ['photoalbum_id', 'upload_id', 'poster_upload_id', 'name', 'width', 'height', 'description', 'is_folder', 'is_cover', 'display_sequence', 'mimetype'];
 
     // NC2移行用の一時項目
     public $migrate_parent_id = 0;

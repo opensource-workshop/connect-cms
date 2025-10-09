@@ -37,6 +37,11 @@
             </div>
         </div>
         --}}
+        @php
+            $current_sort_folder = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::sort_folder);
+            $current_sort_file = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::sort_file);
+        @endphp
+
         {{-- ダウンロード --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::download]}}</label>
@@ -132,7 +137,7 @@
         {{-- アルバム並び順 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::sort_folder]}}</label>
-            <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control" name="sort_folder">
                     @foreach (PhotoalbumSort::getMembers() as $sort_key => $sort_view)
                         {{-- 未設定時の初期値 --}}
@@ -143,12 +148,17 @@
                         @endif
                     @endforeach
                 </select>
+                @if (($current_sort_folder ?? '') === PhotoalbumSort::manual_order)
+                    <small class="form-text text-muted">
+                        カスタム順の変更は <a href="#manual-sort-preview">現在の並び順プレビュー</a> の上下ボタンから行えます。
+                    </small>
+                @endif
             </div>
         </div>
         {{-- 写真並び順 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::sort_file]}}</label>
-            <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="{{$frame->getSettingInputClass()}}">
                 <select class="form-control" name="sort_file">
                     @foreach (PhotoalbumSort::getMembers() as $sort_key => $sort_view)
                         {{-- 未設定時の初期値 --}}
@@ -159,6 +169,11 @@
                         @endif
                     @endforeach
                 </select>
+                @if (($current_sort_file ?? '') === PhotoalbumSort::manual_order)
+                    <small class="form-text text-muted">
+                        カスタム順の変更は <a href="#manual-sort-preview">現在の並び順プレビュー</a> の上下ボタンから行えます。
+                    </small>
+                @endif
             </div>
         </div>
 
@@ -175,5 +190,55 @@
             </button>
         </div>
     </form>
+
+    @if (!empty($photoalbum->id))
+        <hr>
+        @php
+            $manual_sort_redirect = url('/') . '/plugin/photoalbums/editView/' . $page->id . '/' . $frame_id;
+            if (!empty($photoalbum->bucket_id)) {
+                $manual_sort_redirect .= '/' . $photoalbum->bucket_id;
+            }
+            $manual_sort_redirect .= '#frame-' . $frame->id;
+            $is_manual_sort_folder = ($sort_folder ?? '') === PhotoalbumSort::manual_order;
+            $is_manual_sort_file = ($sort_file ?? '') === PhotoalbumSort::manual_order;
+            $is_manual_sort_active = $is_manual_sort_folder || $is_manual_sort_file;
+        @endphp
+        <div class="card {{ $is_manual_sort_active ? 'photoalbum-manual-sort__card' : '' }}" id="manual-sort-preview">
+            <div class="card-header font-weight-bold d-flex align-items-center justify-content-between">
+                <span>
+                    <i class="fas fa-list mr-2"></i>現在の並び順プレビュー
+                </span>
+                {{-- カスタム順が有効な時だけバッジを表示して操作可能であることを明示 --}}
+                @if ($is_manual_sort_active)
+                    <span class="photoalbum-manual-sort__badge">
+                        カスタム順操作可
+                    </span>
+                @endif
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    現在の表示設定での並び順です。利用者画面と同じ順序で表示されます。<br>
+                    カスタム順が選択されている対象は、このプレビュー内の上下ボタンで並び替えできます。
+                </p>
+
+                @if (empty($manual_sort_root))
+                    <p class="text-muted mb-0">表示できるコンテンツがありません。</p>
+                @else
+                    @include('plugins.user.photoalbums.default.partials.manual_sort_tree', [
+                        'node' => $manual_sort_root,
+                        'sorted_children_map' => $sorted_children_map,
+                        'level' => 0,
+                        'page' => $page,
+                        'frame_id' => $frame_id,
+                        'photoalbum' => $photoalbum,
+                        'redirect_path' => $manual_sort_redirect,
+                        'sort_folder' => $sort_folder,
+                        'sort_file' => $sort_file,
+                        'show_controls' => true,
+                    ])
+                @endif
+            </div>
+        </div>
+    @endif
 @endif
 @endsection

@@ -29,6 +29,7 @@ use App\Traits\ConnectCommonTrait;
 use Intervention\Image\Facades\Image;
 
 use App\Plugins\User\UserPluginBase;
+use Illuminate\Support\Facades\Session;
 
 /**
  * フォトアルバム・プラグイン
@@ -66,7 +67,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory', 'embed'];
-        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents'];
+        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence'];
         return $functions;
     }
 
@@ -86,6 +87,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $role_check_table["editContents"] = array('posts.update');
         $role_check_table["editVideo"] = array('posts.update');
         $role_check_table["deleteContents"] = array('posts.delete');
+        $role_check_table["updateViewSequence"] = array('frames.edit');
         return $role_check_table;
     }
 
@@ -137,40 +139,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
         $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
 
-        // データ取得してからソート(ページネートに対応するためにSQLソートに変更予定)
-        $photoalbum_contents = $parent->children()->get()->sort(function ($first, $second) use ($sort_folder, $sort_file) {
-            // フォルダ>ファイル
-            if ($first['is_folder'] == $second['is_folder']) {
-                // フォルダ同士 or ファイル同士を比較
-
-                if ($first['is_folder'] == PhotoalbumContent::is_folder_on) {
-                    // フォルダを比較
-                    $sort = $sort_folder;
-                } else {
-                    // ファイルを比較
-                    $sort = $sort_file;
-                }
-
-                if ($sort == '' || $sort == PhotoalbumSort::name_asc) {
-                    // 名前（昇順）
-                    // return $first['displayName'] < $second['displayName'] ? -1 : 1;
-                    return $this->sortAsc($first['displayName'], $second['displayName']);
-                } elseif ($sort == PhotoalbumSort::name_desc) {
-                    // 名前（降順）
-                    return $this->sortDesc($first['displayName'], $second['displayName']);
-                } elseif ($sort == PhotoalbumSort::created_asc) {
-                    // 登録日（昇順）
-                    return $this->sortAsc($first['created_at'], $second['created_at']);
-                } elseif ($sort == PhotoalbumSort::created_desc) {
-                    // 登録日（降順）
-                    return $this->sortDesc($first['created_at'], $second['created_at']);
-                }
-            }
-            // フォルダとファイルの比較
-            // ファイル(is_folder=0)よりフォルダ(is_folder=1)を上（降順）にする
-            // return $first['is_folder'] < $second['is_folder'] ? 1 : -1;
-            return $this->sortDesc($first['is_folder'], $second['is_folder']);
-        });
+        $photoalbum_contents = $this->getSortedChildren($parent, $sort_folder, $sort_file);
 
         // カバー写真に指定されている写真
         $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))->where('is_cover', PhotoalbumContent::is_cover_on)->get();
@@ -291,43 +260,148 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * コレクションのsortメソッドでコールバック使用時の昇順処理
-     *
-     * firstが小さい時(-1), firstが大きい時(1)  = 昇順
-     * firstが小さい時(1),  firstが大きい時(-1) = 降順
-     *
-     * @param int $first
-     * @param int $second
-     * @return int
-     * @see https://readouble.com/laravel/6.x/ja/collections.html#method-some
-     * @see https://www.php.net/manual/ja/function.uasort.php
+     * 指定した親の子要素をフレーム設定に合わせて並び替えて取得する
      */
-    private function sortAsc($first, $second)
+    private function getSortedChildren(PhotoalbumContent $parent, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
     {
-        if ($first == $second) {
-            return 0;
+        $children = is_null($preloaded_children)
+            ? $parent->children()->get()
+            : $preloaded_children->get($parent->id, collect());
+
+        // 設定画面などで事前に読み込んだ子要素一覧を再利用し、追加クエリを避ける
+        if (!is_null($preloaded_children) && $children->isEmpty()) {
+            return collect();
         }
-        return $first < $second ? -1 : 1;
+
+        return $children->sort(function ($first, $second) use ($sort_folder, $sort_file) {
+            return $this->comparePhotoalbumContents($first, $second, $sort_folder, $sort_file);
+        })->values();
     }
 
     /**
-     * コレクションのsortメソッドでコールバック使用時の降順処理
-     *
-     * firstが小さい時(-1), firstが大きい時(1)  = 昇順
-     * firstが小さい時(1),  firstが大きい時(-1) = 降順
-     *
-     * @param int $first
-     * @param int $second
-     * @return int
-     * @see https://readouble.com/laravel/6.x/ja/collections.html#method-some
-     * @see https://www.php.net/manual/ja/function.uasort.php
+     * 並び替え比較処理
      */
-    private function sortDesc($first, $second)
+    private function comparePhotoalbumContents(PhotoalbumContent $first, PhotoalbumContent $second, ?string $sort_folder, ?string $sort_file)
     {
-        if ($first == $second) {
+        if ($first->is_folder == $second->is_folder) {
+            $sort_key = $first->is_folder == PhotoalbumContent::is_folder_on ? $sort_folder : $sort_file;
+
+            switch ($sort_key) {
+                case PhotoalbumSort::name_desc:
+                    return strnatcasecmp($second->displayName, $first->displayName);
+                case PhotoalbumSort::created_asc:
+                    return $this->compareDates($first->created_at, $second->created_at);
+                case PhotoalbumSort::created_desc:
+                    return $this->compareDates($second->created_at, $first->created_at);
+                case PhotoalbumSort::manual_order:
+                    $sequence = $first->display_sequence <=> $second->display_sequence;
+                    return $sequence !== 0 ? $sequence : $first->id <=> $second->id;
+                default:
+                    return strnatcasecmp($first->displayName, $second->displayName);
+            }
+        }
+
+        return $second->is_folder <=> $first->is_folder;
+    }
+
+    /**
+     * 日付比較
+     */
+    private function compareDates($first, $second)
+    {
+        $first_timestamp = $this->convertToTimestamp($first);
+        $second_timestamp = $this->convertToTimestamp($second);
+
+        return $first_timestamp <=> $second_timestamp;
+    }
+
+    /**
+     * 日付をタイムスタンプへ変換する
+     */
+    private function convertToTimestamp($value)
+    {
+        if (empty($value)) {
             return 0;
         }
-        return $first < $second ? 1 : -1;
+
+        if ($value instanceof \Carbon\Carbon) {
+            return $value->timestamp;
+        }
+
+        return strtotime((string) $value) ?: 0;
+    }
+
+    /**
+     * 並び替え済みの子要素マップを作成する
+     */
+    private function buildSortedChildrenMap(PhotoalbumContent $root, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
+    {
+        $map = [];
+        $this->appendSortedChildrenToMap($root, $sort_folder, $sort_file, $map, $preloaded_children);
+        return $map;
+    }
+
+    /**
+     * 事前取得済みデータを元に、各親IDの並び済み子リストをマップへ格納する
+     */
+    private function appendSortedChildrenToMap(PhotoalbumContent $node, ?string $sort_folder, ?string $sort_file, array &$map, ?Collection $preloaded_children = null)
+    {
+        if (isset($map[$node->id])) {
+            return;
+        }
+
+        $children = $this->getSortedChildren($node, $sort_folder, $sort_file, $preloaded_children);
+        $map[$node->id] = $children;
+
+        foreach ($children as $child) {
+            if ($child->is_folder == PhotoalbumContent::is_folder_off) {
+                continue;
+            }
+
+            $this->appendSortedChildrenToMap($child, $sort_folder, $sort_file, $map, $preloaded_children);
+        }
+    }
+
+    /**
+     * 次に採番する表示順を取得する
+     */
+    private function getNextDisplaySequence($parent_id)
+    {
+        $max = PhotoalbumContent::where('parent_id', $parent_id)->max('display_sequence');
+        if (is_null($max)) {
+            return 1;
+        }
+        return $max + 1;
+    }
+
+    /**
+     * 表示順を付与して子要素を作成する
+     */
+    private function createChildContent($parent, $attributes)
+    {
+        $attributes['display_sequence'] = $this->getNextDisplaySequence($parent->id);
+        return $parent->children()->create($attributes);
+    }
+
+    /**
+     * 指定した親直下の表示順を詰め直す
+     */
+    private function normalizeDisplaySequence($parent_id)
+    {
+        $siblings = PhotoalbumContent::where('parent_id', $parent_id)
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('display_sequence')
+            ->orderBy('id')
+            ->get();
+
+        $sequence = 1;
+        foreach ($siblings as $sibling) {
+            if ($sibling->display_sequence != $sequence) {
+                $sibling->display_sequence = $sequence;
+                $sibling->save();
+            }
+            $sequence++;
+        }
     }
 
     /**
@@ -351,7 +425,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
         $parent = $this->fetchPhotoalbumContent($request->parent_id);
 
-        $parent->children()->create([
+        $this->createChildContent($parent, [
             'photoalbum_id' => $photoalbum->id,
             'upload_id' => null,
             'name' => $request->folder_name[$frame_id],
@@ -486,7 +560,7 @@ class PhotoalbumsPlugin extends UserPluginBase
                     $folder = $photoalbum_contents->where('is_folder', 1)->where('parent_id', $parent_id)->where('name', $album_dir_path)->first();
                     if (empty($folder)) {
                         // アルバムがないので作成する。（作成したら、それをルーム内の親に設定する）
-                        $create_parent = $create_parent->children()->create([
+                        $create_parent = $this->createChildContent($create_parent, [
                             'photoalbum_id' => $photoalbum->id,
                             'upload_id' => null,
                             'name' => $album_dir_path,
@@ -579,7 +653,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $directory = $this->makeDirectory($upload->id);
         $image->save(storage_path('app/') . $directory . '/' . $upload->id . '.' . $file_params['extension']);
 
-        return $parent->children()->create([
+        return $this->createChildContent($parent, [
             'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
             'name' => $file_params['name'],
@@ -646,7 +720,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         // コンテンツレコードの保存
-        $parent->children()->create([
+        $this->createChildContent($parent, [
             'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
             'poster_upload_id' => isset($upload_poster) ? $upload_poster->id : null,
@@ -904,7 +978,15 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         // フォトアルバムコンテンツの削除
-        PhotoalbumContent::find($photoalbum_content_id)->delete();
+        $target = PhotoalbumContent::find($photoalbum_content_id);
+        if (empty($target)) {
+            return;
+        }
+
+        $parent_id = $target->parent_id;
+        $target->delete();
+
+        $this->normalizeDisplaySequence($parent_id);
     }
 
     /**
@@ -1390,7 +1472,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         PhotoalbumContent::updateOrCreate(
             ['photoalbum_id' => $photoalbum->id, 'parent_id' => null, 'is_folder' => PhotoalbumContent::is_folder_on],
-            ['name' => $photoalbum->name]
+            ['name' => $photoalbum->name, 'display_sequence' => 1]
         );
     }
 
@@ -1475,9 +1557,33 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function editView($request, $page_id, $frame_id)
     {
+        $photoalbum = $this->getPluginBucket($this->getBucketId());
+
+        $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
+        $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
+
+        $preview_root = null;
+        $sorted_children_map = [];
+        if (!empty($photoalbum->id)) {
+            $all_contents = PhotoalbumContent::with(['upload', 'posterUpload'])
+                ->where('photoalbum_id', $photoalbum->id)
+                ->get();
+
+            $preview_root = $all_contents->firstWhere('parent_id', null);
+
+            if (!empty($preview_root)) {
+                // プレビュー／編集の双方で使えるよう、親IDごとの並び済みリストを構築
+                $grouped_children = $all_contents->groupBy('parent_id');
+                $sorted_children_map = $this->buildSortedChildrenMap($preview_root, $sort_folder, $sort_file, $grouped_children);
+            }
+        }
         // 表示テンプレートを呼び出す。
         return $this->view('frame', [
-            'photoalbum' => $this->getPluginBucket($this->getBucketId()),
+            'photoalbum' => $photoalbum,
+            'manual_sort_root' => $preview_root,
+            'sort_folder' => $sort_folder,
+            'sort_file' => $sort_file,
+            'sorted_children_map' => $sorted_children_map,
         ]);
     }
 
@@ -1492,6 +1598,85 @@ class PhotoalbumsPlugin extends UserPluginBase
         $this->refreshFrameConfigs();
 
         return;
+    }
+
+    /**
+     * 表示設定のカスタム順序を更新する
+     */
+    public function updateViewSequence($request, $page_id, $frame_id)
+    {
+        $content = PhotoalbumContent::find($request->photoalbum_content_id);
+        if (empty($content)) {
+            return;
+        }
+
+        $this->refreshFrameConfigs();
+        $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
+        $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
+
+        $is_folder = $content->is_folder == PhotoalbumContent::is_folder_on;
+        if ($is_folder && $sort_folder != PhotoalbumSort::manual_order) {
+            return;
+        }
+        if (!$is_folder && $sort_file != PhotoalbumSort::manual_order) {
+            return;
+        }
+
+        $siblings = PhotoalbumContent::where('parent_id', $content->parent_id)
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('display_sequence')
+            ->orderBy('id')
+            ->get();
+
+        $target_index = $siblings->search(function ($item) use ($content) {
+            return $item->id == $content->id;
+        });
+
+        if ($target_index === false) {
+            return;
+        }
+
+        $pair = null;
+        if ($request->display_sequence_operation === 'up') {
+            for ($i = $target_index - 1; $i >= 0; $i--) {
+                if ($siblings[$i]->is_folder == $content->is_folder) {
+                    $pair = $siblings[$i];
+                    break;
+                }
+            }
+        } elseif ($request->display_sequence_operation === 'down') {
+            for ($i = $target_index + 1; $i < $siblings->count(); $i++) {
+                if ($siblings[$i]->is_folder == $content->is_folder) {
+                    $pair = $siblings[$i];
+                    break;
+                }
+            }
+        }
+
+        if ($pair) {
+            $current_sequence = $content->display_sequence;
+            $content->display_sequence = $pair->display_sequence;
+            $content->save();
+
+            $pair->display_sequence = $current_sequence;
+            $pair->save();
+
+            $this->normalizeDisplaySequence($content->parent_id);
+
+            $request->merge(['flash_message' => '並び順を更新しました。']);
+            // ハイライト対象をセッションに保持し、次回描画で視覚的に示す
+            Session::flash('photoalbum_sort_focus', $content->id);
+        }
+
+        if (!empty($request->redirect_path)) {
+            $redirect_path = $request->redirect_path;
+            if ($request->filled('anchor_target')) {
+                $redirect_path = preg_replace('/#.*$/', '', $redirect_path);
+                $redirect_path .= '#'.$request->anchor_target;
+            }
+
+            return new Collection(['redirect_path' => $redirect_path]);
+        }
     }
 
     /**
