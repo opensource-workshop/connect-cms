@@ -9,6 +9,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+@include('plugins.user.menus.common.edit_button')
 @if ($pages)
 <div class="list-group mb-0" role="navigation" aria-label="メニュー">
 

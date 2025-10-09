@@ -13,47 +13,22 @@
         if (!empty($value_obj)) {
             $value = $value_obj->value;
         }
-
+        // 現在の選択値の決定（リクエスト優先 → old → 既存値分解）
+        $selected_values = [];
+        if (isset($request->databases_columns_value) &&
+            array_key_exists($database_obj->id, $request->databases_columns_value)) {
+            $selected_values = (array)$request->databases_columns_value[$database_obj->id];
+        } elseif (!is_null(old('databases_columns_value.' . $database_obj->id))) {
+            $selected_values = (array)old('databases_columns_value.' . $database_obj->id);
+        } elseif (!empty($value)) {
+            // 既存値は '|' 区切り
+            $selected_values = array_filter($value === '' ? [] : explode('|', $value), function($v){ return $v !== ''; });
+        }
     @endphp
     <div class="container-fluid row @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) border border-danger @endif">
         @foreach($databases_columns_id_select[$database_obj->id] as $select)
-
-            @php
-            // チェック用変数
-            $column_checkbox_checked = "";
-
-            // old でチェックされていたもの
-            if (!empty(old('databases_columns_value.'.$database_obj->id))) {
-                foreach(old('databases_columns_value.'.$database_obj->id) as $old_value) {
-                    if ( $old_value == $select['value'] ) {
-                        $column_checkbox_checked = " checked";
-                    }
-                }
-            }
-
-            // 画面が戻ってきたもの
-            if (isset($request->databases_columns_value) &&
-                array_key_exists($database_obj->id, $request->databases_columns_value)) {
-
-                foreach($request->databases_columns_value[$database_obj->id] as $request_value) {
-                    if ( $request_value == $select['value'] ) {
-                        $column_checkbox_checked = " checked";
-                    }
-                }
-            }
-
-            // 変更時のデータベースの値から
-            if (!empty($value)) {
-                // 入力されたデータの中に選択肢が含まれているか否か
-                // 選択肢にカンマが含まれている可能性を考慮
-                if(strpos($value,$select['value']) !== false){
-                    $column_checkbox_checked = " checked";
-                }
-            }
-            @endphp
-
             <div class="custom-control custom-checkbox custom-control-inline">
-                <input name="databases_columns_value[{{$database_obj->id}}][]" value="{{$select['value']}}" type="{{$database_obj->column_type}}" class="custom-control-input" id="databases_columns_value[{{$database_obj->id}}]_{{$loop->iteration}}"{{$column_checkbox_checked}}>
+                <input name="databases_columns_value[{{$database_obj->id}}][]" value="{{$select['value']}}" type="{{$database_obj->column_type}}" class="custom-control-input" id="databases_columns_value[{{$database_obj->id}}]_{{$loop->iteration}}" @if(in_array($select['value'], $selected_values, true)) checked @endif>
                 <label class="custom-control-label" for="databases_columns_value[{{$database_obj->id}}]_{{$loop->iteration}}"> {{$select['value']}}</label>
             </div>
 

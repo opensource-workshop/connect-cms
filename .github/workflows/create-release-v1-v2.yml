@@ -209,6 +209,7 @@ jobs:
     permissions:
       contents: write
       actions: write
+      pull-requests: write
 
     steps:
       # 1. リポジトリのコードをチェックアウト
@@ -258,50 +259,98 @@ jobs:
           echo "v2_version=$v2_version" >> $GITHUB_OUTPUT
           echo "v2_tag=$v2_tag" >> $GITHUB_OUTPUT
 
-      # 3. ブランチ「2」に切り替えてmasterをマージ（必要な場合のみ）
-      - name: Merge master to branch 2
+      # 3. PR作成によるmasterマージ（必要な場合のみ）
+      - name: Create PR for merging master to branch 2
         if: steps.v2_check.outputs.skip_all != 'true' && steps.v2_check.outputs.need_merge == 'true'
+        id: create_pr
+        run: |
+          v1_version="${{ needs.v1-release.outputs.version_number }}"
+          
+          # PRを作成（競合が発生することを想定）
+          pr_url=$(gh pr create \
+            --base 2 \
+            --head master \
+            --title "Merge v$v1_version into 2" \
+            --body "2ブランチに最新バージョンを適用します。")
+          
+          pr_number=$(echo "$pr_url" | grep -o '[0-9]*$')
+          echo "pr_number=$pr_number" >> $GITHUB_OUTPUT
+          echo "pr_url=$pr_url" >> $GITHUB_OUTPUT
+          echo "Created PR #$pr_number: $pr_url"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. 競合解決用の一時ブランチ作成と競合解決
+      - name: Resolve conflicts via temporary branch
+        if: steps.v2_check.outputs.skip_all != 'true' && steps.v2_check.outputs.need_merge == 'true'
+        id: resolve_conflicts
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # ブランチ「2」をチェックアウト
+          v1_version="${{ needs.v1-release.outputs.version_number }}"
+          v2_version="2.$(echo $v1_version | cut -d. -f2-)"
+          temp_branch="merge-v${v1_version}-into-2-resolve"
+          pr_number="${{ steps.create_pr.outputs.pr_number }}"
+          
+          # 一時ブランチを作成（ブランチ「2」ベース）
           git checkout 2
           git pull origin 2
+          git checkout -b "$temp_branch"
           
-          # masterをマージ（競合が発生する可能性あり）
-          git merge master || echo "Merge conflict detected, will resolve..."
-
-      # 4. version.phpの競合解決（v2バージョンに更新、必要な場合のみ）
-      - name: Resolve version.php conflict for v2
-        if: steps.v2_check.outputs.skip_all != 'true' && steps.v2_check.outputs.need_version_update == 'true'
-        run: |
-          # ブランチ「2」にいることを確認
-          git checkout 2 2>/dev/null || echo "Already on branch 2"
+          # masterをマージして競合を発生させる
+          git merge master || echo "Expected merge conflict occurred"
           
           # version.phpの競合を解決
-          # 1. 競合マーカーのみを削除
-          sed -i '/^<<<<<<< /d; /^=======/d; /^>>>>>>> /d' config/version.php
-          # 2. 最初に見つかった'cc_version'行を置換（行番号を保持）
-          sed -i "0,/^[[:space:]]*'cc_version'/s/^[[:space:]]*'cc_version' => '.*',/    'cc_version' => '${{ steps.v2_check.outputs.v2_version }}',/" config/version.php
-          # 3. 重複した'cc_version'行があれば削除（最初の行は保持）
-          sed -i "0,/^[[:space:]]*'cc_version'/b; /^[[:space:]]*'cc_version'/d" config/version.php
-          echo "Updated config/version.php for v2 (resolved conflicts and duplicates)"
-          cat config/version.php
-          
-          # マージの続行（変更がある場合のみコミット）
-          git add config/version.php
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: Bump version to ${{ steps.v2_check.outputs.v2_tag }}"
-          else
-            echo "No changes to commit (version.php already up to date)"
+          if [ -f config/version.php ]; then
+            # 競合マーカーを削除
+            sed -i '/^<<<<<<< /d; /^=======/d; /^>>>>>>> /d' config/version.php
+            
+            # 最初の'cc_version' => の行をv2バージョンに置換
+            sed -i "0,/'cc_version' =>/s/'cc_version' => '.*',/'cc_version' => '$v2_version',/" config/version.php
+            # 残りの'cc_version' => の行を削除（重複排除）
+            sed -i "0,/'cc_version' =>/b; /'cc_version' =>/d" config/version.php
+            
+            echo "Updated to new v2 version: $v2_version"
+            git add config/version.php
+            git commit -m "Resolve version.php conflict for v$v2_version"
           fi
+          
+          git push origin "$temp_branch"
+          
+          # 既存PRをクローズして新しいPRを作成
+          gh pr close "$pr_number"
+          
+          # 新しいPRを一時ブランチで作成
+          new_pr_url=$(gh pr create \
+            --base 2 \
+            --head "$temp_branch" \
+            --title "Merge v$v1_version into 2" \
+            --body "2ブランチに最新バージョンを適用します。")
+          
+          new_pr_number=$(echo "$new_pr_url" | grep -o '[0-9]*$')
+          echo "pr_number=$new_pr_number" >> $GITHUB_OUTPUT
+          echo "Created new PR #$new_pr_number: $new_pr_url"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 5. 変更をプッシュ（変更があった場合のみ）
-      - name: Push v2 branch changes
-        if: steps.v2_check.outputs.skip_all != 'true' && (steps.v2_check.outputs.need_merge == 'true' || steps.v2_check.outputs.need_version_update == 'true')
+      # 5. PRを自動マージして一時ブランチ削除
+      - name: Auto-merge PR and cleanup
+        if: steps.v2_check.outputs.skip_all != 'true' && steps.v2_check.outputs.need_merge == 'true'
         run: |
-          git push origin 2
+          pr_number="${{ steps.resolve_conflicts.outputs.pr_number }}"
+          temp_branch="merge-v${{ needs.v1-release.outputs.version_number }}-into-2-resolve"
+          
+          # PRがマージ可能になるまで待機
+          echo "Waiting for PR to become mergeable..."
+          sleep 10
+          
+          # PRを自動マージして一時ブランチ削除
+          gh pr merge "$pr_number" --merge --delete-branch
+          
+          echo "PR #$pr_number merged and temporary branch deleted successfully"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # 6. v2 GitHub Releaseを作成
       - name: Create v2 GitHub Release

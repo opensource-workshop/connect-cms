@@ -1,2 +1,5 @@
 cc_api_config.php
 cc_shibboleth_config.php
+
+# Option Plugins 用設定ファイル
+option/

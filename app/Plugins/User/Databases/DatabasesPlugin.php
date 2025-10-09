@@ -35,6 +35,7 @@ use App\Rules\CustomValiDatesYm;
 use App\Rules\CustomValiCsvImage;
 use App\Rules\CustomValiCsvExtensions;
 use App\Rules\CustomValiWysiwygMax;
+use App\Rules\CustomValiRequiredFileKeep;
 
 use App\Plugins\User\UserPluginBase;
 
@@ -1118,9 +1119,6 @@ class DatabasesPlugin extends UserPluginBase
      */
     public function input($request, $page_id, $frame_id, $id = null, $errors = null)
     {
-        // セッション初期化などのLaravel 処理。
-        // $request->flash();
-
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
@@ -1132,6 +1130,16 @@ class DatabasesPlugin extends UserPluginBase
 
         // 権限のよって登録・編集の非表示columnsを取り除く
         $databases_columns = $this->removeRegistEditHideColumns($databases_columns);
+
+        // セッション初期化（戻る時に入力値を保持するため）
+        // アップロードファイル（UploadedFile）はシリアライズ不可のため、ファイル項目はフラッシュ対象から除外する。
+        $flash_excepts = [];
+        foreach ($databases_columns as $databases_column) {
+            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                $flash_excepts[] = 'databases_columns_value.' . $databases_column->id;
+            }
+        }
+        $request->flashExcept($flash_excepts);
 
         // カラムの選択肢用データ
         $databases_columns_id_select = null;
@@ -1195,7 +1203,12 @@ class DatabasesPlugin extends UserPluginBase
         $validator_rule = null;
         // 必須チェック
         if ($databases_column->required) {
-            $validator_rule[] = 'required';
+            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                // ファイル系の必須は「既存ファイルが残るなら再アップ不要」の独自ルール
+                $validator_rule[] = new CustomValiRequiredFileKeep($databases_column->id);
+            } else {
+                $validator_rule[] = 'required';
+            }
         }
         // メールアドレスチェック
         if ($databases_column->column_type == DatabaseColumnType::mail) {
@@ -1256,12 +1269,16 @@ class DatabasesPlugin extends UserPluginBase
         }
         // 画像チェック
         if ($databases_column->column_type == DatabaseColumnType::image) {
-            $validator_rule[] = 'nullable';
+            if (!$databases_column->required) {
+                $validator_rule[] = 'nullable';
+            }
             $validator_rule[] = 'image';
         }
         // 動画チェック
         if ($databases_column->column_type == DatabaseColumnType::video) {
-            $validator_rule[] = 'nullable';
+            if (!$databases_column->required) {
+                $validator_rule[] = 'nullable';
+            }
             $validator_rule[] = 'mimes:mp4';
         }
         // wysiwygチェック
