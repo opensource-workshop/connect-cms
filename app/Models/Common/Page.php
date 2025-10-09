@@ -40,6 +40,7 @@ class Page extends Model
         'class',
         'othersite_url',
         'othersite_url_target',
+        'meta_robots',
         'transfer_lower_page_flag',
         'password',
     ];
@@ -537,6 +538,26 @@ class Page extends Model
         if ($this->getSimpleLayout() == '1111') {
             return "ヘッダー、左、右、フッター";
         }
+    }
+
+    /**
+     * メタrobotsの有効値を取得（自ページから親を遡って検索）
+     */
+    public function getMetaRobots(?Collection $page_tree = null): ?string
+    {
+        if (empty($this->id)) {
+            return null;
+        }
+
+        $page_tree = $this->getPageTreeByGoingBackParent($page_tree);
+
+        foreach ($page_tree as $page) {
+            if (!empty($page->meta_robots)) {
+                return $page->meta_robots;
+            }
+        }
+
+        return null;
     }
 
     /**
