@@ -314,7 +314,10 @@ class UserManage extends ManagePluginBase
             $in_original_roles_query = UsersRoles::select('users_id');
 
             foreach ($user_original_roles as $user_original_role) {
-                $in_original_roles_query->orWhere('role_name', $user_original_role);
+                $in_original_roles_query->orWhere(function ($query) use ($user_original_role) {
+                    $query->where('target', 'original_role')
+                        ->where('role_name', $user_original_role);
+                });
             }
             $users_query->whereIn('users.id', $in_original_roles_query->pluck('users_id'));
         }
