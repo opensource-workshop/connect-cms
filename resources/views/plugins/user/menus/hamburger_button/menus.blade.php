@@ -9,6 +9,7 @@
 @extends('core.cms_frame_base')
 
 @section("plugin_contents_$frame->id")
+@include('plugins.user.menus.common.edit_button')
 @if ($pages)
 
 {{-- ハンバーガーメニュー用script&CSS読み込み --}}

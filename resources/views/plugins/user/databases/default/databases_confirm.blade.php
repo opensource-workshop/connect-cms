@@ -46,6 +46,7 @@
 
 <form action="" name="databases_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
+    <input type="hidden" name="frame_id" value="{{$frame_id}}">
     @foreach($databases_columns as $database_column)
 
         {{-- 入力しないカラム型は表示しない --}}

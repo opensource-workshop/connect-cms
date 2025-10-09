@@ -96,7 +96,7 @@
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame->id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
-    <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
+    <button class="btn btn-primary btn-sm btn-download" type="button" disabled @click="downloadSelected"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 
 @php
@@ -112,7 +112,7 @@
             <th>
                 {{-- 全選択チェック --}}
                 <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="select_all_{{$frame_id}}">
+                    <input type="checkbox" class="custom-control-input" id="select_all_{{$frame_id}}" @click="toggleAllSelection">
                     <label class="custom-control-label" for="select_all_{{$frame_id}}"></label>
                 </div>
             </th>
@@ -141,7 +141,7 @@
                 <tr class="cabinet-item" data-id="{{$cabinet_content->id}}" data-type="@if($cabinet_content->is_folder) folder @else file @endif">
                     <td>
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="customCheck{{$cabinet_content->id}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->displayName}}">
+                            <input type="checkbox" class="custom-control-input" id="customCheck{{$cabinet_content->id}}" name="cabinet_content_id[]" value="{{$cabinet_content->id}}" data-name="{{$cabinet_content->displayName}}" @change="updateSelectedContents">
                             <label class="custom-control-label" for="customCheck{{$cabinet_content->id}}"></label>
                         </div>
                     </td>
@@ -199,7 +199,7 @@
     @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
     <button class="btn btn-danger btn-sm btn-delete" type="button" data-toggle="modal" data-target="#delete-confirm{{$frame_id}}" disabled><i class="fas fa-trash-alt"></i><span class="d-none d-sm-inline"> 削除</span></button>
     @endcan
-    <button class="btn btn-primary btn-sm btn-download" type="button" disabled><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
+    <button class="btn btn-primary btn-sm btn-download" type="button" disabled @click="downloadSelected"><i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span></button>
 </div>
 </form>
 @can('posts.delete', [[null, $frame->plugin_name, $buckets]])
@@ -450,28 +450,6 @@
                     }
                 });
                 @endcan
-
-                // チェックボックスのイベント
-                const checkboxes = document.querySelectorAll('#app_{{$frame_id}} input[type="checkbox"][name="cabinet_content_id[]"]');
-                checkboxes.forEach(checkbox => {
-                    checkbox.addEventListener('change', () => {
-                        this.updateSelectedContents();
-                    });
-                });
-
-                const selectAllBox = document.getElementById('select_all_{{$frame_id}}');
-                if (selectAllBox) {
-                    selectAllBox.addEventListener('click', (e) => {
-                        this.toggleAllSelection(e.target.checked);
-                    });
-                }
-
-                const downloadBtn = document.querySelector('#app_{{$frame_id}} .btn-download');
-                if (downloadBtn) {
-                    downloadBtn.addEventListener('click', () => {
-                        this.downloadSelected();
-                    });
-                }
             },
 
             /**

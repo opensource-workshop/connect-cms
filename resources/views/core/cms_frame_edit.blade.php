@@ -196,7 +196,7 @@
                                 id="{{ "content_open_type_{$key}" }}"
                                 name="content_open_type"
                                 class="custom-control-input"
-                                {{ old('content_open_type', $frame->content_open_type) ? 'checked' : '' }}
+                                {{ old('content_open_type', $frame->content_open_type) == $key ? 'checked' : '' }}
                                 v-model="v_content_open_type"
                             >
                             <label class="custom-control-label" for="{{ "content_open_type_{$key}" }}">
