@@ -309,17 +309,16 @@ class UserManage extends ManagePluginBase
 
         // 役割設定
         if ($request->session()->has('user_search_condition.user_original_roles')) {
-            // 役割設定複数チェックするとOR検索
+            // 役割設定複数チェックするとOR検索（ここではinで検索）
             $user_original_roles = $request->session()->get('user_search_condition.user_original_roles');
-            $in_original_roles_query = UsersRoles::select('users_id');
 
-            foreach ($user_original_roles as $user_original_role) {
-                $in_original_roles_query->orWhere(function ($query) use ($user_original_role) {
-                    $query->where('target', 'original_role')
-                        ->where('role_name', $user_original_role);
-                });
-            }
-            $users_query->whereIn('users.id', $in_original_roles_query->pluck('users_id'));
+            $users_query->whereExists(function ($query) use ($user_original_roles) {  
+                $query->select(DB::raw(1))  
+                    ->from('users_roles')  
+                    ->whereColumn('users_roles.users_id', 'users.id')  
+                    ->where('users_roles.target', 'original_role')  
+                    ->whereIn('users_roles.role_name', $user_original_roles);  
+            });              
         }
 
         // 状態
