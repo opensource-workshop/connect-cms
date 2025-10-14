@@ -1,34 +1,59 @@
 services:
-    app:
-        container_name: app
-        build: ./docker/app
+    webapp:
+        container_name: webapp
+        build:
+            context: ./docker/webapp
+            args:
+                PHP_INI_ENV: ${PHP_INI_ENV:-development}
+                TZ: ${APP_TZ:-Asia/Tokyo}
         volumes:
             - .:/var/www/html/connect-cms
         ports:
-            - 80:80
+            - "80:80"
+        depends_on:
+            db:
+                condition: service_started
+            dusk:
+                condition: service_healthy
         environment:
-            DB_USERNAME: JohnDoe
-            DB_PASSWORD: foobar
-            DB_DATABASE: connect
-            TZ: 'Asia/Tokyo'
+            TZ: ${APP_TZ:-Asia/Tokyo}
+            DUSK_DRIVER_URL: ${DUSK_DRIVER_URL:-http://dusk:4444/wd/hub}
     db:
         container_name: db
-        image: mysql:5.7
+        image: ${MYSQL_IMAGE:-mysql:8}
         ports:
-            - 3306:3306
-        command: --default-authentication-plugin=mysql_native_password
+            - "3306:3306"
         restart: always
         volumes:
-            # 永続化
             - ./docker/db/mysql_data:/var/lib/mysql
+            - ./docker/db/initdb.d:/docker-entrypoint-initdb.d:ro
         environment:
-            MYSQL_ROOT_PASSWORD: hogehoge
-            MYSQL_USER: JohnDoe
-            MYSQL_PASSWORD: foobar
-            MYSQL_DATABASE: connect
-            TZ: 'Asia/Tokyo'
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-secret}
+            MYSQL_USER: ${DB_USERNAME:-app}
+            MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+            MYSQL_DATABASE: ${DB_DATABASE:-connect}
+            MYSQL_TCP_PORT: ${DB_PORT:-3306}
+            TZ: ${APP_TZ:-Asia/Tokyo}
     mailhog:
         container_name: mailhog
         image: mailhog/mailhog
         ports:
             - "8025:8025"
+    dusk:
+        container_name: dusk
+        image: selenium/standalone-chrome:latest
+        restart: unless-stopped
+        shm_size: 2g
+        ports:
+            - "${DUSK_DRIVER_PORT:-4444}:4444"
+            - "${DUSK_VNC_PORT:-5900}:5900"
+            - "${DUSK_NOVNC_PORT:-7900}:7900"
+        environment:
+            DUSK_DRIVER_PORT: ${DUSK_DRIVER_PORT:-4444}
+            SE_ENABLE_VNC: "true"
+            SE_VNC_NO_PASSWORD: "1"
+        healthcheck:
+            test: ["CMD", "curl", "-fsS", "http://localhost:4444/wd/hub/status"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
