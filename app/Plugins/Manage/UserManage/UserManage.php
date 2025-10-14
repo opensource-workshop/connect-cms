@@ -307,6 +307,20 @@ class UserManage extends ManagePluginBase
             $users_query->where('users.email', 'like', '%' . $request->session()->get('user_search_condition.email') . '%');
         }
 
+        // 役割設定
+        if ($request->session()->has('user_search_condition.user_original_roles')) {
+            // 役割設定複数チェックするとOR検索（ここではinで検索）
+            $user_original_roles = $request->session()->get('user_search_condition.user_original_roles');
+
+            $users_query->whereExists(function ($query) use ($user_original_roles) {
+                $query->select(DB::raw(1))
+                    ->from('users_roles')
+                    ->whereColumn('users_roles.users_id', 'users.id')
+                    ->where('users_roles.target', 'original_role')
+                    ->whereIn('users_roles.role_name', $user_original_roles);
+            });
+        }
+
         // 状態
         if ($request->session()->has('user_search_condition.status')) {
             $users_query->where('users.status', $request->session()->get('user_search_condition.status'));
@@ -537,6 +551,9 @@ class UserManage extends ManagePluginBase
         // 自身のシステム管理者権限持ち
         $has_auth_role_admin_system = Arr::get($auth_users_roles, 'manage.admin_system') == 1 ? true : false;
 
+        // 役割設定取得
+        $config_original_roles = Configs::where('category', 'original_role')->orderBy('additional1', 'asc')->get();
+
         return view('plugins.manage.user.list', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
@@ -547,6 +564,7 @@ class UserManage extends ManagePluginBase
             "users_columns_id_select" => $users_columns_id_select,
             "input_cols" => $input_cols,
             "groups_select" => $groups_select,
+            "config_original_roles" => $config_original_roles,
             "sections" => Section::orderBy('display_sequence')->get(),
             "has_auth_role_admin_system" => $has_auth_role_admin_system,
         ]);
@@ -618,6 +636,8 @@ class UserManage extends ManagePluginBase
             "admin_user"         => $request->input('user_search_condition.admin_user'),
 
             "guest"              => $request->input('user_search_condition.guest'),
+
+            "user_original_roles" => $request->input('user_search_condition.user_original_roles'),
 
             "status"             => $request->input('user_search_condition.status'),
 
