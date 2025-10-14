@@ -13,8 +13,6 @@ services:
         depends_on:
             db:
                 condition: service_started
-            dusk:
-                condition: service_healthy
         environment:
             TZ: ${APP_TZ:-Asia/Tokyo}
             DUSK_DRIVER_URL: ${DUSK_DRIVER_URL:-http://dusk:4444/wd/hub}
@@ -44,6 +42,8 @@ services:
         image: selenium/standalone-chrome:latest
         restart: unless-stopped
         shm_size: 2g
+        profiles:
+            - dusk
         ports:
             - "${DUSK_DRIVER_PORT:-4444}:4444"
             - "${DUSK_VNC_PORT:-5900}:5900"
