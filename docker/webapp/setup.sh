@@ -108,8 +108,30 @@ wait_for_database
 
 php artisan key:generate --force
 php artisan config:clear
-# DBを初期化して Seed まで実行（既存テーブルは削除される）
-php artisan migrate:fresh --seed --force
+
+should_reset_db=false
+case "${SETUP_RESET_DB:-${SETUP_MIGRATE_FRESH:-}}" in
+    1|true|TRUE|yes|YES)
+        should_reset_db=true
+        ;;
+esac
+
+if [ "$should_reset_db" = true ]; then
+    echo "Running destructive reset: php artisan migrate:fresh --seed --force"
+    php artisan migrate:fresh --seed --force
+else
+    echo "Running safe update: php artisan migrate --force"
+    php artisan migrate --force
+    case "${SETUP_SKIP_SEED:-}" in
+        1|true|TRUE|yes|YES)
+            echo "Skipping db:seed as requested (SETUP_SKIP_SEED)"
+            ;;
+        *)
+            echo "Running php artisan db:seed --force"
+            php artisan db:seed --force
+            ;;
+    esac
+fi
 
 # storageディレクトリとbootstrap/cacheディレクトリをWebサーバから書き込み可能にする
 chown -R www-data:www-data storage
