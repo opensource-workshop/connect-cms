@@ -71,4 +71,4 @@ composer-option*
 /tests/Browser/screenshots/*
 
 # Docker
-/docker/db
+/docker/db/mysql_data
