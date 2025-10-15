@@ -26,7 +26,8 @@
         <label for="userid" class="col-md-4 col-form-label text-md-right">ログインID</label>
 
         <div class="col-md-6">
-            <input id="userid" type="text" class="form-control" name="userid" value="" required="" autofocus="">
+            <input id="userid" type="text" class="form-control" name="userid" value="{{old('userid')}}" required="" autofocus="">
+            @include('plugins.common.errors_inline', ['name' => 'userid'])
         </div>
     </div>
     <div class="form-group row">
@@ -34,6 +35,7 @@
 
         <div class="col-md-6">
             <input id="password" type="password" class="form-control" name="password" required="">
+            @include('plugins.common.errors_inline', ['name' => 'password'])
         </div>
     </div>
 
