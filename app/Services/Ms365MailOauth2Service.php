@@ -133,7 +133,7 @@ class Ms365MailOauth2Service
     {
         // 連携解除されている場合はエラー
         if (!$this->isConnected()) {
-            throw new \Exception('Microsoft 365 OAuth2 is not connected. Please reconnect.');
+            throw new \Exception('Microsoft 365 OAuth2が未連携です。再度連携を行ってください。');
         }
 
         if ($this->isTokenExpired()) {
@@ -160,7 +160,7 @@ class Ms365MailOauth2Service
             }
         }
 
-        throw new \Exception('Access token not found');
+        throw new \Exception('アクセストークンが見つかりません。');
     }
 
     /**
