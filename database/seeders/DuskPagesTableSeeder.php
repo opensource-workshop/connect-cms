@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Common\Page;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 /**
  * Duskの単独実行時にページを登録するシーダー
@@ -15,25 +14,33 @@ class DuskPagesTableSeeder extends Seeder
     {
         $records = $this->loadRecords();
 
-        foreach ($records as $index => $record) {
-            $lft = $index * 2 + 1;
-            $rgt = $index * 2 + 2;
-
-            $payload = array_merge($record, [
+        foreach ($records as $record) {
+            $attributes = [
+                'page_name' => $record['page_name'],
+                'background_color' => $record['background_color'],
+                'header_color' => $record['header_color'],
+                'theme' => $record['theme'],
+                'layout' => $record['layout'],
                 'base_display_flag' => 1,
                 'membership_flag' => 0,
                 'container_flag' => 0,
-                '_lft' => $lft,
-                '_rgt' => $rgt,
-                'parent_id' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            ];
 
-            DB::table('pages')->updateOrInsert(
-                ['permanent_link' => $record['permanent_link']],
-                $payload
-            );
+            $page = Page::where('permanent_link', $record['permanent_link'])->first();
+
+            if ($page) {
+                $page->fill($attributes);
+
+                if ($page->isDirty()) {
+                    $page->save();
+                }
+
+                continue;
+            }
+
+            Page::create(array_merge($attributes, [
+                'permanent_link' => $record['permanent_link'],
+            ]));
         }
     }
 
