@@ -23,11 +23,13 @@
         "laravel/helpers": "^1.4",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.0",
+        "league/oauth2-client": "^2.8",
         "mews/captcha": "3.3.0",
         "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
         "symfony/yaml": "^5.4",
-        "tecnickcom/tcpdf": "^6.3"
+        "tecnickcom/tcpdf": "^6.3",
+        "thenetworg/oauth2-azure": "^2.2"
     },
     "config": {
         "optimize-autoloader": true,
