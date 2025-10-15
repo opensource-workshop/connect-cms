@@ -27,6 +27,16 @@ use App\Plugins\Manage\ManagePluginBase;
 class SystemManage extends ManagePluginBase
 {
     /**
+     * Microsoft 365 OAuth2サービスを取得
+     *
+     * @return Ms365MailOauth2Service
+     */
+    protected function getMs365MailOauth2Service()
+    {
+        return app(Ms365MailOauth2Service::class);
+    }
+
+    /**
      *  権限定義
      */
     public function declareRole()
@@ -220,14 +230,13 @@ class SystemManage extends ManagePluginBase
 
         // Microsoft 365連携（OAuth2）設定の取得
         $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
-        $oauth2_service = new Ms365MailOauth2Service();
 
         return view('plugins.manage.system.mail', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "system",
             "mail_auth_method"   => $mail_auth_method,
             "oauth2_configs"     => $oauth2_configs,
-            "is_oauth2_connected" => $oauth2_service->isConnected(),
+            "is_oauth2_connected" => $this->getMs365MailOauth2Service()->isConnected(),
         ]);
     }
 
@@ -365,49 +374,23 @@ class SystemManage extends ManagePluginBase
         }
 
         // バリデーション
-        $validator = Validator::make($request->all(), [
-            'tenant_id' => 'required',
-            'client_id' => 'required',
-            'client_secret' => 'required',
-            'mail_from_address' => 'required|email',
-        ]);
-        $validator->setAttributeNames([
-            'tenant_id' => 'テナントID',
-            'client_id' => 'クライアントID',
-            'client_secret' => 'クライアントシークレット',
-            'mail_from_address' => '送信者メールアドレス',
-        ]);
-
+        $validator = $this->getMs365MailOauth2Service()->validateConfig($request->all());
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Microsoft 365連携（OAuth2）設定を保存（クライアントシークレットは暗号化）
-        Configs::updateOrCreate(
-            ['category' => 'mail_oauth2_ms365_app', 'name' => 'tenant_id'],
-            ['value' => $request->tenant_id]
-        );
-        Configs::updateOrCreate(
-            ['category' => 'mail_oauth2_ms365_app', 'name' => 'client_id'],
-            ['value' => $request->client_id]
-        );
-        Configs::updateOrCreate(
-            ['category' => 'mail_oauth2_ms365_app', 'name' => 'client_secret'],
-            ['value' => encrypt($request->client_secret)]
-        );
-        Configs::updateOrCreate(
-            ['category' => 'mail_oauth2_ms365_app', 'name' => 'mail_from_address'],
-            ['value' => $request->mail_from_address]
-        );
+        // 設定保存とトークン取得
+        $result = $this->getMs365MailOauth2Service()->saveConfig($request->only([
+            'tenant_id',
+            'client_id',
+            'client_secret',
+            'mail_from_address'
+        ]));
 
-        // 設定保存後、即座にトークンを取得（Client Credentials Grant）
-        $oauth2_service = new Ms365MailOauth2Service();
-        try {
-            $oauth2_service->obtainTokens();
-            return redirect("/manage/system/mail")->with('flash_message', 'Microsoft 365連携（OAuth2）設定を保存し、連携が完了しました。');
-        } catch (\Exception $e) {
-            Log::error('Failed to obtain OAuth2 tokens: ' . $e->getMessage());
-            return redirect("/manage/system/mail")->with('error_message', 'Microsoft 365連携（OAuth2）設定を保存しましたが、トークンの取得に失敗しました: ' . $e->getMessage());
+        if ($result['success']) {
+            return redirect("/manage/system/mail")->with('flash_message', $result['message']);
+        } else {
+            return redirect("/manage/system/mail")->with('error_message', $result['message']);
         }
     }
 
@@ -421,8 +404,7 @@ class SystemManage extends ManagePluginBase
             abort(403, '権限がありません。');
         }
 
-        $oauth2_service = new Ms365MailOauth2Service();
-        $oauth2_service->disconnect();
+        $this->getMs365MailOauth2Service()->disconnect();
 
         return redirect("/manage/system/mail")->with('flash_message', 'Microsoft 365との連携を解除しました。');
     }

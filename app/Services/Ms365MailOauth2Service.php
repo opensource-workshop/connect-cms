@@ -230,4 +230,74 @@ class Ms365MailOauth2Service
             ['value' => '0']
         );
     }
+
+    /**
+     * OAuth2設定のバリデーション
+     *
+     * @param array $data
+     * @return \Illuminate\Contracts\Validation\Validator
+     */
+    public function validateConfig(array $data): \Illuminate\Contracts\Validation\Validator
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($data, [
+            'tenant_id' => 'required',
+            'client_id' => 'required',
+            'client_secret' => 'required',
+            'mail_from_address' => 'required|email',
+        ]);
+
+        $validator->setAttributeNames([
+            'tenant_id' => 'テナントID',
+            'client_id' => 'クライアントID',
+            'client_secret' => 'クライアントシークレット',
+            'mail_from_address' => '送信者メールアドレス',
+        ]);
+
+        return $validator;
+    }
+
+    /**
+     * OAuth2設定を保存してトークンを取得
+     *
+     * @param array $data
+     * @return array ['success' => bool, 'message' => string]
+     */
+    public function saveConfig(array $data): array
+    {
+        // Microsoft 365連携（OAuth2）設定を保存（クライアントシークレットは暗号化）
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'tenant_id'],
+            ['value' => $data['tenant_id']]
+        );
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'client_id'],
+            ['value' => $data['client_id']]
+        );
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'client_secret'],
+            ['value' => encrypt($data['client_secret'])]
+        );
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'mail_from_address'],
+            ['value' => $data['mail_from_address']]
+        );
+
+        // キャッシュをクリア（新しい設定を読み込み直すため）
+        $this->oauth2_configs_cache = null;
+
+        // 設定保存後、即座にトークンを取得（Client Credentials Grant）
+        try {
+            $this->obtainTokens();
+            return [
+                'success' => true,
+                'message' => 'Microsoft 365連携（OAuth2）設定を保存し、連携が完了しました。'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to obtain OAuth2 tokens: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Microsoft 365連携（OAuth2）設定を保存しましたが、トークンの取得に失敗しました: ' . $e->getMessage()
+            ];
+        }
+    }
 }
