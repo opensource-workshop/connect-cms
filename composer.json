@@ -28,8 +28,7 @@
         "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
         "symfony/yaml": "^5.4",
-        "tecnickcom/tcpdf": "^6.3",
-        "thenetworg/oauth2-azure": "^2.2"
+        "tecnickcom/tcpdf": "^6.3"
     },
     "config": {
         "optimize-autoloader": true,
