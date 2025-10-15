@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
 
 use App\Models\Core\Configs;
+use App\Services\Ms365MailOauth2Service;
+use App\Enums\MailAuthMethod;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -39,6 +41,9 @@ class SystemManage extends ManagePluginBase
         $role_ckeck_table["updateServer"]    = array('admin_system');
         $role_ckeck_table["mail"]            = ['admin_system'];
         $role_ckeck_table["updateMail"]      = ['admin_system'];
+        $role_ckeck_table["updateMailAuthMethod"] = ['admin_system'];
+        $role_ckeck_table["updateMailOauth2"] = ['admin_system'];
+        $role_ckeck_table["mailOauth2Disconnect"] = ['admin_system'];
         $role_ckeck_table["mailTest"]        = ['admin_system'];
         $role_ckeck_table["sendMailTest"]    = ['admin_system'];
         return $role_ckeck_table;
@@ -209,9 +214,20 @@ class SystemManage extends ManagePluginBase
      */
     public function mail($request, $id = null)
     {
+        // メール認証方式の取得
+        $mail_configs = Configs::where('category', 'mail')->get();
+        $mail_auth_method = Configs::getConfigsValue($mail_configs, 'mail_auth_method', MailAuthMethod::smtp);
+
+        // Microsoft 365連携（OAuth2）設定の取得
+        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        $oauth2_service = new Ms365MailOauth2Service();
+
         return view('plugins.manage.system.mail', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "system",
+            "mail_auth_method"   => $mail_auth_method,
+            "oauth2_configs"     => $oauth2_configs,
+            "is_oauth2_connected" => $oauth2_service->isConnected(),
         ]);
     }
 
@@ -317,5 +333,97 @@ class SystemManage extends ManagePluginBase
         }
 
         return redirect("/manage/system/mailTest")->with('flash_message', 'メール送信しました。');
+    }
+
+    /**
+     * メール認証方式更新
+     */
+    public function updateMailAuthMethod($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // メール認証方式を保存
+        Configs::updateOrCreate(
+            ['category' => 'mail', 'name' => 'mail_auth_method'],
+            ['value' => $request->mail_auth_method]
+        );
+
+        return redirect("/manage/system/mail")->with('flash_message', '認証方式を更新しました。');
+    }
+
+    /**
+     * Microsoft 365連携（OAuth2）設定更新
+     */
+    public function updateMailOauth2($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // バリデーション
+        $validator = Validator::make($request->all(), [
+            'tenant_id' => 'required',
+            'client_id' => 'required',
+            'client_secret' => 'required',
+            'mail_from_address' => 'required|email',
+        ]);
+        $validator->setAttributeNames([
+            'tenant_id' => 'テナントID',
+            'client_id' => 'クライアントID',
+            'client_secret' => 'クライアントシークレット',
+            'mail_from_address' => '送信者メールアドレス',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // Microsoft 365連携（OAuth2）設定を保存（クライアントシークレットは暗号化）
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'tenant_id'],
+            ['value' => $request->tenant_id]
+        );
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'client_id'],
+            ['value' => $request->client_id]
+        );
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'client_secret'],
+            ['value' => encrypt($request->client_secret)]
+        );
+        Configs::updateOrCreate(
+            ['category' => 'mail_oauth2_ms365_app', 'name' => 'mail_from_address'],
+            ['value' => $request->mail_from_address]
+        );
+
+        // 設定保存後、即座にトークンを取得（Client Credentials Grant）
+        $oauth2_service = new Ms365MailOauth2Service();
+        try {
+            $oauth2_service->obtainTokens();
+            return redirect("/manage/system/mail")->with('flash_message', 'Microsoft 365連携（OAuth2）設定を保存し、連携が完了しました。');
+        } catch (\Exception $e) {
+            Log::error('Failed to obtain OAuth2 tokens: ' . $e->getMessage());
+            return redirect("/manage/system/mail")->with('error_message', 'Microsoft 365連携（OAuth2）設定を保存しましたが、トークンの取得に失敗しました: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Microsoft 365連携（OAuth2）解除
+     */
+    public function mailOauth2Disconnect($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        $oauth2_service = new Ms365MailOauth2Service();
+        $oauth2_service->disconnect();
+
+        return redirect("/manage/system/mail")->with('flash_message', 'Microsoft 365との連携を解除しました。');
     }
 }

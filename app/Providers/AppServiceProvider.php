@@ -17,8 +17,10 @@ use Illuminate\Queue\Events\JobFailed;
 use App\Traits\ConnectRoleTrait;
 
 use App\Models\Common\Buckets;
+use App\Models\Core\Configs;
 
 use App\Enums\PluginName;
+use App\Enums\MailAuthMethod;
 
 //class AppServiceProvider extends ServiceProvider
 class AppServiceProvider extends AuthServiceProvider
@@ -45,6 +47,9 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function boot()
     {
+        // メール認証方式に応じて、メールドライバーとFROMアドレスを動的に設定
+        $this->configureMail();
+
         // ペジネーションでBootstrapのスタイルを利用する
         // Laravel 8からデフォルトがTailwind CSSフレームワークに変わったが、以前のままで行く
         Paginator::useBootstrap();
@@ -367,6 +372,37 @@ class AppServiceProvider extends AuthServiceProvider
         });
 
         return false;
+    }
+
+    /**
+     * メール設定を動的に設定
+     *
+     * @return void
+     */
+    private function configureMail()
+    {
+        // 認証方式を取得
+        $mail_configs = Configs::where('category', 'mail')->get();
+        $mail_auth_method = Configs::getConfigsValue(
+            $mail_configs,
+            'mail_auth_method',
+            MailAuthMethod::smtp
+        );
+
+        if ($mail_auth_method == MailAuthMethod::oauth2_microsoft365_app) {
+            // Microsoft 365連携（OAuth2）の場合
+            $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+            $from_address = Configs::getConfigsValue($oauth2_configs, 'mail_from_address');
+
+            // メールドライバーをMicrosoft Graphに設定
+            config(['mail.driver' => 'microsoft-graph']);
+
+            // FROMアドレスをOAuth2設定のものに変更
+            if ($from_address) {
+                config(['mail.from.address' => $from_address]);
+            }
+        }
+        // SMTP認証の場合は、.envの設定をそのまま使用（デフォルト動作）
     }
 
     /**

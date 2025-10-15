@@ -181,6 +181,7 @@ $app_array = [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\MailServiceProvider::class,
 
         /*
         * Connect-CMS Plugin Service Providers...
@@ -336,6 +337,7 @@ $app_array = [
         'EditType' => \App\Enums\EditType::class,
         'SmartphoneMenuTemplateType' => \App\Enums\SmartphoneMenuTemplateType::class,
         'MenuFrameConfig' => \App\Enums\MenuFrameConfig::class,
+        'MailAuthMethod' => \App\Enums\MailAuthMethod::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
