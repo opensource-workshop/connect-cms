@@ -81,8 +81,12 @@ class MicrosoftGraphTransport extends Transport
                 $this->sendPerformed($message);
                 return $this->numberOfRecipients($message);
             } else {
-                Log::error('Microsoft Graph API mail send error: ' . $response->body());
-                throw new \Exception('メール送信に失敗しました: ' . $response->body());
+                // セキュリティ上、詳細なエラーレスポンスはログにのみ記録し、ユーザーには表示しない
+                Log::error('Microsoft Graph API mail send error', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                throw new \Exception('メール送信に失敗しました。システム管理者にお問い合わせください。');
             }
         } catch (\Exception $e) {
             Log::error('Microsoft Graph Transport error: ' . $e->getMessage());
