@@ -30,11 +30,30 @@ class Ms365MailOauth2Service
     private const GRAPH_API_DEFAULT_SCOPE = 'https://graph.microsoft.com/.default';
 
     /**
+     * OAuth2設定のキャッシュ
+     * @var \Illuminate\Support\Collection|null
+     */
+    private $oauth2_configs_cache = null;
+
+    /**
+     * OAuth2設定を取得（キャッシュ付き）
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    private function getOauth2Configs()
+    {
+        if ($this->oauth2_configs_cache === null) {
+            $this->oauth2_configs_cache = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        }
+        return $this->oauth2_configs_cache;
+    }
+
+    /**
      * OAuth2 Provider インスタンスを取得
      */
     public function getProvider(): GenericProvider
     {
-        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        $oauth2_configs = $this->getOauth2Configs();
 
         $tenant_id = Configs::getConfigsValue($oauth2_configs, 'tenant_id');
         $client_id = Configs::getConfigsValue($oauth2_configs, 'client_id');
@@ -96,7 +115,7 @@ class Ms365MailOauth2Service
      */
     public function isTokenExpired(): bool
     {
-        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        $oauth2_configs = $this->getOauth2Configs();
         $expires_at = Configs::getConfigsValue($oauth2_configs, 'token_expires_at');
 
         if (!$expires_at) {
@@ -128,7 +147,7 @@ class Ms365MailOauth2Service
             return $access_token->getToken();
         }
 
-        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        $oauth2_configs = $this->getOauth2Configs();
         $token = Configs::getConfigsValue($oauth2_configs, 'access_token');
 
         // トークンの復号化
@@ -180,7 +199,7 @@ class Ms365MailOauth2Service
      */
     public function isConnected(): bool
     {
-        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        $oauth2_configs = $this->getOauth2Configs();
         $is_connected = Configs::getConfigsValue($oauth2_configs, 'is_connected', '0');
 
         return $is_connected === '1';
@@ -191,7 +210,7 @@ class Ms365MailOauth2Service
      */
     public function getTokenObtainedAt(): ?string
     {
-        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+        $oauth2_configs = $this->getOauth2Configs();
         return Configs::getConfigsValue($oauth2_configs, 'token_obtained_at');
     }
 
