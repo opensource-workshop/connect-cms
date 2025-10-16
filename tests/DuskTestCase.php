@@ -78,14 +78,26 @@ abstract class DuskTestCase extends BaseTestCase
      */
     protected function driver()
     {
-        $options = (new ChromeOptions)->addArguments([
+        $headless = filter_var(
+            $_ENV['DUSK_HEADLESS'] ?? env('DUSK_HEADLESS', true),
+            FILTER_VALIDATE_BOOLEAN,
+            FILTER_NULL_ON_FAILURE
+        );
+        $headless = $headless ?? true;
+
+        $arguments = [
             '--disable-gpu',
-            '--headless',
             '--window-size=1920,1080',
             // Improve stability in CI containers
             '--no-sandbox',
             '--disable-dev-shm-usage',
-        ]);
+        ];
+
+        if ($headless) {
+            $arguments[] = '--headless';
+        }
+
+        $options = (new ChromeOptions)->addArguments($arguments);
 
         return RemoteWebDriver::create(
             $_ENV['DUSK_DRIVER_URL'] ?? env('DUSK_DRIVER_URL') ?? 'http://localhost:9515',
@@ -142,25 +154,23 @@ abstract class DuskTestCase extends BaseTestCase
             $this->no_api_test = true;
         }
 
-/* 一旦コメントアウト。データのクリアは、意識して行いたいかもしれないので。
-
-        // テスト実行のタイミングで一度だけ実行する
-        if (! self::$migrated) {
-            // config キャッシュクリア
+        // Dusk用のデータベースを初期化
+        if (! self::$migrated && env('DUSK_AUTO_MIGRATE', false)) {
             $this->artisan('config:clear');
+            $this->artisan('migrate:fresh', ['--force' => true]);
 
-            // マイグレーション実行
-            $this->artisan('migrate');
+            $seeders = array_filter(array_map('trim', explode(',', (string) env('DUSK_SEEDERS'))));
 
-            // Seederを実行
-            // ・Seederを１つだけ指定して実行（全テーブルを空にするSeeder）
-            // ・通常のDatabaseSeederを実行
-            $this->seed(TruncateAllTables::class);
-            $this->seed();
+            if (empty($seeders)) {
+                $this->artisan('db:seed', ['--force' => true]);
+            } else {
+                foreach ($seeders as $seeder) {
+                    $this->artisan('db:seed', ['--force' => true, '--class' => $seeder]);
+                }
+            }
 
             self::$migrated = true;
         }
-*/
     }
 
     /**
