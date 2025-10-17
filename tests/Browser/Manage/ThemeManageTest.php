@@ -143,7 +143,7 @@ class ThemeManageTest extends DuskTestCase
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/theme')
                     ->click('#name_edit_1')
-                    ->pause(500)
+                    ->waitFor('input[name="theme_name"]')
                     ->assertTitleContains('Connect-CMS')
                     ->screenshot('manage/theme/editName/images/editName');
         });
