@@ -1,0 +1,677 @@
+<?php
+
+namespace Tests\Unit\Plugins\Manage\UserManage;
+
+use App\Enums\UserColumnType;
+use App\Models\Core\UsersColumns;
+use App\Plugins\Manage\UserManage\UsersTool;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
+use Tests\TestCase;
+
+/**
+ * UsersToolクラスのユニットテスト
+ */
+class UsersToolTest extends TestCase
+{
+    use RefreshDatabase;
+
+    /**
+     * 初期設定
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 正規表現が設定されている場合、追加ルールが適用される
+     *
+     * @test
+     */
+    public function testGetDefaultColumnAdditionalRulesWithRegex()
+    {
+        // テスト用のUsersColumnsオブジェクトを作成
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^[a-zA-Z0-9]+$/';
+
+        // 基本ルールを設定
+        $base_rules = ['required', 'max:255'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 正規表現ルールが追加されている
+        $this->assertContains('regex:/^[a-zA-Z0-9]+$/', $result);
+        // 検証: 基本ルールも保持されている
+        $this->assertContains('required', $result);
+        $this->assertContains('max:255', $result);
+        // 検証: 配列の要素数が正しい（基本2つ + 追加1つ = 3つ）
+        $this->assertCount(3, $result);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 正規表現が未設定の場合、基本ルールのみ返す
+     *
+     * @test
+     */
+    public function testGetDefaultColumnAdditionalRulesWithoutRegex()
+    {
+        // テスト用のUsersColumnsオブジェクトを作成（正規表現なし）
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = null;
+
+        // 基本ルールを設定
+        $base_rules = ['required', 'max:255'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 基本ルールのみ返される
+        $this->assertEquals($base_rules, $result);
+        // 検証: 配列の要素数が基本ルールと同じ
+        $this->assertCount(2, $result);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 空の基本ルールでも正規表現が追加される
+     *
+     * @test
+     */
+    public function testGetDefaultColumnAdditionalRulesWithEmptyBaseRules()
+    {
+        // テスト用のUsersColumnsオブジェクトを作成
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^[0-9]{3}-[0-9]{4}$/';
+
+        // 空の基本ルール
+        $base_rules = [];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 正規表現ルールのみが含まれる
+        $this->assertContains('regex:/^[0-9]{3}-[0-9]{4}$/', $result);
+        $this->assertCount(1, $result);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 複数の基本ルールと正規表現が正しくマージされる
+     *
+     * @test
+     */
+    public function testGetDefaultColumnAdditionalRulesWithMultipleRules()
+    {
+        // テスト用のUsersColumnsオブジェクトを作成
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^[a-z]+$/';
+
+        // 複数の基本ルールを設定
+        $base_rules = ['required', 'string', 'min:3', 'max:20'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: すべてのルールが含まれている
+        $this->assertContains('required', $result);
+        $this->assertContains('string', $result);
+        $this->assertContains('min:3', $result);
+        $this->assertContains('max:20', $result);
+        $this->assertContains('regex:/^[a-z]+$/', $result);
+        // 検証: 配列の要素数が正しい（基本4つ + 追加1つ = 5つ）
+        $this->assertCount(5, $result);
+    }
+
+    /**
+     * buildValidatorArray: デフォルト項目（user_name）に追加バリデーションが適用される
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayAppliesRegexToUserName()
+    {
+        // テスト用のUsersColumnsコレクションを作成
+        $users_column = new UsersColumns();
+        $users_column->id = 1;
+        $users_column->column_type = UserColumnType::user_name;
+        $users_column->rule_regex = '/^[ぁ-んァ-ヶー一-龯]+$/u'; // 日本語のみ
+
+        $users_columns = new Collection([$users_column]);
+
+        // 基本バリデーション配列
+        $validator_array = [
+            'column' => [
+                'name' => ['required', 'string', 'max:255'],
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^[ぁ-んァ-ヶー一-龯]+$/u', $result['column']['name']);
+        // 検証: 基本ルールも保持されている
+        $this->assertContains('required', $result['column']['name']);
+        $this->assertContains('string', $result['column']['name']);
+        $this->assertContains('max:255', $result['column']['name']);
+    }
+
+    /**
+     * buildValidatorArray: デフォルト項目（login_id）に追加バリデーションが適用される
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayAppliesRegexToLoginId()
+    {
+        // テスト用のUsersColumnsコレクションを作成
+        $users_column = new UsersColumns();
+        $users_column->id = 2;
+        $users_column->column_type = UserColumnType::login_id;
+        $users_column->rule_regex = '/^[a-zA-Z0-9_]+$/'; // 英数字とアンダースコアのみ
+
+        $users_columns = new Collection([$users_column]);
+
+        // 基本バリデーション配列（文字列形式でテスト）
+        $validator_array = [
+            'column' => [
+                'userid' => 'required|max:255',
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^[a-zA-Z0-9_]+$/', $result['column']['userid']);
+        // 検証: 文字列が配列に変換されている
+        $this->assertIsArray($result['column']['userid']);
+        // 検証: 基本ルールも保持されている
+        $this->assertContains('required', $result['column']['userid']);
+        $this->assertContains('max:255', $result['column']['userid']);
+    }
+
+    /**
+     * buildValidatorArray: デフォルト項目（user_email）に追加バリデーションが適用される
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayAppliesRegexToUserEmail()
+    {
+        // テスト用のUsersColumnsコレクションを作成
+        $users_column = new UsersColumns();
+        $users_column->id = 3;
+        $users_column->column_type = UserColumnType::user_email;
+        $users_column->rule_regex = '/^[a-zA-Z0-9._%+-]+@example\.com$/'; // example.comドメインのみ
+
+        $users_columns = new Collection([$users_column]);
+
+        // 基本バリデーション配列
+        $validator_array = [
+            'column' => [
+                'email' => ['nullable', 'email', 'max:255'],
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^[a-zA-Z0-9._%+-]+@example\.com$/', $result['column']['email']);
+        // 検証: 基本ルールも保持されている
+        $this->assertContains('nullable', $result['column']['email']);
+        $this->assertContains('email', $result['column']['email']);
+        $this->assertContains('max:255', $result['column']['email']);
+    }
+
+    /**
+     * buildValidatorArray: 正規表現が未設定のデフォルト項目は基本ルールのみ
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithoutRegexKeepsBaseRules()
+    {
+        // テスト用のUsersColumnsコレクションを作成（正規表現なし）
+        $users_column = new UsersColumns();
+        $users_column->id = 1;
+        $users_column->column_type = UserColumnType::user_name;
+        $users_column->rule_regex = null;
+
+        $users_columns = new Collection([$users_column]);
+
+        // 基本バリデーション配列
+        $base_name_rules = ['required', 'string', 'max:255'];
+        $validator_array = [
+            'column' => [
+                'name' => $base_name_rules,
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: 基本ルールのみが保持されている
+        $this->assertEquals($base_name_rules, $result['column']['name']);
+    }
+
+    /**
+     * buildValidatorArray: 複数のデフォルト項目を同時に処理できる
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithMultipleDefaultColumns()
+    {
+        // 複数のデフォルト項目を作成
+        $user_name_column = new UsersColumns();
+        $user_name_column->id = 1;
+        $user_name_column->column_type = UserColumnType::user_name;
+        $user_name_column->rule_regex = '/^[ぁ-んァ-ヶー一-龯]+$/u';
+
+        $login_id_column = new UsersColumns();
+        $login_id_column->id = 2;
+        $login_id_column->column_type = UserColumnType::login_id;
+        $login_id_column->rule_regex = '/^[a-zA-Z0-9]+$/';
+
+        $email_column = new UsersColumns();
+        $email_column->id = 3;
+        $email_column->column_type = UserColumnType::user_email;
+        $email_column->rule_regex = null; // 正規表現なし
+
+        $users_columns = new Collection([$user_name_column, $login_id_column, $email_column]);
+
+        // 基本バリデーション配列
+        $validator_array = [
+            'column' => [
+                'name' => ['required', 'string', 'max:255'],
+                'userid' => ['required', 'max:255'],
+                'email' => ['nullable', 'email', 'max:255'],
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: user_nameに正規表現が追加されている
+        $this->assertContains('regex:/^[ぁ-んァ-ヶー一-龯]+$/u', $result['column']['name']);
+        // 検証: login_idに正規表現が追加されている
+        $this->assertContains('regex:/^[a-zA-Z0-9]+$/', $result['column']['userid']);
+        // 検証: emailは正規表現なしで基本ルールのみ
+        $email_rules_string = implode('|', $result['column']['email']);
+        $this->assertStringNotContainsString('regex:', $email_rules_string);
+        $this->assertContains('nullable', $result['column']['email']);
+    }
+
+    /**
+     * buildValidatorArray: パスワード項目はスキップされる
+     *
+     * @test
+     */
+    public function testBuildValidatorArraySkipsPasswordColumn()
+    {
+        // パスワード項目を作成
+        $password_column = new UsersColumns();
+        $password_column->id = 4;
+        $password_column->column_type = UserColumnType::user_password;
+        $password_column->rule_regex = '/^.{8,}$/'; // 8文字以上（設定しても無視される）
+
+        $users_columns = new Collection([$password_column]);
+
+        // 基本バリデーション配列（パスワードフィールドなし）
+        $validator_array = [
+            'column' => [],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: パスワード項目は処理されず、columnは空のまま
+        $this->assertEmpty($result['column']);
+    }
+
+    /**
+     * buildValidatorArray: カスタム項目のバリデーションが適用される
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayAppliesCustomColumnValidation()
+    {
+        // カスタム項目（テキスト）を作成
+        $custom_column = new UsersColumns();
+        $custom_column->id = 10;
+        $custom_column->column_type = UserColumnType::text;
+        $custom_column->column_name = 'custom_field';
+        $custom_column->required = 1;
+        $custom_column->rule_regex = '/^[0-9]{3}-[0-9]{4}$/'; // 郵便番号
+
+        $users_columns = new Collection([$custom_column]);
+
+        // 基本バリデーション配列
+        $validator_array = [
+            'column' => [],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: カスタム項目のバリデーションが追加されている
+        // カスタム項目のキーは 'users_columns_value.{id}' の形式
+        $this->assertArrayHasKey('users_columns_value.10', $result['column']);
+        $this->assertContains('required', $result['column']['users_columns_value.10']);
+        $this->assertContains('regex:/^[0-9]{3}-[0-9]{4}$/', $result['column']['users_columns_value.10']);
+    }
+
+    /**
+     * buildValidatorArray: デフォルト項目とカスタム項目が混在する場合
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithMixedColumns()
+    {
+        // デフォルト項目
+        $user_name_column = new UsersColumns();
+        $user_name_column->id = 1;
+        $user_name_column->column_type = UserColumnType::user_name;
+        $user_name_column->rule_regex = '/^[ぁ-んァ-ヶー一-龯]+$/u';
+
+        // カスタム項目
+        $custom_column = new UsersColumns();
+        $custom_column->id = 10;
+        $custom_column->column_type = UserColumnType::text;
+        $custom_column->column_name = 'phone';
+        $custom_column->required = 0;
+        $custom_column->rule_regex = '/^[0-9]{2,4}-[0-9]{2,4}-[0-9]{4}$/'; // 電話番号
+
+        $users_columns = new Collection([$user_name_column, $custom_column]);
+
+        // 基本バリデーション配列
+        $validator_array = [
+            'column' => [
+                'name' => ['required', 'string', 'max:255'],
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: デフォルト項目が正しく処理されている
+        $this->assertContains('regex:/^[ぁ-んァ-ヶー一-龯]+$/u', $result['column']['name']);
+        // 検証: カスタム項目が追加されている（キーは 'users_columns_value.{id}'）
+        $this->assertArrayHasKey('users_columns_value.10', $result['column']);
+        $this->assertContains('regex:/^[0-9]{2,4}-[0-9]{2,4}-[0-9]{4}$/', $result['column']['users_columns_value.10']);
+    }
+
+    /**
+     * buildValidatorArray: 空のコレクションでもエラーにならない
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithEmptyCollection()
+    {
+        // 空のコレクション
+        $users_columns = new Collection([]);
+
+        // 基本バリデーション配列
+        $validator_array = [
+            'column' => [
+                'name' => ['required', 'string', 'max:255'],
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: 元の配列がそのまま返される
+        $this->assertEquals($validator_array, $result);
+    }
+
+    /**
+     * buildValidatorArray: base_rulesが存在しないデフォルト項目は処理されない
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithoutBaseRulesForDefaultColumn()
+    {
+        // デフォルト項目を作成
+        $user_name_column = new UsersColumns();
+        $user_name_column->id = 1;
+        $user_name_column->column_type = UserColumnType::user_name;
+        $user_name_column->rule_regex = '/^[a-z]+$/';
+
+        $users_columns = new Collection([$user_name_column]);
+
+        // 基本バリデーション配列（nameフィールドなし）
+        $validator_array = [
+            'column' => [],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: base_rulesがないため、nameは追加されない
+        $this->assertArrayNotHasKey('name', $result['column']);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 実用的な正規表現パターン - 電話番号禁止
+     *
+     * @test
+     */
+    public function testRealWorldScenarioPreventPhoneNumberInLoginId()
+    {
+        // ログインIDに電話番号を禁止する正規表現
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^(?!.*[0-9]{3,4}-[0-9]{3,4}-[0-9]{4}).*$/';
+
+        $base_rules = ['required', 'max:255'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^(?!.*[0-9]{3,4}-[0-9]{3,4}-[0-9]{4}).*$/', $result);
+        $this->assertCount(3, $result);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 実用的な正規表現パターン - メールアドレス禁止
+     *
+     * @test
+     */
+    public function testRealWorldScenarioPreventEmailInLoginId()
+    {
+        // ログインIDにメールアドレス形式を禁止する正規表現
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^(?!.*@).*$/';
+
+        $base_rules = ['required', 'max:255'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^(?!.*@).*$/', $result);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 実用的な正規表現パターン - 特定ドメインのみ許可
+     *
+     * @test
+     */
+    public function testRealWorldScenarioAllowOnlySpecificDomain()
+    {
+        // 特定ドメインのメールアドレスのみ許可
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^.+@(company\.com|company\.co\.jp)$/';
+
+        $base_rules = ['nullable', 'email', 'max:255'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^.+@(company\.com|company\.co\.jp)$/', $result);
+        $this->assertCount(4, $result);
+    }
+
+    /**
+     * getDefaultColumnAdditionalRules: 実用的な正規表現パターン - ひらがなのみ
+     *
+     * @test
+     */
+    public function testRealWorldScenarioOnlyHiragana()
+    {
+        // ユーザー名にひらがなのみ許可
+        $users_column = new UsersColumns();
+        $users_column->rule_regex = '/^[ぁ-ん]+$/u';
+
+        $base_rules = ['required', 'string', 'max:255'];
+
+        // テスト実行
+        $result = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
+
+        // 検証: 正規表現が追加されている
+        $this->assertContains('regex:/^[ぁ-ん]+$/u', $result);
+    }
+
+    /**
+     * buildValidatorArray: user_id引数が正しく渡される（更新時）
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayPassesUserIdForUpdate()
+    {
+        // カスタム項目を作成
+        $custom_column = new UsersColumns();
+        $custom_column->id = 10;
+        $custom_column->column_type = UserColumnType::text;
+        $custom_column->column_name = 'custom_text';
+        $custom_column->required = 1;
+
+        $users_columns = new Collection([$custom_column]);
+
+        $validator_array = ['column' => []];
+        $columns_set_id = 1;
+        $user_id = 999; // 更新時のユーザーID
+
+        // テスト実行（user_idを渡す）
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id, $user_id);
+
+        // 検証: バリデーションルールが追加されている（内部でuser_idが使われる）
+        // カスタム項目のキーは 'users_columns_value.{id}' の形式
+        $this->assertArrayHasKey('users_columns_value.10', $result['column']);
+        $this->assertContains('required', $result['column']['users_columns_value.10']);
+    }
+
+    /**
+     * buildValidatorArray: 全デフォルト項目を一度に処理
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithAllDefaultColumns()
+    {
+        // 全デフォルト項目を作成
+        $columns = [
+            'user_name' => UserColumnType::user_name,
+            'login_id' => UserColumnType::login_id,
+            'user_email' => UserColumnType::user_email,
+        ];
+
+        $users_columns_array = [];
+        $id = 1;
+        foreach ($columns as $key => $type) {
+            $column = new UsersColumns();
+            $column->id = $id++;
+            $column->column_type = $type;
+            $column->rule_regex = '/^test_' . $key . '$/';
+            $users_columns_array[] = $column;
+        }
+
+        $users_columns = new Collection($users_columns_array);
+
+        $validator_array = [
+            'column' => [
+                'name' => ['required', 'string', 'max:255'],
+                'userid' => ['required', 'max:255'],
+                'email' => ['nullable', 'email', 'max:255'],
+            ],
+        ];
+
+        $columns_set_id = 1;
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id);
+
+        // 検証: 全デフォルト項目に正規表現が追加されている
+        $this->assertContains('regex:/^test_user_name$/', $result['column']['name']);
+        $this->assertContains('regex:/^test_login_id$/', $result['column']['userid']);
+        $this->assertContains('regex:/^test_user_email$/', $result['column']['email']);
+    }
+
+    /**
+     * UserColumnType::supportsValidationSettings: 正しいカラムタイプの配列を返す
+     *
+     * @test
+     */
+    public function testSupportsValidationSettingsReturnsCorrectTypes()
+    {
+        // テスト実行
+        $result = UserColumnType::supportsValidationSettings();
+
+        // 検証: 配列が返される
+        $this->assertIsArray($result);
+
+        // 検証: バリデーション設定をサポートする項目が含まれている
+        $this->assertContains(UserColumnType::text, $result);
+        $this->assertContains(UserColumnType::textarea, $result);
+        $this->assertContains(UserColumnType::mail, $result);
+        $this->assertContains(UserColumnType::user_name, $result);
+        $this->assertContains(UserColumnType::login_id, $result);
+        $this->assertContains(UserColumnType::user_email, $result);
+
+        // 検証: サポートしない項目が含まれていない
+        $this->assertNotContains(UserColumnType::radio, $result);
+        $this->assertNotContains(UserColumnType::checkbox, $result);
+        $this->assertNotContains(UserColumnType::select, $result);
+        $this->assertNotContains(UserColumnType::user_password, $result);
+        $this->assertNotContains(UserColumnType::created_at, $result);
+        $this->assertNotContains(UserColumnType::updated_at, $result);
+    }
+
+    /**
+     * UserColumnType::supportsValidationSettings: in_arrayで使用できる
+     *
+     * @test
+     */
+    public function testSupportsValidationSettingsWorksWithInArray()
+    {
+        $supported_types = UserColumnType::supportsValidationSettings();
+
+        // 検証: サポートする項目はtrue
+        $this->assertTrue(in_array(UserColumnType::text, $supported_types));
+        $this->assertTrue(in_array(UserColumnType::user_name, $supported_types));
+        $this->assertTrue(in_array(UserColumnType::login_id, $supported_types));
+
+        // 検証: サポートしない項目はfalse
+        $this->assertFalse(in_array(UserColumnType::radio, $supported_types));
+        $this->assertFalse(in_array(UserColumnType::user_password, $supported_types));
+        $this->assertFalse(in_array(UserColumnType::created_at, $supported_types));
+    }
+}

@@ -145,4 +145,24 @@ class UserColumnType extends EnumsBase
 
         return [];
     }
+
+    /**
+     * バリデーション設定（チェック処理の設定）をサポートするカラム型 取得
+     *
+     * 数値のみ許容、英数値のみ許容、入力桁数、入力最大文字数、最大値、最小値、正規表現などの
+     * 詳細なバリデーション設定が可能なカラムタイプを返します。
+     *
+     * @return array バリデーション設定が可能なカラムタイプの配列
+     */
+    public static function supportsValidationSettings(): array
+    {
+        return [
+            self::text,
+            self::textarea,
+            self::mail,
+            self::user_name,
+            self::login_id,
+            self::user_email,
+        ];
+    }
 }

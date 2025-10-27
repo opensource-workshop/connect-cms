@@ -97,12 +97,15 @@ class ProfileMypage extends MypagePluginBase
 
         foreach ($users_columns as $users_column) {
             if ($users_column->column_type == UserColumnType::user_name) {
-                $validator_array['column']['name'] = 'required|string|max:255';
+                $base_rules = ['required', 'string', 'max:255'];
+                $validator_array['column']['name'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::login_id) {
-                $validator_array['column']['userid'] = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)];
+                $base_rules = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)];
+                $validator_array['column']['userid'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::user_email) {
                 // $validator_array['column']['email'] = ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)];
-                $validator_array['column']['email'] = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)];
+                $base_rules = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)];
+                $validator_array['column']['email'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::user_password) {
                 // 入力があったら、ここで現在のパスワードチェック
                 $validator_array['column']['now_password'] = [
