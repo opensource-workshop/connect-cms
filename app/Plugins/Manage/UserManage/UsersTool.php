@@ -123,10 +123,10 @@ class UsersTool
      * デフォルト項目の追加バリデーションルールを取得
      *
      * @param array $base_rules 既存の基本バリデーションルール
-     * @param \App\Models\Core\UsersColumns $users_column ユーザカラム情報
+     * @param UsersColumns $users_column ユーザカラム情報
      * @return array 追加ルールが適用されたバリデーションルール
      */
-    public static function getDefaultColumnAdditionalRules(array $base_rules, $users_column) : array
+    public static function getDefaultColumnAdditionalRules(array $base_rules, UsersColumns $users_column) : array
     {
         $additional_rules = [];
         
