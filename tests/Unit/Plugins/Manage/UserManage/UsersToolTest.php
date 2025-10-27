@@ -624,4 +624,54 @@ class UsersToolTest extends TestCase
         $this->assertContains('regex:/^test_login_id$/', $result['column']['userid']);
         $this->assertContains('regex:/^test_user_email$/', $result['column']['email']);
     }
+
+    /**
+     * UserColumnType::supportsValidationSettings: 正しいカラムタイプの配列を返す
+     *
+     * @test
+     */
+    public function testSupportsValidationSettingsReturnsCorrectTypes()
+    {
+        // テスト実行
+        $result = UserColumnType::supportsValidationSettings();
+
+        // 検証: 配列が返される
+        $this->assertIsArray($result);
+
+        // 検証: バリデーション設定をサポートする項目が含まれている
+        $this->assertContains(UserColumnType::text, $result);
+        $this->assertContains(UserColumnType::textarea, $result);
+        $this->assertContains(UserColumnType::mail, $result);
+        $this->assertContains(UserColumnType::user_name, $result);
+        $this->assertContains(UserColumnType::login_id, $result);
+        $this->assertContains(UserColumnType::user_email, $result);
+
+        // 検証: サポートしない項目が含まれていない
+        $this->assertNotContains(UserColumnType::radio, $result);
+        $this->assertNotContains(UserColumnType::checkbox, $result);
+        $this->assertNotContains(UserColumnType::select, $result);
+        $this->assertNotContains(UserColumnType::user_password, $result);
+        $this->assertNotContains(UserColumnType::created_at, $result);
+        $this->assertNotContains(UserColumnType::updated_at, $result);
+    }
+
+    /**
+     * UserColumnType::supportsValidationSettings: in_arrayで使用できる
+     *
+     * @test
+     */
+    public function testSupportsValidationSettingsWorksWithInArray()
+    {
+        $supported_types = UserColumnType::supportsValidationSettings();
+
+        // 検証: サポートする項目はtrue
+        $this->assertTrue(in_array(UserColumnType::text, $supported_types));
+        $this->assertTrue(in_array(UserColumnType::user_name, $supported_types));
+        $this->assertTrue(in_array(UserColumnType::login_id, $supported_types));
+
+        // 検証: サポートしない項目はfalse
+        $this->assertFalse(in_array(UserColumnType::radio, $supported_types));
+        $this->assertFalse(in_array(UserColumnType::user_password, $supported_types));
+        $this->assertFalse(in_array(UserColumnType::created_at, $supported_types));
+    }
 }

@@ -306,13 +306,7 @@ use App\Models\Core\UsersColumns;
                 <br>
             @endif
 
-            @if ($column->column_type == UserColumnType::text || 
-                $column->column_type == UserColumnType::textarea || 
-                $column->column_type == UserColumnType::mail || 
-                $column->column_type == UserColumnType::user_name || 
-                $column->column_type == UserColumnType::login_id || 
-                $column->column_type == UserColumnType::user_email
-            )
+            @if (in_array($column->column_type, UserColumnType::supportsValidationSettings()))
                 {{-- チェック処理の設定 --}}
                 <div class="card form-group" id="div_rule">
                     <h5 class="card-header">チェック処理の設定</h5>
@@ -399,27 +393,19 @@ use App\Models\Core\UsersColumns;
                             </div>
                         @endif
 
-                        @if ($column->column_type == UserColumnType::text || 
-                            $column->column_type == UserColumnType::textarea || 
-                            $column->column_type == UserColumnType::mail || 
-                            $column->column_type == UserColumnType::user_name || 
-                            $column->column_type == UserColumnType::login_id || 
-                            $column->column_type == UserColumnType::user_email
-                        )
-                            {{-- 正規表現設定 --}}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right">正規表現</label>
-                                <div class="col-md-9 align-items-center">
-                                    <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
-                                    @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
-                                    <small class="text-muted">
-                                        ※ エラーメッセージは「正しい形式の＜項目名＞を指定してください。」と表示されるため、併せてキャプションの設定をする事をオススメします。<br>
-                                        ※ （設定例：電話番号ハイフンあり）/0\d{1,4}-\d{1,4}-\d{4}/<br>
-                                        ※ （設定例：指定ドメインのメールアドレスのみ）/@example\.com$/<br>
-                                    </small>
-                                </div>
+                        {{-- 正規表現設定 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right">正規表現</label>
+                            <div class="col-md-9 align-items-center">
+                                <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
+                                @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
+                                <small class="text-muted">
+                                    ※ エラーメッセージは「正しい形式の＜項目名＞を指定してください。」と表示されるため、併せてキャプションの設定をする事をオススメします。<br>
+                                    ※ （設定例：電話番号ハイフンあり）/0\d{1,4}-\d{1,4}-\d{4}/<br>
+                                    ※ （設定例：指定ドメインのメールアドレスのみ）/@example\.com$/<br>
+                                </small>
                             </div>
-                        @endif
+                        </div>
 
                         {{-- ボタンエリア --}}
                         <div class="form-group text-center">
