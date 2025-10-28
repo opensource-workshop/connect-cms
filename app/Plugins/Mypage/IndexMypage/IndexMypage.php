@@ -4,6 +4,7 @@ namespace app\Plugins\Mypage\IndexMypage;
 
 use Illuminate\Support\Facades\Auth;
 use App\Enums\ShowType;
+use App\Models\Core\Configs;
 use App\Plugins\Mypage\MypagePluginBase;
 use App\Plugins\Manage\UserManage\UsersTool;
 
@@ -50,6 +51,8 @@ class IndexMypage extends MypagePluginBase
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
         $users_columns = $users_columns->where('is_show_my_page', ShowType::show);
+        // Configs取得
+        $configs = Configs::getSharedConfigs();
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
@@ -61,6 +64,7 @@ class IndexMypage extends MypagePluginBase
             "user"            => $user,
             "input_cols"      => $input_cols,
             "users_columns"   => $users_columns,
+            'configs'         => $configs,
         ]);
     }
 }

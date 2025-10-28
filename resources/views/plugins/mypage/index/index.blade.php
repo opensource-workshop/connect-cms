@@ -11,6 +11,14 @@
 {{-- マイページ画面メイン部分のコンテンツ section:mypage_content で作ること --}}
 @section('mypage_content')
 
+@if(Configs::getConfigsValueWithHtmlRepair($configs, 'mypage_top_notice'))
+<div class="card mb-3">
+    <div class="card-body">
+        {!! Configs::getConfigsValueWithHtmlRepair($configs, 'mypage_top_notice') !!}
+    </div>
+</div>
+@endif
+
 <div class="card">
     <div class="card-header p-0">
         {{-- 機能選択タブ --}}
@@ -84,5 +92,13 @@
         </div>
     </div>
 </div>
+
+@if(Configs::getConfigsValueWithHtmlRepair($configs, 'mypage_bottom_notice'))
+<div class="card mt-3">
+    <div class="card-body">
+        {!! Configs::getConfigsValueWithHtmlRepair($configs, 'mypage_bottom_notice') !!}
+    </div>
+</div>
+@endif
 
 @endsection
