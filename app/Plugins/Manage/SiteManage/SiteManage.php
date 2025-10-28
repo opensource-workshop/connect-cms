@@ -430,6 +430,20 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->use_mypage]
         );
 
+        // マイページ上部お知らせ
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'mypage_top_notice'],
+            ['category' => 'mypage',
+             'value'    => $request->mypage_top_notice]
+        );
+
+        // マイページ下部お知らせ
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'mypage_bottom_notice'],
+            ['category' => 'mypage',
+             'value'    => $request->mypage_bottom_notice]
+        );
+
         // 画像の保存機能の無効化
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_mousedown_off'],

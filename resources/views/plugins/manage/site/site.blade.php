@@ -343,6 +343,20 @@
                 <small class="form-text text-muted">ユーザ自身でパスワード変更等できるマイページ機能を使用するかどうかを選択</small>
             </div>
 
+            {{-- マイページ上部お知らせ --}}
+            <div class="form-group">
+                <label class="control-label">マイページ－上部お知らせ</label>
+                <textarea name="mypage_top_notice" class="form-control" rows=5>{!! Configs::getConfigsValueAndOld($configs, 'mypage_top_notice', null) !!}</textarea>
+                <small class="form-text text-muted">マイページ（/mypage）の上部に表示するお知らせ（HTML可）</small>
+            </div>
+
+            {{-- マイページ下部お知らせ --}}
+            <div class="form-group">
+                <label class="control-label">マイページ－下部お知らせ</label>
+                <textarea name="mypage_bottom_notice" class="form-control" rows=5>{!! Configs::getConfigsValueAndOld($configs, 'mypage_bottom_notice', null) !!}</textarea>
+                <small class="form-text text-muted">マイページ（/mypage）の下部に表示するお知らせ（HTML可）</small>
+            </div>
+
             {{-- 画像の保存機能の無効化 --}}
             <div class="form-group">
                 <label class="col-form-label">画像の保存機能の無効化</label>

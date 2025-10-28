@@ -4,6 +4,7 @@ namespace app\Plugins\Mypage\IndexMypage;
 
 use Illuminate\Support\Facades\Auth;
 use App\Enums\ShowType;
+use App\Models\Core\Configs;
 use App\Plugins\Mypage\MypagePluginBase;
 use App\Plugins\Manage\UserManage\UsersTool;
 
@@ -50,17 +51,24 @@ class IndexMypage extends MypagePluginBase
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($user->columns_set_id);
         $users_columns = $users_columns->where('is_show_my_page', ShowType::show);
+        // Configs取得
+        $configs = Configs::getSharedConfigs();
+        // マイページお知らせ取得
+        $mypage_top_notice = Configs::getConfigsValueWithHtmlRepair($configs, 'mypage_top_notice');
+        $mypage_bottom_notice = Configs::getConfigsValueWithHtmlRepair($configs, 'mypage_bottom_notice');
 
         // 管理画面プラグインの戻り値の返し方
         // view 関数の第一引数に画面ファイルのパス、第二引数に画面に渡したいデータを名前付き配列で渡し、その結果のHTML。
         return view('plugins.mypage.index.index', [
-            'themes'          => $request->themes,
-            "plugin_name"     => "index",
-            "function"        => __FUNCTION__,
-            "id"              => $user->id,
-            "user"            => $user,
-            "input_cols"      => $input_cols,
-            "users_columns"   => $users_columns,
+            'themes'                => $request->themes,
+            "plugin_name"           => "index",
+            "function"              => __FUNCTION__,
+            "id"                    => $user->id,
+            "user"                  => $user,
+            "input_cols"            => $input_cols,
+            "users_columns"         => $users_columns,
+            'mypage_top_notice'     => $mypage_top_notice,
+            'mypage_bottom_notice'  => $mypage_bottom_notice,
         ]);
     }
 }
