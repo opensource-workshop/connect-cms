@@ -23,14 +23,22 @@ composer run phpcbf-any -- path/to/file
 
 ### テスト
 ```bash
-# PHPUnit テストの実行
+# テストの実行（推奨）
+php artisan test
+
+# 特定のテストファイルの実行例
+php artisan test tests/Unit/Database/Seeders/DefaultConfigsTableSeederTest.php
+
+# PHPUnit による直接実行
 composer run phpunit
 # または
 ./vendor/bin/phpunit
 
-# 特定のテストファイルの実行
+# PHPUnit で特定のテストファイルの実行
 ./vendor/bin/phpunit tests/Feature/SomeTest.php
 ```
+
+**重要**: テストは `php artisan test` コマンドを使用すること。PHPUnitの直接実行よりもLaravelの機能を活用できます。
 
 ### フロントエンド
 ```bash
@@ -72,6 +80,7 @@ npm run watch
 ### PHPコーディング規約
 - phpcs.xml に従った PSR-12 準拠のコーディングスタイル
 - プライベートフィールドには `_` プレフィックスを使用
+- 変数名はスネークケース（例: `$existing_config_names`、`$first_count`）を使用
 
 ## 主要なファイル構造
 
@@ -100,6 +109,8 @@ npm run watch
 - 新機能には対応するテストを作成
 - Feature テストとUnit テストを適切に使い分け
 - テストデータベースは `db-testing` データベースを使用
+- テストの実行は `php artisan test` コマンドを使用
+- 変数名はスネークケース（例: `$first_count`、`$config_name`）を使用
 
 ## ブランチ戦略
 
@@ -133,6 +144,8 @@ PRを作成する際は以下のルールに**必ず**従ってください：
 - チェックリスト
 
 詳細: https://github.com/opensource-workshop/connect-cms/wiki/Pull-requests-Rule
+
+**重要**: PRの本文には、Claude産とわかるようなメッセージ（例: "🤖 Generated with Claude Code"）を含めないこと
 
 ## 記録すべき内容
 
