@@ -19,147 +19,159 @@ class DefaultConfigsTableSeeder extends Seeder
      */
     public function run()
     {
-        if (Configs::count() == 0) {
-            Configs::insert(
-                [
-                    [
-                        'name'=>'base_background_color',
-                        'value'=>null,
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_header_color',
-                        'value'=>null,
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_site_name',
-                        'value'=>'Connect-CMS',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_header_hidden',
-                        'value'=>'0',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_header_fix',
-                        'value'=>'0',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_mousedown_off',
-                        'value'=>'0',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_contextmenu_off',
-                        'value'=>'0',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_touch_callout',
-                        'value'=>'0',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_header_login_link',
-                        'value'=>'1',
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'user_register_enable',
-                        'value'=>'0',
-                        'additional1' => 1,
-                        'category'=>'user_register',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'base_theme',
-                        'value'=>null,
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name'=>'smartphone_menu_template',
-                        'value'=>SmartphoneMenuTemplateType::opencurrenttree,
-                        'additional1' => null,
-                        'category'=>'general',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name' => 'app_log_scope',    // これ以降は取得するログの初期値の設定
-                        'value' => 'select',
-                        'additional1' => null,
-                        'category' => 'app_log',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name' => 'save_log_type_login',
-                        'value' => '1',
-                        'additional1' => null,
-                        'category' => 'app_log',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name' => 'save_log_type_sendmail',
-                        'value' => '1',
-                        'additional1' => null,
-                        'category' => 'app_log',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name' => 'save_log_type_password',
-                        'value' => '1',
-                        'additional1' => null,
-                        'category' => 'app_log',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ],
-                    [
-                        'name' => 'save_log_type_register',
-                        'value' => '1',
-                        'additional1' => null,
-                        'category' => 'app_log',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s'),
-                    ]
-                ]
-            );
+        // 基本設定の投入（個別チェックで冪等性を確保）
+        if (Configs::where('name', 'base_background_color')->count() == 0) {
+            Configs::create([
+                'name' => 'base_background_color',
+                'category' => 'general',
+                'value' => null,
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_header_color')->count() == 0) {
+            Configs::create([
+                'name' => 'base_header_color',
+                'category' => 'general',
+                'value' => null,
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_site_name')->count() == 0) {
+            Configs::create([
+                'name' => 'base_site_name',
+                'category' => 'general',
+                'value' => 'Connect-CMS',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_header_hidden')->count() == 0) {
+            Configs::create([
+                'name' => 'base_header_hidden',
+                'category' => 'general',
+                'value' => '0',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_header_fix')->count() == 0) {
+            Configs::create([
+                'name' => 'base_header_fix',
+                'category' => 'general',
+                'value' => '0',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_mousedown_off')->count() == 0) {
+            Configs::create([
+                'name' => 'base_mousedown_off',
+                'category' => 'general',
+                'value' => '0',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_contextmenu_off')->count() == 0) {
+            Configs::create([
+                'name' => 'base_contextmenu_off',
+                'category' => 'general',
+                'value' => '0',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_touch_callout')->count() == 0) {
+            Configs::create([
+                'name' => 'base_touch_callout',
+                'category' => 'general',
+                'value' => '0',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_header_login_link')->count() == 0) {
+            Configs::create([
+                'name' => 'base_header_login_link',
+                'category' => 'general',
+                'value' => '1',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'user_register_enable')->count() == 0) {
+            Configs::create([
+                'name' => 'user_register_enable',
+                'category' => 'user_register',
+                'value' => '0',
+                'additional1' => 1,
+            ]);
+        }
+
+        if (Configs::where('name', 'base_theme')->count() == 0) {
+            Configs::create([
+                'name' => 'base_theme',
+                'category' => 'general',
+                'value' => null,
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'smartphone_menu_template')->count() == 0) {
+            Configs::create([
+                'name' => 'smartphone_menu_template',
+                'category' => 'general',
+                'value' => SmartphoneMenuTemplateType::opencurrenttree,
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'app_log_scope')->count() == 0) {
+            // 取得するログの初期値の設定
+            Configs::create([
+                'name' => 'app_log_scope',
+                'category' => 'app_log',
+                'value' => 'select',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'save_log_type_login')->count() == 0) {
+            Configs::create([
+                'name' => 'save_log_type_login',
+                'category' => 'app_log',
+                'value' => '1',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'save_log_type_sendmail')->count() == 0) {
+            Configs::create([
+                'name' => 'save_log_type_sendmail',
+                'category' => 'app_log',
+                'value' => '1',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'save_log_type_password')->count() == 0) {
+            Configs::create([
+                'name' => 'save_log_type_password',
+                'category' => 'app_log',
+                'value' => '1',
+                'additional1' => null,
+            ]);
+        }
+
+        if (Configs::where('name', 'save_log_type_register')->count() == 0) {
+            Configs::create([
+                'name' => 'save_log_type_register',
+                'category' => 'app_log',
+                'value' => '1',
+                'additional1' => null,
+            ]);
         }
 
         if (Configs::where('name', 'base_login_password_reset')->count() == 0) {
