@@ -84,6 +84,8 @@
 @if ($post->important == 1 && Auth::user() && (Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]) || $post->created_id == Auth::user()->id))
     <span class="badge badge-pill badge-danger">重要記事に設定</span>
 @endif
+{{-- 承認待ち・一時保存マーク --}}
+@include('plugins.user.blogs.default.include_status_badges')
 
     {{-- 記事本文 --}}
     {!! $post->post_text !!}
