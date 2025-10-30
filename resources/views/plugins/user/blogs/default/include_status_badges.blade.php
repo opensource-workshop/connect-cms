@@ -6,14 +6,14 @@
  * @category ブログプラグイン
 --}}
 {{-- 承認待ち --}}
-@if ($post->status == 2)
+@if ($post->status == StatusType::approval_pending)
     @can('role_update_or_approval',[[$post, $frame->plugin_name, $buckets]])
         <span class="badge badge-warning align-bottom">承認待ち</span>
     @endcan
 @endif
 {{-- 一時保存 --}}
 @can('posts.update',[[$post, $frame->plugin_name, $buckets]])
-    @if ($post->status == 1)
+    @if ($post->status == StatusType::temporary)
         <span class="badge badge-warning align-bottom">一時保存</span>
     @endif
 @endcan
