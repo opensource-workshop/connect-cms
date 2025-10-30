@@ -42,7 +42,7 @@ trait RegistersUsers
 
     /**
      * Show the application registration form.
-     * ユーザー登録画面表示（自動登録）
+     * ユーザー登録画面表示(自動登録)
      *
      * @param  \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
@@ -99,6 +99,9 @@ trait RegistersUsers
         // カラムの登録データ
         $input_cols = null;
 
+        // 条件付き表示の設定を取得
+        $conditional_display_settings = UsersTool::getConditionalDisplaySettings($columns_set_id);
+
         // サイトテーマ詰込
         $tmp_configs = Configs::getSharedConfigs();
         $base_theme = Configs::getConfigsValue($tmp_configs, 'base_theme', null);
@@ -119,6 +122,7 @@ trait RegistersUsers
             'users_columns' => $users_columns,
             'users_columns_id_select' => $users_columns_id_select,
             'input_cols' => $input_cols,
+            'conditional_display_settings' => $conditional_display_settings,
             'themes' => $themes,
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => new UserSection(),

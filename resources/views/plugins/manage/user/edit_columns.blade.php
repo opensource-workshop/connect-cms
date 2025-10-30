@@ -72,6 +72,14 @@
             {{-- 登録後メッセージ表示 --}}
             @include('plugins.common.flash_message')
 
+            {{-- エラーメッセージ（errors_flash_message）表示 --}}
+            @if (session('errors_flash_message'))
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {!! nl2br(e(session('errors_flash_message'))) !!}
+                </div>
+            @endif
+
             {{-- メッセージエリア --}}
             <div class="alert alert-info">
                 @if (config('connect.USE_USERS_COLUMNS_SET'))

@@ -429,4 +429,32 @@ class UsersTool
         }
         return null;
     }
+
+    /**
+     * 条件付き表示の設定情報を取得
+     *
+     * @param int $columns_set_id カラムセットID
+     * @return array 条件付き表示の設定情報の配列
+     */
+    public static function getConditionalDisplaySettings($columns_set_id)
+    {
+        $conditional_columns = UsersColumns::where('columns_set_id', $columns_set_id)
+            ->where('conditional_display_flag', ShowType::show)
+            ->whereNotNull('conditional_trigger_column_id')
+            ->whereNotNull('conditional_operator')
+            ->whereNotNull('conditional_value')
+            ->get();
+
+        $settings = [];
+        foreach ($conditional_columns as $column) {
+            $settings[] = [
+                'target_column_id' => $column->id,
+                'trigger_column_id' => $column->conditional_trigger_column_id,
+                'operator' => $column->conditional_operator,
+                'value' => $column->conditional_value,
+            ];
+        }
+
+        return $settings;
+    }
 }

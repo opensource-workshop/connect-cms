@@ -7,6 +7,7 @@
 --}}
 @php
 use App\Models\Core\UsersColumns;
+use App\Enums\ConditionalOperator;
 @endphp
 
 <tr @if ($column->hide_flag) class="table-secondary" @endif>
@@ -102,6 +103,11 @@ use App\Models\Core\UsersColumns;
             <div class="button-wrapper" data-toggle="tooltip" title="ユーザに必ず必要な項目のため削除できません。">
                 <button class="btn btn-danger btn-sm text-nowrap" disabled><i class="fas fa-trash-alt"></i> 削除</button>
             </div>
+        @elseif (isset($column->is_used_as_trigger) && $column->is_used_as_trigger)
+            {{-- トリガー項目として使用されている --}}
+            <div class="button-wrapper" data-toggle="tooltip" title="この項目は条件付き表示のトリガー項目として使用されているため削除できません。">
+                <button class="btn btn-danger btn-sm text-nowrap" disabled><i class="fas fa-trash-alt"></i> 削除</button>
+            </div>
         @else
             <button class="btn btn-danger btn-sm text-nowrap" onclick="javascript:return submit_delete_column({{ $column->id }});"><i class="fas fa-trash-alt"></i> 削除</button>
         @endif
@@ -157,6 +163,20 @@ use App\Models\Core\UsersColumns;
                 <i class="fas fa-box" data-toggle="tooltip" title="変数名"></i>
                 {{ mb_strimwidth($column->variable_name, 0, 60, '...', 'UTF-8') }}
             </div>
+        @endif
+
+        @if ($column->conditional_display_flag)
+            {{-- 条件付き表示が設定されている場合、設定内容を表示する --}}
+            @php
+                $trigger_column = $columns->firstWhere('id', $column->conditional_trigger_column_id);
+                $operator_text = ConditionalOperator::getDescription($column->conditional_operator);
+            @endphp
+            @if ($trigger_column)
+                <div class="small text-info">
+                    <i class="fas fa-random" data-toggle="tooltip" title="条件付き表示"></i>
+                    トリガー項目: {{ $trigger_column->column_name }} / {{ $operator_text }} / 値: {{ $column->conditional_value }}
+                </div>
+            @endif
         @endif
     </td>
 </tr>
