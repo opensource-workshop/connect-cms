@@ -17,7 +17,7 @@ class ConditionalOperator extends EnumsBase
     const enum = [
         self::equals => '次の値と等しい',
         self::not_equals => '次の値と等しくない',
-        self::is_empty => '空白である',
-        self::is_not_empty => '空白でない',
+        self::is_empty => '未入力である',
+        self::is_not_empty => '未入力でない',
     ];
 }
