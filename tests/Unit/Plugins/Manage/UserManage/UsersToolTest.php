@@ -2,9 +2,14 @@
 
 namespace Tests\Unit\Plugins\Manage\UserManage;
 
+use App\Enums\ConditionalOperator;
+use App\Enums\Required;
+use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Models\Core\UsersColumns;
+use App\Models\Core\UsersColumnsSet;
 use App\Plugins\Manage\UserManage\UsersTool;
+use App\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
 use Tests\TestCase;
@@ -673,5 +678,353 @@ class UsersToolTest extends TestCase
         $this->assertFalse(in_array(UserColumnType::radio, $supported_types));
         $this->assertFalse(in_array(UserColumnType::user_password, $supported_types));
         $this->assertFalse(in_array(UserColumnType::created_at, $supported_types));
+    }
+
+    /**
+     * getConditionalDisplaySettings: 条件付き表示設定が正しく取得できる
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsReturnsCorrectSettings()
+    {
+        // テスト用ユーザーを作成
+        $user = User::factory()->create();
+
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // ターゲット項目を作成（条件付き表示あり）
+        $target_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目',
+            'required' => Required::off,
+            'display_sequence' => 2,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'テスト値',
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: 配列が返される
+        $this->assertIsArray($settings);
+        $this->assertCount(1, $settings);
+
+        // 検証: 正しい設定情報が含まれている
+        $setting = $settings[0];
+        $this->assertEquals($target_column->id, $setting['target_column_id']);
+        $this->assertEquals($trigger_column->id, $setting['trigger_column_id']);
+        $this->assertEquals(UserColumnType::text, $setting['trigger_column_type']);
+        $this->assertEquals(ConditionalOperator::equals, $setting['operator']);
+        $this->assertEquals('テスト値', $setting['value']);
+    }
+
+    /**
+     * getConditionalDisplaySettings: 複数の条件付き表示設定を取得できる
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsReturnsMultipleSettings()
+    {
+        $user = User::factory()->create();
+
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // トリガー項目
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // ターゲット項目1
+        $target_column1 = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目1',
+            'required' => Required::off,
+            'display_sequence' => 2,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => '値1',
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // ターゲット項目2
+        $target_column2 = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目2',
+            'required' => Required::off,
+            'display_sequence' => 3,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::not_equals,
+            'conditional_value' => '値2',
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証
+        $this->assertCount(2, $settings);
+        $this->assertEquals($target_column1->id, $settings[0]['target_column_id']);
+        $this->assertEquals($target_column2->id, $settings[1]['target_column_id']);
+        $this->assertEquals(ConditionalOperator::equals, $settings[0]['operator']);
+        $this->assertEquals(ConditionalOperator::not_equals, $settings[1]['operator']);
+    }
+
+    /**
+     * getConditionalDisplaySettings: is_empty演算子の場合もvalueがnullで取得できる
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsWithIsEmptyOperator()
+    {
+        $user = User::factory()->create();
+
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $target_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目',
+            'required' => Required::off,
+            'display_sequence' => 2,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_empty,
+            'conditional_value' => null,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: is_empty演算子でもvalueがnullで取得できる
+        $this->assertCount(1, $settings);
+        $this->assertEquals(ConditionalOperator::is_empty, $settings[0]['operator']);
+        $this->assertNull($settings[0]['value']);
+    }
+
+    /**
+     * getConditionalDisplaySettings: システム固定項目をトリガーにした場合
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsWithSystemFixedColumn()
+    {
+        $user = User::factory()->create();
+
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // システム固定項目（氏名）をトリガーに
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::user_name,
+            'column_name' => 'ユーザー名',
+            'required' => Required::on,
+            'display_sequence' => 0,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $target_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_not_empty,
+            'conditional_value' => null,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: システム固定項目のcolumn_typeが取得できる
+        $this->assertCount(1, $settings);
+        $this->assertEquals(UserColumnType::user_name, $settings[0]['trigger_column_type']);
+    }
+
+    /**
+     * getConditionalDisplaySettings: 条件付き表示がOFFの項目は取得されない
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsExcludesDisabledSettings()
+    {
+        $user = User::factory()->create();
+
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 条件付き表示OFF
+        UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目',
+            'required' => Required::off,
+            'display_sequence' => 2,
+            'conditional_display_flag' => ShowType::not_show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'テスト値',
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: 条件付き表示OFFの項目は取得されない
+        $this->assertCount(0, $settings);
+    }
+
+    /**
+     * getConditionalDisplaySettings: 空の結果を返す（設定なし）
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsReturnsEmptyArrayWhenNoSettings()
+    {
+        $user = User::factory()->create();
+
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 条件付き表示設定なしの項目のみ
+        UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '通常項目',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: 空の配列が返される
+        $this->assertIsArray($settings);
+        $this->assertCount(0, $settings);
+    }
+
+    /**
+     * getConditionalDisplaySettings: トリガー項目が削除されている場合
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsWhenTriggerColumnDeleted()
+    {
+        $user = User::factory()->create();
+
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 存在しないトリガー項目IDを参照
+        $target_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'ターゲット項目',
+            'required' => Required::off,
+            'display_sequence' => 2,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => 999999,  // 存在しないID
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'テスト値',
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: trigger_column_typeがnullになる
+        $this->assertCount(1, $settings);
+        $this->assertNull($settings[0]['trigger_column_type']);
     }
 }
