@@ -15,8 +15,8 @@ class ConditionalOperator extends EnumsBase
 
     // key/valueの連想配列
     const enum = [
-        self::equals => '次の値と等しい',
-        self::not_equals => '次の値と等しくない',
+        self::equals => '次の値と一致する',
+        self::not_equals => '次の値と一致しない',
         self::is_empty => '未入力である',
         self::is_not_empty => '未入力でない',
     ];
