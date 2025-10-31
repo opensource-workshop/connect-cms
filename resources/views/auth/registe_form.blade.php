@@ -202,11 +202,17 @@ use App\Models\Core\UsersColumns;
         if (targetElement) {
             var formGroup = $(targetElement).closest('.form-group.row');
             if (conditionMet) {
-                formGroup.show();
+                if (formGroup.is(':hidden')) {
+                    formGroup.slideDown(300);
+                }
             } else {
-                formGroup.hide();
-                // 非表示時は入力値をクリア
-                clearInputValue(targetElement);
+                if (formGroup.is(':visible')) {
+                    formGroup.slideUp(300);
+                    // 非表示完了後に入力値をクリア
+                    formGroup.promise().done(function() {
+                        clearInputValue(targetElement);
+                    });
+                }
             }
         }
     }
