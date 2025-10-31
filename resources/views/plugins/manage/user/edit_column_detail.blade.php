@@ -770,10 +770,10 @@ use App\Models\Core\UsersColumns;
                         @php
                             $trigger_column = $trigger_columns->firstWhere('id', $column->conditional_trigger_column_id);
                             $operator_text = match($column->conditional_operator) {
-                                ConditionalOperator::equals => '等しい',
-                                ConditionalOperator::not_equals => '等しくない',
-                                ConditionalOperator::is_empty => '空白である',
-                                ConditionalOperator::is_not_empty => '空白でない',
+                                ConditionalOperator::equals => '一致する',
+                                ConditionalOperator::not_equals => '一致しない',
+                                ConditionalOperator::is_empty => '未入力である',
+                                ConditionalOperator::is_not_empty => '未入力でない',
                                 default => ''
                             };
                         @endphp
@@ -953,7 +953,7 @@ use App\Models\Core\UsersColumns;
     function toggleConditionalValueField() {
         var operator = $('#conditional_operator').val();
         if (operator === 'is_empty' || operator === 'is_not_empty') {
-            // 空白チェックの場合は条件の値入力欄を非表示
+            // 未入力チェックの場合は条件の値入力欄を非表示
             $('#conditional_value_row').hide();
             $('#conditional_value').removeAttr('required');
         } else {
