@@ -429,4 +429,97 @@ class UsersTool
         }
         return null;
     }
+
+    /**
+     * 条件付き表示の設定情報を取得
+     *
+     * @param int $columns_set_id カラムセットID
+     * @return array 条件付き表示の設定情報の配列
+     */
+    public static function getConditionalDisplaySettings($columns_set_id)
+    {
+        $conditional_columns = UsersColumns::where('columns_set_id', $columns_set_id)
+            ->where('conditional_display_flag', ShowType::show)
+            ->whereNotNull('conditional_trigger_column_id')
+            ->whereNotNull('conditional_operator')
+            ->get();
+
+        // トリガー項目を一括取得（N+1クエリ対策）
+        $trigger_ids = $conditional_columns->pluck('conditional_trigger_column_id')->unique();
+        $trigger_columns = UsersColumns::whereIn('id', $trigger_ids)->get()->keyBy('id');
+
+        $settings = [];
+        foreach ($conditional_columns as $column) {
+            $trigger_column = $trigger_columns->get($column->conditional_trigger_column_id);
+
+            $settings[] = [
+                'target_column_id' => $column->id,
+                'trigger_column_id' => $column->conditional_trigger_column_id,
+                'trigger_column_type' => $trigger_column ? $trigger_column->column_type : null,
+                'operator' => $column->conditional_operator,
+                'value' => $column->conditional_value,
+            ];
+        }
+
+        return $settings;
+    }
+
+    /**
+     * 循環依存をチェックする
+     *
+     * 指定された項目をトリガーに設定した場合、循環依存が発生しないかをチェックします。
+     * 例: A→B→C→A のような循環参照を検出
+     *
+     * @param int $column_id 条件付き表示を設定する項目のID
+     * @param int $trigger_column_id トリガーとして設定しようとしている項目のID
+     * @param int $columns_set_id 項目セットID
+     * @return bool 循環依存がある場合true、ない場合false
+     */
+    public static function hasCyclicDependency($column_id, $trigger_column_id, $columns_set_id)
+    {
+        // トリガー項目が設定されていない場合は循環しない
+        if (empty($trigger_column_id)) {
+            return false;
+        }
+
+        // 訪問済みノードを記録（無限ループ防止）
+        $visited = [];
+
+        // 探索スタック（深さ優先探索）
+        $stack = [$trigger_column_id];
+
+        // 同一項目セット内の条件付き表示設定を一度に取得（パフォーマンス最適化）
+        $conditional_columns = UsersColumns::where('columns_set_id', $columns_set_id)
+            ->where('conditional_display_flag', ShowType::show)
+            ->whereNotNull('conditional_trigger_column_id')
+            ->get()
+            ->keyBy('id');
+
+        while (!empty($stack)) {
+            $current_id = array_pop($stack);
+
+            // 自分自身に到達したら循環依存を検出
+            if ($current_id == $column_id) {
+                return true;
+            }
+
+            // 既に訪問済みの場合はスキップ
+            if (in_array($current_id, $visited)) {
+                continue;
+            }
+
+            // 訪問済みとしてマーク
+            $visited[] = $current_id;
+
+            // 現在のノードがトリガーとして設定されているか確認
+            $current_column = $conditional_columns->get($current_id);
+            if ($current_column && $current_column->conditional_trigger_column_id) {
+                // 次のトリガーをスタックに追加
+                $stack[] = $current_column->conditional_trigger_column_id;
+            }
+        }
+
+        // 循環依存なし
+        return false;
+    }
 }

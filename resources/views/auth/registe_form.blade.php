@@ -22,6 +22,9 @@ use App\Models\Core\UsersColumns;
     $(function () {
         /** ツールチップ有効化 */
         $('[data-toggle="tooltip"]').tooltip();
+
+        // 条件付き表示の初期化
+        initConditionalDisplay();
     });
 
     /** 項目セット変更submit */
@@ -39,6 +42,250 @@ use App\Models\Core\UsersColumns;
             document.forms['form_register'].action = '{{route('show_register_form.re_show')}}';
         @endif
         document.forms['form_register'].submit();
+    }
+
+    /**
+     * 条件付き表示の初期化
+     */
+    function initConditionalDisplay() {
+        @if (isset($conditional_display_settings) && !empty($conditional_display_settings))
+            var settings = {!! json_encode($conditional_display_settings) !!};
+
+            // 各トリガー項目に対してchangeイベントを設定
+            settings.forEach(function(setting) {
+                // 初回表示時の判定
+                evaluateCondition(setting);
+
+                // 値変更時のイベントリスナーを設定
+                attachEventListeners(setting);
+            });
+        @endif
+    }
+
+    /**
+     * イベントリスナーを設定
+     */
+    function attachEventListeners(setting) {
+        var columnId = setting.trigger_column_id;
+        var columnType = setting.trigger_column_type;
+
+        // システム固定項目の場合
+        if (columnType) {
+            var fixedElement = null;
+            switch(columnType) {
+                case 'user_name':
+                    fixedElement = document.getElementById('name');
+                    break;
+                case 'login_id':
+                    fixedElement = document.getElementById('userid');
+                    break;
+                case 'user_email':
+                    fixedElement = document.getElementById('email');
+                    break;
+                case 'user_password':
+                    fixedElement = document.getElementById('password');
+                    break;
+            }
+            if (fixedElement) {
+                $(fixedElement).on('change input', function() {
+                    evaluateCondition(setting);
+                });
+                return;
+            }
+        }
+
+        // 各入力タイプに応じてイベントリスナーを設定
+        // 1. id="user-column-{id}" の要素（テキスト入力、所属型セレクトボックス）
+        var idElement = document.getElementById('user-column-' + columnId);
+        if (idElement) {
+            $(idElement).on('change input', function() {
+                evaluateCondition(setting);
+            });
+            return; // 見つかったので他の検索は不要
+        }
+
+        // 2. ラジオボタン（users_columns_value[{id}]）
+        var radioElements = document.querySelectorAll('input[name="users_columns_value[' + columnId + ']"]');
+        if (radioElements.length > 0) {
+            $(radioElements).on('change', function() {
+                evaluateCondition(setting);
+            });
+            return;
+        }
+
+        // 3. チェックボックス・同意型（users_columns_value[{id}][]）
+        var checkboxElements = document.querySelectorAll('input[name="users_columns_value[' + columnId + '][]"]');
+        if (checkboxElements.length > 0) {
+            $(checkboxElements).on('change', function() {
+                evaluateCondition(setting);
+            });
+            return;
+        }
+    }
+
+    /**
+     * 入力要素を検索
+     */
+    function findInputElement(columnId, columnType) {
+        // システム固定項目の場合、固定のname/idを使用
+        if (columnType) {
+            var fixedElement = null;
+            switch(columnType) {
+                case 'user_name':
+                    fixedElement = document.getElementById('name');
+                    break;
+                case 'login_id':
+                    fixedElement = document.getElementById('userid');
+                    break;
+                case 'user_email':
+                    fixedElement = document.getElementById('email');
+                    break;
+                case 'user_password':
+                    fixedElement = document.getElementById('password');
+                    break;
+            }
+            if (fixedElement) {
+                return fixedElement;
+            }
+        }
+
+        // 1. user-column-{id} のIDを持つ要素を探す（テキスト入力）
+        var element = document.getElementById('user-column-' + columnId);
+        if (element) {
+            return element;
+        }
+
+        // 2. name="users_columns_value[{id}]" のラジオボタンを探す
+        var elements = document.querySelectorAll('input[name="users_columns_value[' + columnId + ']"]');
+        if (elements.length > 0) {
+            return elements[0];
+        }
+
+        // 3. name="users_columns_value[{id}][]" のチェックボックス・同意型を探す
+        elements = document.querySelectorAll('input[name="users_columns_value[' + columnId + '][]"]');
+        if (elements.length > 0) {
+            return elements[0];
+        }
+
+        // 4. name="users_columns_value[{id}]" の所属型セレクトボックスを探す
+        element = document.querySelector('select[name="users_columns_value[' + columnId + ']"]');
+        if (element) {
+            return element;
+        }
+
+        return null;
+    }
+
+    /**
+     * 条件を評価して対象項目の表示/非表示を切り替え
+     */
+    function evaluateCondition(setting) {
+        var triggerElement = findInputElement(setting.trigger_column_id, setting.trigger_column_type);
+        var triggerValue = getInputValue(triggerElement);
+        var conditionMet = false;
+
+        // 条件評価
+        if (setting.operator === 'equals') {
+            conditionMet = (triggerValue == setting.value);
+        } else if (setting.operator === 'not_equals') {
+            conditionMet = (triggerValue != setting.value);
+        } else if (setting.operator === 'is_empty') {
+            // 空白である（空文字または未選択）
+            conditionMet = (triggerValue === '' || triggerValue === null || triggerValue === undefined);
+        } else if (setting.operator === 'is_not_empty') {
+            // 空白でない
+            conditionMet = (triggerValue !== '' && triggerValue !== null && triggerValue !== undefined);
+        }
+
+        // 対象項目のform-group rowを表示/非表示
+        var targetElement = findInputElement(setting.target_column_id);
+        if (targetElement) {
+            var formGroup = $(targetElement).closest('.form-group.row');
+            if (conditionMet) {
+                if (formGroup.is(':hidden')) {
+                    formGroup.slideDown(300);
+                }
+            } else {
+                if (formGroup.is(':visible')) {
+                    formGroup.slideUp(300);
+                    // 非表示完了後に入力値をクリア
+                    formGroup.promise().done(function() {
+                        clearInputValue(targetElement);
+                    });
+                }
+            }
+        }
+    }
+
+    /**
+     * 入力要素の値を取得
+     */
+    function getInputValue(element) {
+        if (!element) {
+            return '';
+        }
+
+        var elementName = element.name;
+
+        // 複数選択チェックボックス（name="columns[X][]"）の場合
+        if (elementName && elementName.endsWith('[]')) {
+            var checkedElements = document.querySelectorAll('input[name="' + elementName + '"]:checked');
+            var values = [];
+            checkedElements.forEach(function(el) {
+                values.push(el.value);
+            });
+            // カンマ区切りで返す（複数選択の場合）
+            return values.join(',');
+        }
+
+        // ラジオボタン・単一チェックボックスの場合
+        if (element.type === 'radio' || element.type === 'checkbox') {
+            var checkedElement = document.querySelector('input[name="' + elementName + '"]:checked');
+            return checkedElement ? checkedElement.value : '';
+        }
+
+        // セレクトボックスの場合
+        if (element.tagName === 'SELECT') {
+            // 所属型セレクトボックス（users_columns_value[X]）の場合、テキストを返す
+            if (elementName && elementName.match(/^users_columns_value\[\d+\]$/)) {
+                var selectedOption = element.options[element.selectedIndex];
+                return selectedOption ? selectedOption.text : '';
+            }
+            // その他のセレクトボックスはvalueを返す
+            return element.options[element.selectedIndex]?.value || '';
+        }
+
+        // その他の入力要素（テキスト等）
+        return element.value || '';
+    }
+
+    /**
+     * 入力要素の値をクリア
+     */
+    function clearInputValue(element) {
+        if (!element) {
+            return;
+        }
+
+        var elementName = element.name;
+
+        // ラジオボタン・チェックボックスの場合、すべてのチェックを外す
+        if (element.type === 'radio' || element.type === 'checkbox') {
+            var elements = document.querySelectorAll('input[name="' + elementName + '"]');
+            elements.forEach(function(el) {
+                el.checked = false;
+            });
+            return;
+        }
+
+        // セレクトボックスの場合、最初のオプションを選択
+        if (element.tagName === 'SELECT') {
+            element.selectedIndex = 0;
+            return;
+        }
+
+        // その他の入力要素（テキスト等）
+        element.value = '';
     }
 </script>
 

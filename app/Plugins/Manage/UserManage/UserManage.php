@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Manage\UserManage;
 
+use App\Enums\ConditionalOperator;
 use App\Enums\CsvCharacterCode;
 use App\Enums\EditType;
 use App\Enums\Required;
@@ -2635,6 +2636,14 @@ class UserManage extends ManagePluginBase
         // ユーザーのカラム
         $columns = UsersTool::getUsersColumns($id);
 
+        // トリガー項目として使用されている項目IDを取得
+        $trigger_column_ids = UsersColumns::where('columns_set_id', $id)
+            ->where('conditional_display_flag', ShowType::show)
+            ->whereNotNull('conditional_trigger_column_id')
+            ->distinct()
+            ->pluck('conditional_trigger_column_id')
+            ->toArray();
+
         foreach ($columns as &$column) {
             if (UsersColumns::isSelectColumnType($column->column_type)) {
                 // 選択肢
@@ -2646,6 +2655,9 @@ class UserManage extends ManagePluginBase
             } else {
                 $column->selects = collect();
             }
+
+            // トリガー項目として使用されているかのフラグを追加
+            $column->is_used_as_trigger = in_array($column->id, $trigger_column_ids);
         }
 
         return view('plugins.manage.user.edit_columns', [
@@ -2741,12 +2753,23 @@ class UserManage extends ManagePluginBase
         $column->column_type = $request->$str_column_type;
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 
+        $messages = [];
+
         if (UsersColumns::isShowOnlyColumnType($column->column_type)) {
             $column->required = Required::off;
-            $message = '項目【 '.$column->column_name.' 】を更新し、表示のみの型のため、必須入力を【 off 】に設定しました。';
+            $messages[] = '表示のみの型のため、必須入力を【 off 】に設定しました';
         } else {
             // 通常
             $column->required = $request->$str_required ? Required::on : Required::off;
+
+            // 必須ONに変更した場合、条件付き表示をOFFにする
+            if ($column->required == Required::on && $column->conditional_display_flag == ShowType::show) {
+                $column->conditional_display_flag = ShowType::not_show;
+                $column->conditional_trigger_column_id = null;
+                $column->conditional_operator = null;
+                $column->conditional_value = null;
+                $messages[] = '必須入力ONのため、条件付き表示を【 OFF 】に設定しました';
+            }
         }
 
         // 固定項目以外
@@ -2754,8 +2777,13 @@ class UserManage extends ManagePluginBase
             // 必須入力
             if ($column->required == Required::on) {
                 $column->is_show_auto_regist = ShowType::show;
-                $message = '項目【 '.$column->column_name.' 】を更新し、必須入力のため、自動登録時の表示指定【 '.ShowType::getDescription($column->is_show_auto_regist).' 】を設定しました。';
+                $messages[] = '必須入力のため、自動登録時の表示指定【 '.ShowType::getDescription($column->is_show_auto_regist).' 】を設定しました';
             }
+        }
+
+        // メッセージの生成
+        if (!empty($messages)) {
+            $message = '項目【 '.$column->column_name.' 】を更新し、' . implode('。また、', $messages) . '。';
         }
 
         $column->save();
@@ -2835,8 +2863,30 @@ class UserManage extends ManagePluginBase
         // 明細行から削除対象の項目名を抽出
         $str_column_name = "column_name_"."$request->column_id";
 
-        // 所属型の関連テーブルを削除
         $users_column = UsersColumns::findOrFail($request->column_id);
+
+        // この項目をトリガーにしている項目がないかチェック
+        $dependent_columns = UsersColumns::where('columns_set_id', $request->columns_set_id)
+            ->where('conditional_display_flag', ShowType::show)
+            ->where('conditional_trigger_column_id', $request->column_id)
+            ->get();
+
+        if ($dependent_columns->count() > 0) {
+            // トリガーとして使用されている場合は削除不可（HTMLエスケープ）
+            $dependent_names_escaped = $dependent_columns->pluck('column_name')
+                ->map(function ($name) {
+                    return e($name);
+                })
+                ->toArray();
+
+            $error_message = '項目【 '. e($request->$str_column_name) .' 】は以下の項目のトリガーとして使用されているため削除できません。<br>';
+            $error_message .= '先に以下の項目の条件付き表示をOFFにしてから削除してください。<br>';
+            $error_message .= '・' . implode('<br>・', $dependent_names_escaped);
+
+            return redirect()->back()->with('errors_flash_message', $error_message);
+        }
+
+        // 所属型の関連テーブルを削除
         if ($users_column->column_type === UserColumnType::affiliation) {
             UserSection::query()->delete();
             Section::query()->delete();
@@ -2879,14 +2929,24 @@ class UserManage extends ManagePluginBase
         $selects = UsersColumnsSelects::where('users_columns_id', $column->id)->orderby('display_sequence')->get();
         $select_agree = $selects->first() ?? new UsersColumnsSelects();
 
+        // トリガー候補の項目を取得
+        // 条件：自分自身を除く（システム固定項目・カスタム必須項目も含める）
+        // ただし、登録フォームに表示されない項目（登録日時、更新日時）は除外
+        $trigger_columns = UsersColumns::where('columns_set_id', $column->columns_set_id)
+            ->where('id', '!=', $id)  // 自分自身を除外
+            ->whereNotIn('column_type', UserColumnType::showOnlyColumnTypes())
+            ->orderBy('display_sequence')
+            ->get();
+
         return view('plugins.manage.user.edit_column_detail', [
-            "function"     => __FUNCTION__,
-            "plugin_name"  => "user",
-            'columns_set'  => $columns_set,
-            'column'       => $column,
-            'selects'      => $selects,
-            'select_agree' => $select_agree,
-            'sections'     => Section::orderBy('display_sequence')->get(),
+            "function"        => __FUNCTION__,
+            "plugin_name"     => "user",
+            'columns_set'     => $columns_set,
+            'column'          => $column,
+            'selects'         => $selects,
+            'select_agree'    => $select_agree,
+            'sections'        => Section::orderBy('display_sequence')->get(),
+            'trigger_columns' => $trigger_columns,
         ]);
     }
 
@@ -2932,6 +2992,55 @@ class UserManage extends ManagePluginBase
             $validator_attributes['variable_name'] = '変数名';
         }
 
+        // カラム取得
+        $column = UsersColumns::where('id', $request->column_id)->where('columns_set_id', $request->columns_set_id)->first();
+        if (!$column) {
+            abort(404, 'カラムデータがありません。');
+        }
+
+        // システム固定項目または必須項目は条件付き表示を設定できない
+        if (UsersColumns::isFixedColumnType($column->column_type) || $column->required == Required::on) {
+            // 強制的に条件付き表示をOFFにする
+            $request->merge(['conditional_display_flag' => ShowType::not_show]);
+        }
+
+        // 条件付き表示のバリデーション
+        if ($request->conditional_display_flag == ShowType::show) {
+            $validator_values['conditional_trigger_column_id'] = ['required'];
+            $validator_values['conditional_operator'] = ['required'];
+
+            // 空白チェック（is_empty, is_not_empty）以外の場合のみ条件の値を必須にする
+            if ($request->conditional_operator !== ConditionalOperator::is_empty &&
+                $request->conditional_operator !== ConditionalOperator::is_not_empty) {
+                $validator_values['conditional_value'] = ['required', 'string', 'max:255'];
+            }
+
+            $validator_attributes['conditional_trigger_column_id'] = 'トリガーとなる項目';
+            $validator_attributes['conditional_operator'] = '表示する条件';
+            $validator_attributes['conditional_value'] = '条件の値';
+
+            // トリガー項目の追加バリデーション
+            $validator_values['conditional_trigger_column_id'][] = function ($attribute, $value, $fail) use ($column) {
+                if ($value) {
+                    $trigger_column = UsersColumns::find($value);
+                    if ($trigger_column) {
+                        // 自分自身をトリガーにできない
+                        if ($trigger_column->id == $column->id) {
+                            $fail('トリガーとなる項目に自分自身は設定できません。');
+                        }
+                        // 同じ項目セットに属していることを確認
+                        if ($trigger_column->columns_set_id != $column->columns_set_id) {
+                            $fail('トリガーとなる項目は同じ項目セットに属している必要があります。');
+                        }
+                        // 循環依存チェック（A→B→C→Aのような循環参照を防止）
+                        if (UsersTool::hasCyclicDependency($column->id, $value, $column->columns_set_id)) {
+                            $fail('この設定により循環依存が発生します。トリガーとなる項目の依存関係を確認してください。');
+                        }
+                    }
+                }
+            };
+        }
+
         // エラーチェック
         if ($validator_values) {
             $validator = Validator::make($request->all(), $validator_values);
@@ -2941,9 +3050,6 @@ class UserManage extends ManagePluginBase
                 return redirect()->back()->withErrors($validator)->withInput();
             }
         }
-
-
-        $column = UsersColumns::where('id', $request->column_id)->where('columns_set_id', $request->columns_set_id)->first();
 
         // 項目の更新処理
         $column->caption = $request->caption;
@@ -2972,6 +3078,20 @@ class UserManage extends ManagePluginBase
         $column->rule_min = $request->rule_min;
         // 正規表現
         $column->rule_regex = $request->rule_regex;
+
+        // 条件付き表示設定の更新
+        $column->conditional_display_flag = $request->conditional_display_flag ?? ShowType::not_show;
+
+        if ($column->conditional_display_flag == ShowType::show) {
+            $column->conditional_trigger_column_id = $request->conditional_trigger_column_id;
+            $column->conditional_operator = $request->conditional_operator;
+            $column->conditional_value = $request->conditional_value;
+        } else {
+            // OFFの場合はクリア
+            $column->conditional_trigger_column_id = null;
+            $column->conditional_operator = null;
+            $column->conditional_value = null;
+        }
 
         // 保存
         $column->save();

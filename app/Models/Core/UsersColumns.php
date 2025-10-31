@@ -36,6 +36,10 @@ class UsersColumns extends Model
         'rule_regex',
         'rule_word_count',
         'display_sequence',
+        'conditional_display_flag',
+        'conditional_trigger_column_id',
+        'conditional_operator',
+        'conditional_value',
     ];
 
     /**
