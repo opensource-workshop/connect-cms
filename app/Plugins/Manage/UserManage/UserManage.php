@@ -2923,7 +2923,6 @@ class UserManage extends ManagePluginBase
         // 条件：自分自身のみを除く（システム固定項目・カスタム必須項目も含める）
         $trigger_columns = UsersColumns::where('columns_set_id', $column->columns_set_id)
             ->where('id', '!=', $id)  // 自分自身を除外
-            ->whereNotIn('column_type', UserColumnType::loopNotShowColumnTypes())  // 非表示項目を除外
             ->orderBy('display_sequence')
             ->get();
 
