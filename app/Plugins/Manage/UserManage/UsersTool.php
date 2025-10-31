@@ -447,9 +447,13 @@ class UsersTool
 
         $settings = [];
         foreach ($conditional_columns as $column) {
+            // トリガー項目の情報を取得
+            $trigger_column = UsersColumns::find($column->conditional_trigger_column_id);
+
             $settings[] = [
                 'target_column_id' => $column->id,
                 'trigger_column_id' => $column->conditional_trigger_column_id,
+                'trigger_column_type' => $trigger_column ? $trigger_column->column_type : null,
                 'operator' => $column->conditional_operator,
                 'value' => $column->conditional_value,
             ];

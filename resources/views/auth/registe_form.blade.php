@@ -67,6 +67,32 @@ use App\Models\Core\UsersColumns;
      */
     function attachEventListeners(setting) {
         var columnId = setting.trigger_column_id;
+        var columnType = setting.trigger_column_type;
+
+        // システム固定項目の場合
+        if (columnType) {
+            var fixedElement = null;
+            switch(columnType) {
+                case 'user_name':
+                    fixedElement = document.getElementById('name');
+                    break;
+                case 'login_id':
+                    fixedElement = document.getElementById('userid');
+                    break;
+                case 'user_email':
+                    fixedElement = document.getElementById('email');
+                    break;
+                case 'user_password':
+                    fixedElement = document.getElementById('password');
+                    break;
+            }
+            if (fixedElement) {
+                $(fixedElement).on('change input', function() {
+                    evaluateCondition(setting);
+                });
+                return;
+            }
+        }
 
         // 各入力タイプに応じてイベントリスナーを設定
         // 1. id="user-column-{id}" の要素（テキスト入力、所属型セレクトボックス）
@@ -100,7 +126,29 @@ use App\Models\Core\UsersColumns;
     /**
      * 入力要素を検索
      */
-    function findInputElement(columnId) {
+    function findInputElement(columnId, columnType) {
+        // システム固定項目の場合、固定のname/idを使用
+        if (columnType) {
+            var fixedElement = null;
+            switch(columnType) {
+                case 'user_name':
+                    fixedElement = document.getElementById('name');
+                    break;
+                case 'login_id':
+                    fixedElement = document.getElementById('userid');
+                    break;
+                case 'user_email':
+                    fixedElement = document.getElementById('email');
+                    break;
+                case 'user_password':
+                    fixedElement = document.getElementById('password');
+                    break;
+            }
+            if (fixedElement) {
+                return fixedElement;
+            }
+        }
+
         // 1. user-column-{id} のIDを持つ要素を探す（テキスト入力）
         var element = document.getElementById('user-column-' + columnId);
         if (element) {
@@ -132,7 +180,7 @@ use App\Models\Core\UsersColumns;
      * 条件を評価して対象項目の表示/非表示を切り替え
      */
     function evaluateCondition(setting) {
-        var triggerElement = findInputElement(setting.trigger_column_id);
+        var triggerElement = findInputElement(setting.trigger_column_id, setting.trigger_column_type);
         var triggerValue = getInputValue(triggerElement);
         var conditionMet = false;
 
