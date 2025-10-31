@@ -2867,16 +2867,21 @@ class UserManage extends ManagePluginBase
 
         // この項目をトリガーにしている項目がないかチェック
         $dependent_columns = UsersColumns::where('columns_set_id', $request->columns_set_id)
-            ->where('conditional_display_flag', 1)
+            ->where('conditional_display_flag', ShowType::show)
             ->where('conditional_trigger_column_id', $request->column_id)
             ->get();
 
         if ($dependent_columns->count() > 0) {
-            // トリガーとして使用されている場合は削除不可
-            $dependent_names = $dependent_columns->pluck('column_name')->toArray();
-            $error_message = '項目【 '. $request->$str_column_name .' 】は以下の項目のトリガーとして使用されているため削除できません。<br>';
+            // トリガーとして使用されている場合は削除不可（HTMLエスケープ）
+            $dependent_names_escaped = $dependent_columns->pluck('column_name')
+                ->map(function ($name) {
+                    return e($name);
+                })
+                ->toArray();
+
+            $error_message = '項目【 '. e($request->$str_column_name) .' 】は以下の項目のトリガーとして使用されているため削除できません。<br>';
             $error_message .= '先に以下の項目の条件付き表示をOFFにしてから削除してください。<br>';
-            $error_message .= '・' . implode('<br>・', $dependent_names);
+            $error_message .= '・' . implode('<br>・', $dependent_names_escaped);
 
             return redirect()->back()->with('errors_flash_message', $error_message);
         }
