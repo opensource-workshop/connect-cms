@@ -3032,6 +3032,10 @@ class UserManage extends ManagePluginBase
                         if ($trigger_column->columns_set_id != $column->columns_set_id) {
                             $fail('トリガーとなる項目は同じ項目セットに属している必要があります。');
                         }
+                        // 循環依存チェック（A→B→C→Aのような循環参照を防止）
+                        if (UsersTool::hasCyclicDependency($column->id, $value, $column->columns_set_id)) {
+                            $fail('この設定により循環依存が発生します。トリガーとなる項目の依存関係を確認してください。');
+                        }
                     }
                 }
             };

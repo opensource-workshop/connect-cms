@@ -1027,4 +1027,320 @@ class UsersToolTest extends TestCase
         $this->assertCount(1, $settings);
         $this->assertNull($settings[0]['trigger_column_type']);
     }
+
+    /**
+     * hasCyclicDependency: 循環依存がない場合はfalseを返す
+     *
+     * @test
+     */
+    public function testHasCyclicDependencyReturnsFalseWhenNoCycle()
+    {
+        // テスト用ユーザーを作成
+        $user = User::factory()->create();
+
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 項目A、B、Cを作成（A→B→Cの依存関係）
+        $column_a = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目A',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_b = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目B',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_a->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 2,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_c = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目C',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_b->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 3,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行: Aのトリガーとして新しい項目Dを設定しても循環しない
+        $has_cycle = UsersTool::hasCyclicDependency($column_a->id, 999, $columns_set->id);
+
+        // 検証: 循環依存なし
+        $this->assertFalse($has_cycle);
+    }
+
+    /**
+     * hasCyclicDependency: 直接的な循環依存を検出する（A→B→A）
+     *
+     * @test
+     */
+    public function testHasCyclicDependencyDetectsDirectCycle()
+    {
+        // テスト用ユーザーを作成
+        $user = User::factory()->create();
+
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 項目A、Bを作成
+        $column_a = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目A',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_b = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目B',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_a->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 2,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行: AのトリガーとしてBを設定すると循環する（A→B→A）
+        $has_cycle = UsersTool::hasCyclicDependency($column_a->id, $column_b->id, $columns_set->id);
+
+        // 検証: 循環依存あり
+        $this->assertTrue($has_cycle);
+    }
+
+    /**
+     * hasCyclicDependency: 間接的な循環依存を検出する（A→B→C→A）
+     *
+     * @test
+     */
+    public function testHasCyclicDependencyDetectsIndirectCycle()
+    {
+        // テスト用ユーザーを作成
+        $user = User::factory()->create();
+
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 項目A、B、Cを作成（B→C、C→Aと設定）
+        $column_a = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目A',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_b = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目B',
+            'required' => Required::off,
+            'display_sequence' => 2,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_c = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目C',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_b->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 3,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // Cのトリガーとして、さらにAを設定
+        $column_a->update([
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_c->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+        ]);
+
+        // テスト実行: BのトリガーとしてAを設定すると循環する（B→A→C→B）
+        $has_cycle = UsersTool::hasCyclicDependency($column_b->id, $column_a->id, $columns_set->id);
+
+        // 検証: 循環依存あり
+        $this->assertTrue($has_cycle);
+    }
+
+    /**
+     * hasCyclicDependency: トリガーが未設定の場合はfalseを返す
+     *
+     * @test
+     */
+    public function testHasCyclicDependencyReturnsFalseWhenNoTrigger()
+    {
+        // テスト用ユーザーを作成
+        $user = User::factory()->create();
+
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 項目Aを作成
+        $column_a = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目A',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // テスト実行: トリガーがnullの場合
+        $has_cycle = UsersTool::hasCyclicDependency($column_a->id, null, $columns_set->id);
+
+        // 検証: 循環依存なし
+        $this->assertFalse($has_cycle);
+    }
+
+    /**
+     * hasCyclicDependency: 複雑な依存関係でも循環を正しく検出する
+     *
+     * @test
+     */
+    public function testHasCyclicDependencyDetectsComplexCycle()
+    {
+        // テスト用ユーザーを作成
+        $user = User::factory()->create();
+
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // 項目A, B, C, D, Eを作成（A→B→D、C→D、D→Eの依存関係）
+        $column_a = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目A',
+            'required' => Required::off,
+            'display_sequence' => 1,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_b = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目B',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_a->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 2,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_c = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目C',
+            'required' => Required::off,
+            'display_sequence' => 3,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_d = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目D',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_b->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 4,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        $column_e = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目E',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_d->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+            'display_sequence' => 5,
+            'created_id' => $user->id,
+            'updated_id' => $user->id,
+        ]);
+
+        // Cのトリガーとして、Dを設定（C→D）
+        $column_c->update([
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_d->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'test',
+        ]);
+
+        // テスト実行1: EのトリガーとしてCを設定しても循環しない（E→C→D→B→Aで終わり）
+        $has_cycle1 = UsersTool::hasCyclicDependency($column_e->id, $column_c->id, $columns_set->id);
+        $this->assertFalse($has_cycle1);
+
+        // テスト実行2: AのトリガーとしてEを設定すると循環する（A→E→D→B→A）
+        $has_cycle2 = UsersTool::hasCyclicDependency($column_a->id, $column_e->id, $columns_set->id);
+        $this->assertTrue($has_cycle2);
+    }
 }
