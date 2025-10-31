@@ -442,7 +442,6 @@ class UsersTool
             ->where('conditional_display_flag', ShowType::show)
             ->whereNotNull('conditional_trigger_column_id')
             ->whereNotNull('conditional_operator')
-            ->whereNotNull('conditional_value')
             ->get();
 
         $settings = [];
