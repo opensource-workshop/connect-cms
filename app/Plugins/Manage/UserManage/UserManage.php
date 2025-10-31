@@ -2753,9 +2753,11 @@ class UserManage extends ManagePluginBase
         $column->column_type = $request->$str_column_type;
         $message = '項目【 '. $column->column_name .' 】を更新しました。';
 
+        $messages = [];
+
         if (UsersColumns::isShowOnlyColumnType($column->column_type)) {
             $column->required = Required::off;
-            $message = '項目【 '.$column->column_name.' 】を更新し、表示のみの型のため、必須入力を【 off 】に設定しました。';
+            $messages[] = '表示のみの型のため、必須入力を【 off 】に設定しました';
         } else {
             // 通常
             $column->required = $request->$str_required ? Required::on : Required::off;
@@ -2766,7 +2768,7 @@ class UserManage extends ManagePluginBase
                 $column->conditional_trigger_column_id = null;
                 $column->conditional_operator = null;
                 $column->conditional_value = null;
-                $message = '項目【 '.$column->column_name.' 】を更新し、必須入力ONのため、条件付き表示を【 OFF 】に設定しました。';
+                $messages[] = '必須入力ONのため、条件付き表示を【 OFF 】に設定しました';
             }
         }
 
@@ -2775,10 +2777,13 @@ class UserManage extends ManagePluginBase
             // 必須入力
             if ($column->required == Required::on) {
                 $column->is_show_auto_regist = ShowType::show;
-                if (!strpos($message, '条件付き表示')) {
-                    $message = '項目【 '.$column->column_name.' 】を更新し、必須入力のため、自動登録時の表示指定【 '.ShowType::getDescription($column->is_show_auto_regist).' 】を設定しました。';
-                }
+                $messages[] = '必須入力のため、自動登録時の表示指定【 '.ShowType::getDescription($column->is_show_auto_regist).' 】を設定しました';
             }
+        }
+
+        // メッセージの生成
+        if (!empty($messages)) {
+            $message = '項目【 '.$column->column_name.' 】を更新し、' . implode('。また、', $messages) . '。';
         }
 
         $column->save();
