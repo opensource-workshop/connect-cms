@@ -444,10 +444,13 @@ class UsersTool
             ->whereNotNull('conditional_operator')
             ->get();
 
+        // トリガー項目を一括取得（N+1クエリ対策）
+        $trigger_ids = $conditional_columns->pluck('conditional_trigger_column_id')->unique();
+        $trigger_columns = UsersColumns::whereIn('id', $trigger_ids)->get()->keyBy('id');
+
         $settings = [];
         foreach ($conditional_columns as $column) {
-            // トリガー項目の情報を取得
-            $trigger_column = UsersColumns::find($column->conditional_trigger_column_id);
+            $trigger_column = $trigger_columns->get($column->conditional_trigger_column_id);
 
             $settings[] = [
                 'target_column_id' => $column->id,
