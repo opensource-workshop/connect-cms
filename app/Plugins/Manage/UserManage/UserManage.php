@@ -2920,9 +2920,11 @@ class UserManage extends ManagePluginBase
         $select_agree = $selects->first() ?? new UsersColumnsSelects();
 
         // トリガー候補の項目を取得
-        // 条件：自分自身のみを除く（システム固定項目・カスタム必須項目も含める）
+        // 条件：自分自身を除く（システム固定項目・カスタム必須項目も含める）
+        // ただし、登録フォームに表示されない項目（登録日時、更新日時）は除外
         $trigger_columns = UsersColumns::where('columns_set_id', $column->columns_set_id)
             ->where('id', '!=', $id)  // 自分自身を除外
+            ->whereNotIn('column_type', UserColumnType::showOnlyColumnTypes())
             ->orderBy('display_sequence')
             ->get();
 
