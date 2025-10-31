@@ -2638,10 +2638,10 @@ class UserManage extends ManagePluginBase
 
         // トリガー項目として使用されている項目IDを取得
         $trigger_column_ids = UsersColumns::where('columns_set_id', $id)
-            ->where('conditional_display_flag', 1)
+            ->where('conditional_display_flag', ShowType::show)
             ->whereNotNull('conditional_trigger_column_id')
+            ->distinct()
             ->pluck('conditional_trigger_column_id')
-            ->unique()
             ->toArray();
 
         foreach ($columns as &$column) {
