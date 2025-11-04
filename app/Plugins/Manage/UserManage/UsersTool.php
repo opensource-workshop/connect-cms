@@ -434,9 +434,18 @@ class UsersTool
      */
     public static function buildValidatorArray(array $validator_array, Collection $users_columns, int $columns_set_id, ?int $user_id = null, $request_data = null): array
     {
+        // トリガー項目を一括取得（N+1クエリ対策）
+        $trigger_columns = null;
+        if ($request_data) {
+            $trigger_ids = $users_columns->pluck('conditional_trigger_column_id')->filter()->unique();
+            if ($trigger_ids->isNotEmpty()) {
+                $trigger_columns = UsersColumns::whereIn('id', $trigger_ids)->get()->keyBy('id');
+            }
+        }
+
         foreach ($users_columns as $users_column) {
             // 条件付き表示の評価（非表示の項目はバリデーションをスキップ）
-            if ($request_data && !self::isColumnDisplayed($users_column, $request_data)) {
+            if ($request_data && !self::isColumnDisplayed($users_column, $request_data, $trigger_columns)) {
                 continue;
             }
 
@@ -566,9 +575,10 @@ class UsersTool
      *
      * @param UsersColumns $column 評価対象の項目
      * @param \Illuminate\Http\Request|array $request_data リクエストデータ（Requestオブジェクトまたは配列）
+     * @param \Illuminate\Support\Collection|null $trigger_columns トリガー項目のコレクション（N+1対策用、nullの場合は都度取得）
      * @return bool 表示される場合true、非表示の場合false
      */
-    public static function isColumnDisplayed($column, $request_data)
+    public static function isColumnDisplayed($column, $request_data, $trigger_columns = null)
     {
         // 条件付き表示が設定されていない場合は常に表示
         if ($column->conditional_display_flag != ShowType::show) {
@@ -581,7 +591,10 @@ class UsersTool
         }
 
         // トリガー項目を取得
-        $trigger_column = UsersColumns::find($column->conditional_trigger_column_id);
+        $trigger_column = $trigger_columns
+            ? $trigger_columns->get($column->conditional_trigger_column_id)
+            : UsersColumns::find($column->conditional_trigger_column_id);
+
         if (!$trigger_column) {
             return true; // トリガーが見つからない場合は表示
         }
