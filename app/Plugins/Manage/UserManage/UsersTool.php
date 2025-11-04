@@ -634,18 +634,18 @@ class UsersTool
         }
 
         // カスタム項目の場合
-        $value = is_array($request_data)
+        $trigger_value = is_array($request_data)
             ? Arr::get($request_data, 'users_columns_value.' . $trigger_column->id)
             : $request_data->input('users_columns_value.' . $trigger_column->id);
 
         // チェックボックス（複数選択）の場合、配列をソートしてからカンマ区切りに変換
         // ソートすることで、選択順序に関わらず同じ文字列になる
-        if (is_array($value)) {
-            sort($value);
-            return implode(',', $value);
+        if (is_array($trigger_value)) {
+            sort($trigger_value);
+            return implode(',', $trigger_value);
         }
 
-        return $value;
+        return $trigger_value;
     }
 
     /**
