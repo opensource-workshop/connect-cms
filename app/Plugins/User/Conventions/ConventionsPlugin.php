@@ -90,7 +90,7 @@ class ConventionsPlugin extends UserPluginBase
             $join->on('conventions.id', '=', 'convention_posts.convention_id')
                 ->where('conventions.bucket_id', '=', $this->frame->bucket_id);
         })
-        ->firstOrNew(['conventions.id' => $id]);
+        ->firstOrNew(['convention_posts.id' => $id]);
         return $this->post;
     }
 
