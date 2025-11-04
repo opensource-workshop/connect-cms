@@ -664,10 +664,13 @@ class UsersTool
                 return $trigger_value != $condition_value;
 
             case ConditionalOperator::is_empty:
-                return empty($trigger_value);
+                // 厳密な空判定: nullまたは空文字列のみを空とみなす
+                // 注: 数値の0や文字列の"0"は空とはみなさない
+                return $trigger_value === null || $trigger_value === '';
 
             case ConditionalOperator::is_not_empty:
-                return !empty($trigger_value);
+                // 厳密な非空判定: nullでも空文字列でもない
+                return $trigger_value !== null && $trigger_value !== '';
 
             default:
                 return true; // 未知の演算子は表示
