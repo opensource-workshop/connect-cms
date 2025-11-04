@@ -638,8 +638,10 @@ class UsersTool
             ? Arr::get($request_data, 'users_columns_value.' . $trigger_column->id)
             : $request_data->input('users_columns_value.' . $trigger_column->id);
 
-        // チェックボックス（複数選択）の場合、配列をカンマ区切りに変換
+        // チェックボックス（複数選択）の場合、配列をソートしてからカンマ区切りに変換
+        // ソートすることで、選択順序に関わらず同じ文字列になる
         if (is_array($value)) {
+            sort($value);
             return implode(',', $value);
         }
 
@@ -675,5 +677,38 @@ class UsersTool
             default:
                 return true; // 未知の演算子は表示
         }
+    }
+
+    /**
+     * カンマ区切り文字列をソートして正規化
+     *
+     * チェックボックスなどの複数選択値を比較する際、
+     * 選択順序に依存しないよう値をソートします。
+     *
+     * @param string|null $value カンマ区切り文字列
+     * @return string|null ソート済みカンマ区切り文字列
+     */
+    public static function normalizeCommaSeparatedValue($value)
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        // カンマ区切りで分割
+        $items = explode(',', $value);
+
+        // 各項目の前後の空白を削除
+        $items = array_map('trim', $items);
+
+        // 空文字列を除外
+        $items = array_filter($items, function ($item) {
+            return $item !== '';
+        });
+
+        // ソート
+        sort($items);
+
+        // カンマ区切りで結合
+        return implode(',', $items);
     }
 }

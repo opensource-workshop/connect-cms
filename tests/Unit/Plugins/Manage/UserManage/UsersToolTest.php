@@ -1916,4 +1916,116 @@ class UsersToolTest extends TestCase
         $not_required_setting = collect($settings)->firstWhere('target_column_id', $column_not_required->id);
         $this->assertFalse($not_required_setting['required']);
     }
+
+    /**
+     * normalizeCommaSeparatedValue: カンマ区切り文字列をソートして正規化
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueSortsItems()
+    {
+        // ソート前の値
+        $input = '選択肢2,選択肢1,選択肢3';
+
+        // 正規化（ソート）
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // ソート済みになっていることを検証
+        $this->assertEquals('選択肢1,選択肢2,選択肢3', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 空白を削除して正規化
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueTrimsWhitespace()
+    {
+        // 空白を含む値
+        $input = ' 選択肢1 , 選択肢2 , 選択肢3 ';
+
+        // 正規化（空白削除とソート）
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // 空白が削除されソート済みになっていることを検証
+        $this->assertEquals('選択肢1,選択肢2,選択肢3', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 空文字列を除外
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueRemovesEmptyItems()
+    {
+        // 空文字列を含む値
+        $input = '選択肢1,,選択肢2,';
+
+        // 正規化（空文字列除外とソート）
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // 空文字列が除外されていることを検証
+        $this->assertEquals('選択肢1,選択肢2', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: nullと空文字列をそのまま返す
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueHandlesNullAndEmpty()
+    {
+        // nullの場合
+        $result_null = UsersTool::normalizeCommaSeparatedValue(null);
+        $this->assertNull($result_null);
+
+        // 空文字列の場合
+        $result_empty = UsersTool::normalizeCommaSeparatedValue('');
+        $this->assertEquals('', $result_empty);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 単一の値はそのまま返す
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueHandlesSingleValue()
+    {
+        // 単一の値
+        $input = '選択肢1';
+
+        // 正規化
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // そのまま返されることを検証
+        $this->assertEquals('選択肢1', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 実際のチェックボックス配列との比較
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueMatchesCheckboxArray()
+    {
+        // ユーザーが選択した順序（配列）
+        $checkbox_array1 = ['選択肢2', '選択肢1', '選択肢3'];
+        $checkbox_array2 = ['選択肢1', '選択肢3', '選択肢2'];
+
+        // 配列をソートしてカンマ区切りに変換（getTriggerValueの処理を模倣）
+        sort($checkbox_array1);
+        $trigger_value1 = implode(',', $checkbox_array1);
+
+        sort($checkbox_array2);
+        $trigger_value2 = implode(',', $checkbox_array2);
+
+        // 条件値（管理者が設定した値）
+        $condition_value = '選択肢2,選択肢1,選択肢3';
+        $normalized_condition = UsersTool::normalizeCommaSeparatedValue($condition_value);
+
+        // 選択順序に関わらず同じ値になることを検証
+        $this->assertEquals($trigger_value1, $trigger_value2);
+        $this->assertEquals($trigger_value1, $normalized_condition);
+        $this->assertEquals('選択肢1,選択肢2,選択肢3', $normalized_condition);
+    }
 }

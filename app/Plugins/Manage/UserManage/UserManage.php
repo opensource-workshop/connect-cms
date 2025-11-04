@@ -3084,7 +3084,8 @@ class UserManage extends ManagePluginBase
         if ($column->conditional_display_flag == ShowType::show) {
             $column->conditional_trigger_column_id = $request->conditional_trigger_column_id;
             $column->conditional_operator = $request->conditional_operator;
-            $column->conditional_value = $request->conditional_value;
+            // カンマ区切りの値をソートして正規化（チェックボックス配列の順序を統一）
+            $column->conditional_value = UsersTool::normalizeCommaSeparatedValue($request->conditional_value);
         } else {
             // OFFの場合はクリア
             $column->conditional_trigger_column_id = null;
