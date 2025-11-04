@@ -368,6 +368,61 @@ class UsersTool
     }
 
     /**
+     * システム固定項目のバリデーション処理
+     *
+     * システム固定項目（ユーザー名、ログインID、メールアドレス）の
+     * 基本バリデーションルールに追加ルール（正規表現など）を適用します。
+     *
+     * @param array $validator_array バリデーション配列（参照渡し）
+     * @param UsersColumns $users_column ユーザカラム情報
+     * @return void
+     */
+    private static function processFixedColumnValidation(array &$validator_array, UsersColumns $users_column): void
+    {
+        // システム固定項目以外は処理不要
+        if (!UsersColumns::isFixedColumnType($users_column->column_type)) {
+            return;
+        }
+
+        // カラムタイプとフィールド名のマッピング
+        $field_name = self::getFixedColumnFieldName($users_column->column_type);
+        if ($field_name === null) {
+            return;
+        }
+
+        // 既存の基本バリデーションルールを取得
+        $base_rules = $validator_array['column'][$field_name] ?? [];
+
+        // 文字列形式を配列形式に変換（'required|max:255' → ['required', 'max:255']）
+        if (is_string($base_rules)) {
+            $base_rules = explode('|', $base_rules);
+        }
+
+        // 基本ルールが存在する場合、追加バリデーションルールを適用
+        if (!empty($base_rules)) {
+            $enhanced_rules = self::getDefaultColumnAdditionalRules($base_rules, $users_column);
+            $validator_array['column'][$field_name] = $enhanced_rules;
+        }
+    }
+
+    /**
+     * システム固定項目のフィールド名を取得
+     *
+     * @param string $column_type カラムタイプ
+     * @return string|null フィールド名（該当しない場合はnull）
+     */
+    private static function getFixedColumnFieldName(string $column_type): ?string
+    {
+        $field_mapping = [
+            UserColumnType::user_name => 'name',      // ユーザ名
+            UserColumnType::login_id => 'userid',     // ログインID
+            UserColumnType::user_email => 'email',    // メールアドレス
+        ];
+
+        return $field_mapping[$column_type] ?? null;
+    }
+
+    /**
      * バリデーション配列の構築処理
      *
      * @param array $validator_array 既存のバリデーション配列
@@ -380,45 +435,17 @@ class UsersTool
     public static function buildValidatorArray(array $validator_array, Collection $users_columns, int $columns_set_id, ?int $user_id = null, $request_data = null): array
     {
         foreach ($users_columns as $users_column) {
-            // 【追加】条件付き表示の評価（$request_dataがある場合のみ）
+            // 条件付き表示の評価（非表示の項目はバリデーションをスキップ）
             if ($request_data && !self::isColumnDisplayed($users_column, $request_data)) {
-                // 非表示の項目はバリデーションをスキップ
                 continue;
             }
 
+            // 表示のみの項目はバリデーション不要
             if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
-                // デフォルト項目の場合、基本バリデーション＋追加バリデーションを設定
-                if (UsersColumns::isFixedColumnType($users_column->column_type)) {
-                    // カラムタイプとフィールド名のマッピング定義
-                    $field_mapping = [
-                        UserColumnType::user_name => 'name',      // ユーザ名
-                        UserColumnType::login_id => 'userid',     // ログインID
-                        UserColumnType::user_email => 'email',    // メールアドレス
-                    ];
-
-                    // マッピングに該当するデフォルト項目の場合のみ処理
-                    if (isset($field_mapping[$users_column->column_type])) {
-                        $field_name = $field_mapping[$users_column->column_type];
-
-                        // 既に設定されている基本バリデーションルールを取得 (例: 'required', 'max:255' など)
-                        $base_rules = $validator_array['column'][$field_name] ?? [];
-
-                        // 文字列形式('required|max:255')の場合は配列形式に変換 ※ Laravelのバリデーションは配列形式と文字列形式の両方をサポートしている為
-                        if (is_string($base_rules)) {
-                            $base_rules = explode('|', $base_rules);
-                        }
-
-                        // 基本ルールが存在する場合、追加バリデーションルール（正規表現など）を適用
-                        if (!empty($base_rules)) {
-                            // 基本ルールに追加ルール（正規表現など）をマージ
-                            $enhanced_rules = self::getDefaultColumnAdditionalRules($base_rules, $users_column);
-                            // 拡張されたルールを元の配列に反映
-                            $validator_array['column'][$field_name] = $enhanced_rules;
-                        }
-                    }
-                }
+                self::processFixedColumnValidation($validator_array, $users_column);
                 continue;
             }
+
             // 通常項目のバリデーションルールをセット
             $validator_array = self::getValidatorRule($validator_array, $users_column, $columns_set_id, $user_id);
         }
