@@ -175,6 +175,9 @@ use App\Enums\ConditionalOperator;
                 <div class="small text-info">
                     <i class="fas fa-random" data-toggle="tooltip" title="条件付き表示"></i>
                     トリガー項目: {{ $trigger_column->column_name }} / {{ $operator_text }} / 値: {{ $column->conditional_value }}
+                    @if ($column->required == Required::on)
+                        <span class="badge badge-primary ml-1" data-toggle="tooltip" title="表示時のみ必須">条件付き必須</span>
+                    @endif
                 </div>
             @endif
         @endif

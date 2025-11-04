@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Manage\UserManage;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,8 @@ use App\Rules\CustomValiAlphaNumForMultiByte;
 use App\Rules\CustomValiCheckWidthForString;
 use App\Rules\CustomValiUserEmailUnique;
 
+use App\Enums\ConditionalOperator;
+use App\Enums\Required;
 use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
@@ -371,11 +374,18 @@ class UsersTool
      * @param Collection $users_columns ユーザカラム情報
      * @param int $columns_set_id 項目セットID
      * @param int|null $user_id ユーザID（更新時のみ）
+     * @param \Illuminate\Http\Request|array|null $request_data リクエストデータ（条件付き表示の評価用、Requestオブジェクトまたは配列）
      * @return array 構築されたバリデーション配列
      */
-    public static function buildValidatorArray(array $validator_array, Collection $users_columns, int $columns_set_id, ?int $user_id = null): array
+    public static function buildValidatorArray(array $validator_array, Collection $users_columns, int $columns_set_id, ?int $user_id = null, $request_data = null): array
     {
         foreach ($users_columns as $users_column) {
+            // 【追加】条件付き表示の評価（$request_dataがある場合のみ）
+            if ($request_data && !self::isColumnDisplayed($users_column, $request_data)) {
+                // 非表示の項目はバリデーションをスキップ
+                continue;
+            }
+
             if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
                 // デフォルト項目の場合、基本バリデーション＋追加バリデーションを設定
                 if (UsersColumns::isFixedColumnType($users_column->column_type)) {
@@ -412,7 +422,7 @@ class UsersTool
             // 通常項目のバリデーションルールをセット
             $validator_array = self::getValidatorRule($validator_array, $users_column, $columns_set_id, $user_id);
         }
-        
+
         return $validator_array;
     }
 
@@ -458,6 +468,7 @@ class UsersTool
                 'trigger_column_type' => $trigger_column ? $trigger_column->column_type : null,
                 'operator' => $column->conditional_operator,
                 'value' => $column->conditional_value,
+                'required' => $column->required == Required::on, // 必須フラグを追加
             ];
         }
 
@@ -521,5 +532,105 @@ class UsersTool
 
         // 循環依存なし
         return false;
+    }
+
+    /**
+     * 条件付き表示項目が現在表示されているかを評価
+     *
+     * @param UsersColumns $column 評価対象の項目
+     * @param \Illuminate\Http\Request|array $request_data リクエストデータ（Requestオブジェクトまたは配列）
+     * @return bool 表示される場合true、非表示の場合false
+     */
+    public static function isColumnDisplayed($column, $request_data)
+    {
+        // 条件付き表示が設定されていない場合は常に表示
+        if ($column->conditional_display_flag != ShowType::show) {
+            return true;
+        }
+
+        // トリガー項目が存在しない場合は表示
+        if (!$column->conditional_trigger_column_id) {
+            return true;
+        }
+
+        // トリガー項目を取得
+        $trigger_column = UsersColumns::find($column->conditional_trigger_column_id);
+        if (!$trigger_column) {
+            return true; // トリガーが見つからない場合は表示
+        }
+
+        // トリガー項目の値を取得
+        $trigger_value = self::getTriggerValue($trigger_column, $request_data);
+
+        // 条件演算子に基づいて評価
+        return self::evaluateCondition(
+            $column->conditional_operator,
+            $trigger_value,
+            $column->conditional_value
+        );
+    }
+
+    /**
+     * トリガー項目の値を取得
+     *
+     * @param UsersColumns $trigger_column トリガー項目
+     * @param \Illuminate\Http\Request|array $request_data リクエストデータ（Requestオブジェクトまたは配列）
+     * @return mixed トリガー項目の値
+     */
+    private static function getTriggerValue($trigger_column, $request_data)
+    {
+        // システム固定項目の場合
+        if (UsersColumns::isFixedColumnType($trigger_column->column_type)) {
+            switch ($trigger_column->column_type) {
+                case UserColumnType::user_name:
+                    return is_array($request_data) ? Arr::get($request_data, 'name') : $request_data->input('name');
+                case UserColumnType::login_id:
+                    return is_array($request_data) ? Arr::get($request_data, 'userid') : $request_data->input('userid');
+                case UserColumnType::user_email:
+                    return is_array($request_data) ? Arr::get($request_data, 'email') : $request_data->input('email');
+                default:
+                    return null;
+            }
+        }
+
+        // カスタム項目の場合
+        $value = is_array($request_data)
+            ? Arr::get($request_data, 'users_columns_value.' . $trigger_column->id)
+            : $request_data->input('users_columns_value.' . $trigger_column->id);
+
+        // チェックボックス（複数選択）の場合、配列をカンマ区切りに変換
+        if (is_array($value)) {
+            return implode(',', $value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * 条件を評価
+     *
+     * @param string $operator 条件演算子
+     * @param mixed $trigger_value トリガー項目の値
+     * @param mixed $condition_value 条件値
+     * @return bool 条件を満たす場合true
+     */
+    private static function evaluateCondition($operator, $trigger_value, $condition_value)
+    {
+        switch ($operator) {
+            case ConditionalOperator::equals:
+                return $trigger_value == $condition_value;
+
+            case ConditionalOperator::not_equals:
+                return $trigger_value != $condition_value;
+
+            case ConditionalOperator::is_empty:
+                return empty($trigger_value);
+
+            case ConditionalOperator::is_not_empty:
+                return !empty($trigger_value);
+
+            default:
+                return true; // 未知の演算子は表示
+        }
     }
 }

@@ -894,7 +894,7 @@ class UserManage extends ManagePluginBase
         ];
 
         // デフォルト項目とカスタム項目のバリデーション配列構築
-        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $request->columns_set_id, $id);
+        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $request->columns_set_id, $id, $request);
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
@@ -2761,15 +2761,6 @@ class UserManage extends ManagePluginBase
         } else {
             // 通常
             $column->required = $request->$str_required ? Required::on : Required::off;
-
-            // 必須ONに変更した場合、条件付き表示をOFFにする
-            if ($column->required == Required::on && $column->conditional_display_flag == ShowType::show) {
-                $column->conditional_display_flag = ShowType::not_show;
-                $column->conditional_trigger_column_id = null;
-                $column->conditional_operator = null;
-                $column->conditional_value = null;
-                $messages[] = '必須入力ONのため、条件付き表示を【 OFF 】に設定しました';
-            }
         }
 
         // 固定項目以外
@@ -2998,8 +2989,8 @@ class UserManage extends ManagePluginBase
             abort(404, 'カラムデータがありません。');
         }
 
-        // システム固定項目または必須項目は条件付き表示を設定できない
-        if (UsersColumns::isFixedColumnType($column->column_type) || $column->required == Required::on) {
+        // システム固定項目は条件付き表示を設定できない
+        if (UsersColumns::isFixedColumnType($column->column_type)) {
             // 強制的に条件付き表示をOFFにする
             $request->merge(['conditional_display_flag' => ShowType::not_show]);
         }
