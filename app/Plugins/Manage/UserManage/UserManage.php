@@ -732,6 +732,9 @@ class UserManage extends ManagePluginBase
             })
             ->get();
 
+        // 条件付き表示設定を取得
+        $conditional_display_settings = UsersTool::getConditionalDisplaySettings($columns_set_id);
+
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
@@ -745,6 +748,7 @@ class UserManage extends ManagePluginBase
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => new UserSection(),
             'configs' => $configs,
+            'conditional_display_settings' => $conditional_display_settings,
         ]);
     }
 
@@ -824,6 +828,9 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // 条件付き表示設定を取得
+        $conditional_display_settings = UsersTool::getConditionalDisplaySettings($columns_set_id);
+
         // 画面呼び出し
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
@@ -841,6 +848,7 @@ class UserManage extends ManagePluginBase
             'user_section' => UserSection::where('user_id', $user->id)->firstOrNew(),
             'can_deleted' => $can_deleted,
             'configs' => $configs,
+            'conditional_display_settings' => $conditional_display_settings,
         ]);
     }
 
