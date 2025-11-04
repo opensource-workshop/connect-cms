@@ -732,6 +732,9 @@ class UserManage extends ManagePluginBase
             })
             ->get();
 
+        // 条件付き表示設定を取得
+        $conditional_display_settings = UsersTool::getConditionalDisplaySettings($columns_set_id);
+
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
             "plugin_name" => "user",
@@ -745,6 +748,7 @@ class UserManage extends ManagePluginBase
             'sections' => Section::orderBy('display_sequence')->get(),
             'user_section' => new UserSection(),
             'configs' => $configs,
+            'conditional_display_settings' => $conditional_display_settings,
         ]);
     }
 
@@ -824,6 +828,9 @@ class UserManage extends ManagePluginBase
             }
         }
 
+        // 条件付き表示設定を取得
+        $conditional_display_settings = UsersTool::getConditionalDisplaySettings($columns_set_id);
+
         // 画面呼び出し
         return view('plugins.manage.user.regist', [
             "function" => __FUNCTION__,
@@ -841,6 +848,7 @@ class UserManage extends ManagePluginBase
             'user_section' => UserSection::where('user_id', $user->id)->firstOrNew(),
             'can_deleted' => $can_deleted,
             'configs' => $configs,
+            'conditional_display_settings' => $conditional_display_settings,
         ]);
     }
 
@@ -894,7 +902,7 @@ class UserManage extends ManagePluginBase
         ];
 
         // デフォルト項目とカスタム項目のバリデーション配列構築
-        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $request->columns_set_id, $id);
+        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $request->columns_set_id, $id, $request);
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
@@ -2761,15 +2769,6 @@ class UserManage extends ManagePluginBase
         } else {
             // 通常
             $column->required = $request->$str_required ? Required::on : Required::off;
-
-            // 必須ONに変更した場合、条件付き表示をOFFにする
-            if ($column->required == Required::on && $column->conditional_display_flag == ShowType::show) {
-                $column->conditional_display_flag = ShowType::not_show;
-                $column->conditional_trigger_column_id = null;
-                $column->conditional_operator = null;
-                $column->conditional_value = null;
-                $messages[] = '必須入力ONのため、条件付き表示を【 OFF 】に設定しました';
-            }
         }
 
         // 固定項目以外
@@ -2998,8 +2997,8 @@ class UserManage extends ManagePluginBase
             abort(404, 'カラムデータがありません。');
         }
 
-        // システム固定項目または必須項目は条件付き表示を設定できない
-        if (UsersColumns::isFixedColumnType($column->column_type) || $column->required == Required::on) {
+        // システム固定項目は条件付き表示を設定できない
+        if (UsersColumns::isFixedColumnType($column->column_type)) {
             // 強制的に条件付き表示をOFFにする
             $request->merge(['conditional_display_flag' => ShowType::not_show]);
         }
@@ -3085,7 +3084,8 @@ class UserManage extends ManagePluginBase
         if ($column->conditional_display_flag == ShowType::show) {
             $column->conditional_trigger_column_id = $request->conditional_trigger_column_id;
             $column->conditional_operator = $request->conditional_operator;
-            $column->conditional_value = $request->conditional_value;
+            // カンマ区切りの値をソートして正規化（チェックボックス配列の順序を統一）
+            $column->conditional_value = UsersTool::normalizeCommaSeparatedValue($request->conditional_value);
         } else {
             // OFFの場合はクリア
             $column->conditional_trigger_column_id = null;

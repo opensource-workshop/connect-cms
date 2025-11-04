@@ -790,22 +790,26 @@ use App\Models\Core\UsersColumns;
                         @endif
                     @endif
 
-                    @if (UsersColumns::isFixedColumnType($column->column_type) || $column->required == Required::on)
-                        {{-- システム固定項目または必須項目の場合は設定不可 --}}
+                    @if (UsersColumns::isFixedColumnType($column->column_type))
+                        {{-- システム固定項目の場合は設定不可 --}}
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            @if (UsersColumns::isFixedColumnType($column->column_type))
-                                システム固定項目（ユーザー名、ログインID、パスワード）は条件付き表示を設定できません。
-                            @else
-                                必須項目は条件付き表示を設定できません。<br>
-                                条件付き表示を利用する場合は、まず「必須」のチェックを外してから設定してください。<br>
-                                <small class="text-muted">
-                                    ※ ただし、この必須項目を他の項目のトリガーとして使用することは可能です。
-                                </small>
-                            @endif
+                            システム固定項目（ユーザー名、ログインID、パスワード）は条件付き表示を設定できません。
                         </div>
                         <input type="hidden" name="conditional_display_flag" value="{{ ShowType::not_show }}">
                     @else
+                        {{-- 必須項目と条件付き表示の組み合わせに関する説明 --}}
+                        @if ($column->required == Required::on)
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>必須項目と条件付き表示の組み合わせ：</strong><br>
+                                必須項目に条件付き表示を設定できます。この場合、項目が<strong>表示されている時のみ</strong>入力が必須となります。<br>
+                                <small class="text-muted">
+                                    ※ 条件を満たさず非表示の場合は、必須チェックが行われません。<br>
+                                    ※ この項目を他の項目のトリガーとして使用することも可能です。
+                                </small>
+                            </div>
+                        @endif
                         {{-- この項目を条件付きで表示する --}}
                         <div class="form-group row">
                             <label class="col-md-3 col-form-label text-md-right pt-0">この項目（{{ $column->column_name }}）を条件付きで表示する</label>

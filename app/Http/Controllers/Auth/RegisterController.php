@@ -110,7 +110,7 @@ class RegisterController extends Controller
         }
 
         // デフォルト項目とカスタム項目のバリデーション配列構築
-        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id, null);
+        $validator_array = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set_id, null, $data);
 
         // 入力値チェック
         $validator = Validator::make($data, $validator_array['column']);

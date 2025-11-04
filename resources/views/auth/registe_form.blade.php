@@ -205,6 +205,10 @@ use App\Models\Core\UsersColumns;
                 if (formGroup.is(':hidden')) {
                     formGroup.slideDown(300);
                 }
+                // 必須フラグがtrueの場合、表示時にrequired属性を追加
+                if (setting.required) {
+                    setRequiredAttribute(targetElement, true);
+                }
             } else {
                 if (formGroup.is(':visible')) {
                     formGroup.slideUp(300);
@@ -212,6 +216,10 @@ use App\Models\Core\UsersColumns;
                     formGroup.promise().done(function() {
                         clearInputValue(targetElement);
                     });
+                }
+                // 必須フラグがtrueの場合、非表示時にrequired属性を削除
+                if (setting.required) {
+                    setRequiredAttribute(targetElement, false);
                 }
             }
         }
@@ -286,6 +294,37 @@ use App\Models\Core\UsersColumns;
 
         // その他の入力要素（テキスト等）
         element.value = '';
+    }
+
+    /**
+     * required属性を設定/解除
+     */
+    function setRequiredAttribute(element, required) {
+        if (!element) {
+            return;
+        }
+
+        var elementName = element.name;
+
+        // ラジオボタン・チェックボックスの場合、全ての要素にrequired属性を設定/解除
+        if (element.type === 'radio' || element.type === 'checkbox') {
+            var elements = document.querySelectorAll('input[name="' + elementName + '"]');
+            elements.forEach(function(el) {
+                if (required) {
+                    el.setAttribute('required', 'required');
+                } else {
+                    el.removeAttribute('required');
+                }
+            });
+            return;
+        }
+
+        // その他の入力要素
+        if (required) {
+            element.setAttribute('required', 'required');
+        } else {
+            element.removeAttribute('required');
+        }
     }
 </script>
 

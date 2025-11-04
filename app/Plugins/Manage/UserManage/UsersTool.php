@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Manage\UserManage;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,8 @@ use App\Rules\CustomValiAlphaNumForMultiByte;
 use App\Rules\CustomValiCheckWidthForString;
 use App\Rules\CustomValiUserEmailUnique;
 
+use App\Enums\ConditionalOperator;
+use App\Enums\Required;
 use App\Enums\ShowType;
 use App\Enums\UserColumnType;
 use App\Enums\UserRegisterNoticeEmbeddedTag;
@@ -365,54 +368,97 @@ class UsersTool
     }
 
     /**
+     * システム固定項目のバリデーション処理
+     *
+     * システム固定項目（ユーザー名、ログインID、メールアドレス）の
+     * 基本バリデーションルールに追加ルール（正規表現など）を適用します。
+     *
+     * @param array $validator_array バリデーション配列（参照渡し）
+     * @param UsersColumns $users_column ユーザカラム情報
+     * @return void
+     */
+    private static function processFixedColumnValidation(array &$validator_array, UsersColumns $users_column): void
+    {
+        // システム固定項目以外は処理不要
+        if (!UsersColumns::isFixedColumnType($users_column->column_type)) {
+            return;
+        }
+
+        // カラムタイプとフィールド名のマッピング
+        $field_name = self::getFixedColumnFieldName($users_column->column_type);
+        if ($field_name === null) {
+            return;
+        }
+
+        // 既存の基本バリデーションルールを取得
+        $base_rules = $validator_array['column'][$field_name] ?? [];
+
+        // 文字列形式を配列形式に変換（'required|max:255' → ['required', 'max:255']）
+        if (is_string($base_rules)) {
+            $base_rules = explode('|', $base_rules);
+        }
+
+        // 基本ルールが存在する場合、追加バリデーションルールを適用
+        if (!empty($base_rules)) {
+            $enhanced_rules = self::getDefaultColumnAdditionalRules($base_rules, $users_column);
+            $validator_array['column'][$field_name] = $enhanced_rules;
+        }
+    }
+
+    /**
+     * システム固定項目のフィールド名を取得
+     *
+     * @param string $column_type カラムタイプ
+     * @return string|null フィールド名（該当しない場合はnull）
+     */
+    private static function getFixedColumnFieldName(string $column_type): ?string
+    {
+        $field_mapping = [
+            UserColumnType::user_name => 'name',      // ユーザ名
+            UserColumnType::login_id => 'userid',     // ログインID
+            UserColumnType::user_email => 'email',    // メールアドレス
+        ];
+
+        return $field_mapping[$column_type] ?? null;
+    }
+
+    /**
      * バリデーション配列の構築処理
      *
      * @param array $validator_array 既存のバリデーション配列
      * @param Collection $users_columns ユーザカラム情報
      * @param int $columns_set_id 項目セットID
      * @param int|null $user_id ユーザID（更新時のみ）
+     * @param \Illuminate\Http\Request|array|null $request_data リクエストデータ（条件付き表示の評価用、Requestオブジェクトまたは配列）
      * @return array 構築されたバリデーション配列
      */
-    public static function buildValidatorArray(array $validator_array, Collection $users_columns, int $columns_set_id, ?int $user_id = null): array
+    public static function buildValidatorArray(array $validator_array, Collection $users_columns, int $columns_set_id, ?int $user_id = null, $request_data = null): array
     {
+        // トリガー項目を一括取得（N+1クエリ対策）
+        $trigger_columns = null;
+        if ($request_data) {
+            $trigger_ids = $users_columns->pluck('conditional_trigger_column_id')->filter()->unique();
+            if ($trigger_ids->isNotEmpty()) {
+                $trigger_columns = UsersColumns::whereIn('id', $trigger_ids)->get()->keyBy('id');
+            }
+        }
+
         foreach ($users_columns as $users_column) {
-            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
-                // デフォルト項目の場合、基本バリデーション＋追加バリデーションを設定
-                if (UsersColumns::isFixedColumnType($users_column->column_type)) {
-                    // カラムタイプとフィールド名のマッピング定義
-                    $field_mapping = [
-                        UserColumnType::user_name => 'name',      // ユーザ名
-                        UserColumnType::login_id => 'userid',     // ログインID
-                        UserColumnType::user_email => 'email',    // メールアドレス
-                    ];
-
-                    // マッピングに該当するデフォルト項目の場合のみ処理
-                    if (isset($field_mapping[$users_column->column_type])) {
-                        $field_name = $field_mapping[$users_column->column_type];
-
-                        // 既に設定されている基本バリデーションルールを取得 (例: 'required', 'max:255' など)
-                        $base_rules = $validator_array['column'][$field_name] ?? [];
-
-                        // 文字列形式('required|max:255')の場合は配列形式に変換 ※ Laravelのバリデーションは配列形式と文字列形式の両方をサポートしている為
-                        if (is_string($base_rules)) {
-                            $base_rules = explode('|', $base_rules);
-                        }
-
-                        // 基本ルールが存在する場合、追加バリデーションルール（正規表現など）を適用
-                        if (!empty($base_rules)) {
-                            // 基本ルールに追加ルール（正規表現など）をマージ
-                            $enhanced_rules = self::getDefaultColumnAdditionalRules($base_rules, $users_column);
-                            // 拡張されたルールを元の配列に反映
-                            $validator_array['column'][$field_name] = $enhanced_rules;
-                        }
-                    }
-                }
+            // 条件付き表示の評価（非表示の項目はバリデーションをスキップ）
+            if ($request_data && !self::isColumnDisplayed($users_column, $request_data, $trigger_columns)) {
                 continue;
             }
+
+            // 表示のみの項目はバリデーション不要
+            if (UsersColumns::isLoopNotShowColumnType($users_column->column_type)) {
+                self::processFixedColumnValidation($validator_array, $users_column);
+                continue;
+            }
+
             // 通常項目のバリデーションルールをセット
             $validator_array = self::getValidatorRule($validator_array, $users_column, $columns_set_id, $user_id);
         }
-        
+
         return $validator_array;
     }
 
@@ -458,6 +504,7 @@ class UsersTool
                 'trigger_column_type' => $trigger_column ? $trigger_column->column_type : null,
                 'operator' => $column->conditional_operator,
                 'value' => $column->conditional_value,
+                'required' => $column->required == Required::on, // 必須フラグを追加
             ];
         }
 
@@ -521,5 +568,153 @@ class UsersTool
 
         // 循環依存なし
         return false;
+    }
+
+    /**
+     * 条件付き表示項目が現在表示されているかを評価
+     *
+     * @param UsersColumns $column 評価対象の項目
+     * @param \Illuminate\Http\Request|array $request_data リクエストデータ（Requestオブジェクトまたは配列）
+     * @param \Illuminate\Support\Collection|null $trigger_columns トリガー項目のコレクション（N+1対策用、nullの場合は都度取得）
+     * @return bool 表示される場合true、非表示の場合false
+     */
+    public static function isColumnDisplayed($column, $request_data, $trigger_columns = null)
+    {
+        // 条件付き表示が設定されていない場合は常に表示
+        if ($column->conditional_display_flag != ShowType::show) {
+            return true;
+        }
+
+        // トリガー項目が存在しない場合は表示
+        if (!$column->conditional_trigger_column_id) {
+            return true;
+        }
+
+        // トリガー項目を取得
+        $trigger_column = $trigger_columns
+            ? $trigger_columns->get($column->conditional_trigger_column_id)
+            : UsersColumns::find($column->conditional_trigger_column_id);
+
+        if (!$trigger_column) {
+            return true; // トリガーが見つからない場合は表示
+        }
+
+        // トリガー項目の値を取得
+        $trigger_value = self::getTriggerValue($trigger_column, $request_data);
+
+        // 条件演算子に基づいて評価
+        return self::evaluateCondition(
+            $column->conditional_operator,
+            $trigger_value,
+            $column->conditional_value
+        );
+    }
+
+    /**
+     * トリガー項目の値を取得
+     *
+     * @param UsersColumns $trigger_column トリガー項目
+     * @param \Illuminate\Http\Request|array $request_data リクエストデータ（Requestオブジェクトまたは配列）
+     * @return mixed トリガー項目の値
+     */
+    private static function getTriggerValue($trigger_column, $request_data)
+    {
+        // システム固定項目の場合
+        if (UsersColumns::isFixedColumnType($trigger_column->column_type)) {
+            switch ($trigger_column->column_type) {
+                case UserColumnType::user_name:
+                    return is_array($request_data) ? Arr::get($request_data, 'name') : $request_data->input('name');
+                case UserColumnType::login_id:
+                    return is_array($request_data) ? Arr::get($request_data, 'userid') : $request_data->input('userid');
+                case UserColumnType::user_email:
+                    return is_array($request_data) ? Arr::get($request_data, 'email') : $request_data->input('email');
+                default:
+                    return null;
+            }
+        }
+
+        // カスタム項目の場合
+        $trigger_value = is_array($request_data)
+            ? Arr::get($request_data, 'users_columns_value.' . $trigger_column->id)
+            : $request_data->input('users_columns_value.' . $trigger_column->id);
+
+        // チェックボックス（複数選択）の場合、配列をソートしてからカンマ区切りに変換
+        // ソートすることで、選択順序に関わらず同じ文字列になる
+        if (is_array($trigger_value)) {
+            // natsort()で自然順序ソート（例: 「選択肢1,選択肢2,選択肢10」となり、辞書順の「選択肢1,選択肢10,選択肢2」より直感的）
+            natsort($trigger_value);
+            // natsort()はキーを保持するため、array_values()でキーを0から振り直す
+            $trigger_value = array_values($trigger_value);
+            return implode(',', $trigger_value);
+        }
+
+        return $trigger_value;
+    }
+
+    /**
+     * 条件を評価
+     *
+     * @param string $operator 条件演算子
+     * @param mixed $trigger_value トリガー項目の値
+     * @param mixed $condition_value 条件値
+     * @return bool 条件を満たす場合true
+     */
+    private static function evaluateCondition($operator, $trigger_value, $condition_value)
+    {
+        switch ($operator) {
+            case ConditionalOperator::equals:
+                return $trigger_value == $condition_value;
+
+            case ConditionalOperator::not_equals:
+                return $trigger_value != $condition_value;
+
+            case ConditionalOperator::is_empty:
+                // 厳密な空判定: nullまたは空文字列のみを空とみなす
+                // 注: 数値の0や文字列の"0"は空とはみなさない
+                return $trigger_value === null || $trigger_value === '';
+
+            case ConditionalOperator::is_not_empty:
+                // 厳密な非空判定: nullでも空文字列でもない
+                return $trigger_value !== null && $trigger_value !== '';
+
+            default:
+                return true; // 未知の演算子は表示
+        }
+    }
+
+    /**
+     * カンマ区切り文字列をソートして正規化
+     *
+     * チェックボックスなどの複数選択値を比較する際、
+     * 選択順序に依存しないよう値をソートします。
+     *
+     * @param string|null $value カンマ区切り文字列
+     * @return string|null ソート済みカンマ区切り文字列
+     */
+    public static function normalizeCommaSeparatedValue($value)
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        // カンマ区切りで分割
+        $items = explode(',', $value);
+
+        // 各項目の前後の空白を削除
+        $items = array_map('trim', $items);
+
+        // 空文字列を除外
+        $items = array_filter($items, function ($item) {
+            return $item !== '';
+        });
+
+        // ソート（自然順序ソートで数値部分を数値として認識）
+        // 例: 「選択肢1,選択肢2,選択肢10」となり、辞書順の「選択肢1,選択肢10,選択肢2」より直感的
+        natsort($items);
+        // natsort()はキーを保持するため、array_values()でキーを0から振り直す
+        $items = array_values($items);
+
+        // カンマ区切りで結合
+        return implode(',', $items);
     }
 }

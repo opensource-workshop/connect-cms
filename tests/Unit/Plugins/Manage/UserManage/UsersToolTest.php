@@ -1343,4 +1343,1154 @@ class UsersToolTest extends TestCase
         $has_cycle2 = UsersTool::hasCyclicDependency($column_a->id, $column_e->id, $columns_set->id);
         $this->assertTrue($has_cycle2);
     }
+
+    /**
+     * isColumnDisplayed: 条件付き表示がOFFの場合は常に表示される
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedReturnsTrueWhenConditionalDisplayIsOff()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // 条件付き表示がOFFの項目を作成
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::not_show,
+        ]);
+
+        // リクエストデータ（ダミー）
+        $request_data = [];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 条件付き表示がOFFなので常に表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: トリガー項目がない場合は常に表示される
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedReturnsTrueWhenNoTrigger()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // 条件付き表示がONだがトリガーIDがnullの項目
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => null,
+        ]);
+
+        // リクエストデータ（ダミー）
+        $request_data = [];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: トリガーがないので常に表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: equals演算子で条件を満たす場合は表示される
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithEqualsOperatorReturnsTrue()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目 = "はい" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // リクエストデータ（トリガー項目 = "はい"）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 'はい',
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 条件を満たすので表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: equals演算子で条件を満たさない場合は非表示
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithEqualsOperatorReturnsFalse()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目 = "はい" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // リクエストデータ（トリガー項目 = "いいえ"）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 'いいえ',
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 条件を満たさないので非表示
+        $this->assertFalse($result);
+    }
+
+    /**
+     * isColumnDisplayed: not_equals演算子が正しく動作する
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithNotEqualsOperator()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目 != "はい" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::not_equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // リクエストデータ（トリガー項目 = "いいえ"）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 'いいえ',
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 条件を満たす（"いいえ" != "はい"）ので表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: is_empty演算子が正しく動作する
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithIsEmptyOperator()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目が空の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_empty,
+            'conditional_value' => null,
+        ]);
+
+        // テストケース1: 空文字の場合
+        $request_data1 = [
+            'users_columns_value' => [
+                $trigger_column->id => '',
+            ],
+        ];
+        $result1 = UsersTool::isColumnDisplayed($column, $request_data1);
+        $this->assertTrue($result1);
+
+        // テストケース2: 値がある場合
+        $request_data2 = [
+            'users_columns_value' => [
+                $trigger_column->id => 'test',
+            ],
+        ];
+        $result2 = UsersTool::isColumnDisplayed($column, $request_data2);
+        $this->assertFalse($result2);
+    }
+
+    /**
+     * isColumnDisplayed: is_not_empty演算子が正しく動作する
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithIsNotEmptyOperator()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目が空でない時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_not_empty,
+            'conditional_value' => null,
+        ]);
+
+        // テストケース1: 値がある場合
+        $request_data1 = [
+            'users_columns_value' => [
+                $trigger_column->id => 'test',
+            ],
+        ];
+        $result1 = UsersTool::isColumnDisplayed($column, $request_data1);
+        $this->assertTrue($result1);
+
+        // テストケース2: 空文字の場合
+        $request_data2 = [
+            'users_columns_value' => [
+                $trigger_column->id => '',
+            ],
+        ];
+        $result2 = UsersTool::isColumnDisplayed($column, $request_data2);
+        $this->assertFalse($result2);
+    }
+
+    /**
+     * isColumnDisplayed: システム固定項目をトリガーにできる
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithSystemFixedColumnAsTrigger()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目（システム固定項目: ユーザー名）を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::user_name,
+            'column_name' => 'ユーザー名',
+            'required' => Required::on,
+        ]);
+
+        // 条件付き表示項目を作成（ユーザー名 = "admin" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'admin',
+        ]);
+
+        // リクエストデータ（ユーザー名 = "admin"）
+        $request_data = [
+            'name' => 'admin',
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 条件を満たすので表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: チェックボックス（配列）が正しく動作する
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithCheckboxArray()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目（チェックボックス）を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::checkbox,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（チェックボックスが "選択肢1,選択肢2" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => '選択肢1,選択肢2',
+        ]);
+
+        // リクエストデータ（チェックボックス配列）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => ['選択肢1', '選択肢2'],
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 条件を満たすので表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * buildValidatorArray: 条件付き表示で非表示の項目はバリデーションをスキップする
+     *
+     * @test
+     */
+    public function testBuildValidatorArraySkipsHiddenConditionalColumns()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目（必須）を作成
+        $conditional_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '条件付き項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        $users_columns = collect([$trigger_column, $conditional_column]);
+
+        // リクエストデータ（トリガー = "いいえ" なので条件付き項目は非表示）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 'いいえ',
+            ],
+        ];
+
+        // バリデーション配列の初期値
+        $validator_array = [
+            'column' => [],
+            'message' => [],
+        ];
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set->id, null, $request_data);
+
+        // 検証: 条件付き項目のバリデーションルールが追加されていない
+        $this->assertArrayNotHasKey('users_columns_value.' . $conditional_column->id, $result['column']);
+    }
+
+    /**
+     * buildValidatorArray: 条件付き表示で表示される項目はバリデーションが適用される
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayIncludesVisibleConditionalColumns()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目（必須）を作成
+        $conditional_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '条件付き項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        $users_columns = collect([$trigger_column, $conditional_column]);
+
+        // リクエストデータ（トリガー = "はい" なので条件付き項目は表示）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 'はい',
+            ],
+        ];
+
+        // バリデーション配列の初期値
+        $validator_array = [
+            'column' => [],
+            'message' => [],
+        ];
+
+        // テスト実行
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set->id, null, $request_data);
+
+        // 検証: 条件付き項目のバリデーションルールが追加されている
+        $this->assertArrayHasKey('users_columns_value.' . $conditional_column->id, $result['column']);
+        $this->assertContains('required', $result['column']['users_columns_value.' . $conditional_column->id]);
+    }
+
+    /**
+     * getConditionalDisplaySettings: requiredフラグが含まれる
+     *
+     * @test
+     */
+    public function testGetConditionalDisplaySettingsIncludesRequiredFlag()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目（必須ON）を作成
+        $column_required = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '必須項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // 条件付き表示項目（必須OFF）を作成
+        $column_not_required = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '任意項目',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // テスト実行
+        $settings = UsersTool::getConditionalDisplaySettings($columns_set->id);
+
+        // 検証: 2つの設定が取得される
+        $this->assertCount(2, $settings);
+
+        // 必須項目の設定にrequired=trueが含まれる
+        $required_setting = collect($settings)->firstWhere('target_column_id', $column_required->id);
+        $this->assertTrue($required_setting['required']);
+
+        // 任意項目の設定にrequired=falseが含まれる
+        $not_required_setting = collect($settings)->firstWhere('target_column_id', $column_not_required->id);
+        $this->assertFalse($not_required_setting['required']);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: カンマ区切り文字列をソートして正規化
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueSortsItems()
+    {
+        // ソート前の値
+        $input = '選択肢2,選択肢1,選択肢3';
+
+        // 正規化（ソート）
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // ソート済みになっていることを検証
+        $this->assertEquals('選択肢1,選択肢2,選択肢3', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 空白を削除して正規化
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueTrimsWhitespace()
+    {
+        // 空白を含む値
+        $input = ' 選択肢1 , 選択肢2 , 選択肢3 ';
+
+        // 正規化（空白削除とソート）
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // 空白が削除されソート済みになっていることを検証
+        $this->assertEquals('選択肢1,選択肢2,選択肢3', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 空文字列を除外
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueRemovesEmptyItems()
+    {
+        // 空文字列を含む値
+        $input = '選択肢1,,選択肢2,';
+
+        // 正規化（空文字列除外とソート）
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // 空文字列が除外されていることを検証
+        $this->assertEquals('選択肢1,選択肢2', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: nullと空文字列をそのまま返す
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueHandlesNullAndEmpty()
+    {
+        // nullの場合
+        $result_null = UsersTool::normalizeCommaSeparatedValue(null);
+        $this->assertNull($result_null);
+
+        // 空文字列の場合
+        $result_empty = UsersTool::normalizeCommaSeparatedValue('');
+        $this->assertEquals('', $result_empty);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 単一の値はそのまま返す
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueHandlesSingleValue()
+    {
+        // 単一の値
+        $input = '選択肢1';
+
+        // 正規化
+        $result = UsersTool::normalizeCommaSeparatedValue($input);
+
+        // そのまま返されることを検証
+        $this->assertEquals('選択肢1', $result);
+    }
+
+    /**
+     * normalizeCommaSeparatedValue: 実際のチェックボックス配列との比較
+     *
+     * @test
+     */
+    public function testNormalizeCommaSeparatedValueMatchesCheckboxArray()
+    {
+        // ユーザーが選択した順序（配列）
+        $checkbox_array1 = ['選択肢2', '選択肢1', '選択肢3'];
+        $checkbox_array2 = ['選択肢1', '選択肢3', '選択肢2'];
+
+        // 配列をソートしてカンマ区切りに変換（getTriggerValueの処理を模倣）
+        sort($checkbox_array1);
+        $trigger_value1 = implode(',', $checkbox_array1);
+
+        sort($checkbox_array2);
+        $trigger_value2 = implode(',', $checkbox_array2);
+
+        // 条件値（管理者が設定した値）
+        $condition_value = '選択肢2,選択肢1,選択肢3';
+        $normalized_condition = UsersTool::normalizeCommaSeparatedValue($condition_value);
+
+        // 選択順序に関わらず同じ値になることを検証
+        $this->assertEquals($trigger_value1, $trigger_value2);
+        $this->assertEquals($trigger_value1, $normalized_condition);
+        $this->assertEquals('選択肢1,選択肢2,選択肢3', $normalized_condition);
+    }
+
+    /**
+     * isColumnDisplayed: システム固定項目（ユーザー名）がnullの場合
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithSystemFixedColumnNullValue()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目（システム固定項目: ユーザー名）を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::user_name,
+            'column_name' => 'ユーザー名',
+            'required' => Required::on,
+        ]);
+
+        // 条件付き表示項目を作成（ユーザー名が空でない時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_not_empty,
+            'conditional_value' => null,
+        ]);
+
+        // リクエストデータ（ユーザー名がnull）
+        $request_data = [
+            'name' => null,
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: ユーザー名がnullなので非表示
+        $this->assertFalse($result);
+    }
+
+    /**
+     * isColumnDisplayed: システム固定項目（ログインID）が空文字の場合
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithSystemFixedColumnEmptyString()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目（システム固定項目: ログインID）を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::login_id,
+            'column_name' => 'ログインID',
+            'required' => Required::on,
+        ]);
+
+        // 条件付き表示項目を作成（ログインIDが空の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_empty,
+            'conditional_value' => null,
+        ]);
+
+        // リクエストデータ（ログインIDが空文字）
+        $request_data = [
+            'userid' => '',
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: ログインIDが空文字なので表示
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: チェックボックスで一部のみ選択された場合
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithPartialCheckboxSelection()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目（チェックボックス）を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::checkbox,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（チェックボックスが "選択肢1,選択肢2,選択肢3" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => '選択肢1,選択肢2,選択肢3',
+        ]);
+
+        // リクエストデータ（一部のみ選択: 選択肢1と選択肢2のみ）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => ['選択肢1', '選択肢2'],
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 一部のみ選択なので条件を満たさず非表示
+        $this->assertFalse($result);
+    }
+
+    /**
+     * isColumnDisplayed: 条件値が空文字でequals演算子の場合
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithEmptyStringEqualsOperator()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目 = "" の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => '',
+        ]);
+
+        // リクエストデータ（トリガー項目が空文字）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => '',
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 空文字 == 空文字 なので表示される
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: 数値の0がis_emptyで正しく評価される
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithZeroValueIsEmpty()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目が空の時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_empty,
+            'conditional_value' => null,
+        ]);
+
+        // リクエストデータ（トリガー項目が数値の0）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 0,
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: 0は空ではない（厳密な判定）ので非表示
+        $this->assertFalse($result);
+    }
+
+    /**
+     * isColumnDisplayed: 文字列の"0"がis_not_emptyで正しく評価される
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithStringZeroIsNotEmpty()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成（トリガー項目が空でない時に表示）
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::is_not_empty,
+            'conditional_value' => null,
+        ]);
+
+        // リクエストデータ（トリガー項目が文字列の"0"）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => '0',
+            ],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: "0"は空ではない（厳密な判定）ので表示
+        $this->assertTrue($result);
+    }
+
+    /**
+     * isColumnDisplayed: ネストした条件付き表示（A→B→C）
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWithNestedConditions()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目A（常に表示）
+        $column_a = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => '項目A',
+            'required' => Required::off,
+        ]);
+
+        // トリガー項目B（Aが"はい"の時に表示）
+        $column_b = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => '項目B',
+            'required' => Required::off,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_a->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // 項目C（Bが"はい"の時に表示）
+        $column_c = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '項目C',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $column_b->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // シナリオ1: A="はい", B="はい" → Cは表示
+        $request_data1 = [
+            'users_columns_value' => [
+                $column_a->id => 'はい',
+                $column_b->id => 'はい',
+            ],
+        ];
+        $result1 = UsersTool::isColumnDisplayed($column_c, $request_data1);
+        $this->assertTrue($result1);
+
+        // シナリオ2: A="はい", B="いいえ" → Cは非表示
+        $request_data2 = [
+            'users_columns_value' => [
+                $column_a->id => 'はい',
+                $column_b->id => 'いいえ',
+            ],
+        ];
+        $result2 = UsersTool::isColumnDisplayed($column_c, $request_data2);
+        $this->assertFalse($result2);
+
+        // シナリオ3: A="いいえ", B未入力 → Cは非表示
+        $request_data3 = [
+            'users_columns_value' => [
+                $column_a->id => 'いいえ',
+            ],
+        ];
+        $result3 = UsersTool::isColumnDisplayed($column_c, $request_data3);
+        $this->assertFalse($result3);
+    }
+
+    /**
+     * buildValidatorArray: 複数の条件付き表示項目が正しく処理される
+     *
+     * @test
+     */
+    public function testBuildValidatorArrayWithMultipleConditionalColumns()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目1（表示される）
+        $column1 = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '条件付き項目1',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // 条件付き表示項目2（非表示）
+        $column2 = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => '条件付き項目2',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'いいえ',
+        ]);
+
+        // リクエストデータ（トリガー項目 = "はい"）
+        $request_data = [
+            'users_columns_value' => [
+                $trigger_column->id => 'はい',
+            ],
+        ];
+
+        // バリデーション配列を構築
+        $validator_array = ['column' => []];
+        $users_columns = collect([$column1, $column2]);
+        $result = UsersTool::buildValidatorArray($validator_array, $users_columns, $columns_set->id, null, $request_data);
+
+        // 検証: 項目1はバリデーションに含まれる
+        $this->assertArrayHasKey('users_columns_value.' . $column1->id, $result['column']);
+
+        // 検証: 項目2はバリデーションに含まれない（非表示のため）
+        $this->assertArrayNotHasKey('users_columns_value.' . $column2->id, $result['column']);
+    }
+
+    /**
+     * isColumnDisplayed: トリガー項目が削除された場合のフォールバック動作
+     *
+     * @test
+     */
+    public function testIsColumnDisplayedWhenTriggerColumnIsDeleted()
+    {
+        // 項目セットを作成
+        $columns_set = UsersColumnsSet::create([
+            'name' => 'テスト項目セット',
+            'display_sequence' => 1,
+        ]);
+
+        // トリガー項目を作成
+        $trigger_column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::radio,
+            'column_name' => 'トリガー項目',
+            'required' => Required::off,
+        ]);
+
+        // 条件付き表示項目を作成
+        $column = UsersColumns::create([
+            'columns_set_id' => $columns_set->id,
+            'column_type' => UserColumnType::text,
+            'column_name' => 'テスト項目',
+            'required' => Required::on,
+            'conditional_display_flag' => ShowType::show,
+            'conditional_trigger_column_id' => $trigger_column->id,
+            'conditional_operator' => ConditionalOperator::equals,
+            'conditional_value' => 'はい',
+        ]);
+
+        // トリガー項目を削除
+        $trigger_column->delete();
+
+        // リクエストデータ
+        $request_data = [
+            'users_columns_value' => [],
+        ];
+
+        // テスト実行
+        $result = UsersTool::isColumnDisplayed($column, $request_data);
+
+        // 検証: トリガーが削除されている場合は安全側（表示）に倒す
+        $this->assertTrue($result);
+    }
 }
