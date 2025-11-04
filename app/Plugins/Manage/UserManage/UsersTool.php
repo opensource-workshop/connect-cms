@@ -641,7 +641,10 @@ class UsersTool
         // チェックボックス（複数選択）の場合、配列をソートしてからカンマ区切りに変換
         // ソートすることで、選択順序に関わらず同じ文字列になる
         if (is_array($trigger_value)) {
-            sort($trigger_value);
+            // natsort()で自然順序ソート（例: 「選択肢1,選択肢2,選択肢10」となり、辞書順の「選択肢1,選択肢10,選択肢2」より直感的）
+            natsort($trigger_value);
+            // natsort()はキーを保持するため、array_values()でキーを0から振り直す
+            $trigger_value = array_values($trigger_value);
             return implode(',', $trigger_value);
         }
 
@@ -705,8 +708,11 @@ class UsersTool
             return $item !== '';
         });
 
-        // ソート
-        sort($items);
+        // ソート（自然順序ソートで数値部分を数値として認識）
+        // 例: 「選択肢1,選択肢2,選択肢10」となり、辞書順の「選択肢1,選択肢10,選択肢2」より直感的
+        natsort($items);
+        // natsort()はキーを保持するため、array_values()でキーを0から振り直す
+        $items = array_values($items);
 
         // カンマ区切りで結合
         return implode(',', $items);
