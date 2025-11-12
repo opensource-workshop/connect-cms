@@ -117,6 +117,15 @@
                     @endforeach
                 </select>
                 @if ($frame->plugin_name == 'menus')
+                    <div class="alert alert-info small mt-2 mb-0" role="alert">
+                        テンプレートの特徴や表示イメージは
+                        <a href="https://connect-cms.jp/manual/user/menus/templates" target="_blank" rel="noopener">
+                            マニュアル
+                        </a>
+                        を参照してください。
+                    </div>
+                @endif
+                @if ($frame->plugin_name == 'menus')
                     <small class="text-muted">※ 「タブ」「ドロップダウン」「マウスオーバードロップダウン」系テンプレートは、スマートフォンでは表示されません。</small>
                 @endif
             </div>
