@@ -568,6 +568,14 @@ use App\Models\Common\Page;
             <small class="form-text text-muted">※ メニュープラグイン（一部テンプレート）のページに対して、デザインで使用するためのclass名を設定できます。</small>
         </div>
     </div>
+    <div class="form-group row">
+        <label for="class" class="col-md-3 col-form-label text-md-right">ページでの上書きサイト名</label>
+        <div class="col-md-9">
+            <input type="text" name="override_site_name" id="override_site_name" value="{{old('override_site_name', $page->override_site_name)}}" class="form-control">
+            @include('common.errors_inline', ['name' => 'override_site_name'])
+            <small class="form-text text-muted">※ サイト名を上書きしたい場合に指定します。</small>
+        </div>
+    </div>
 
     {{-- ボタンエリア --}}
     <div class="form-group text-center">

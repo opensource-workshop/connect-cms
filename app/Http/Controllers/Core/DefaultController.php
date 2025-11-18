@@ -53,6 +53,7 @@ class DefaultController extends ConnectController
         $this->middleware('connect.page')->except(['changeLanguage']);
         $this->middleware('connect.page.password')->except(['changeLanguage']);
         $this->middleware('connect.frame')->except(['changeLanguage']);
+        $this->middleware('connect.multilanguage');
     }
 
     /**
