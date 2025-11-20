@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
 
 use App\Models\Core\Configs;
+use App\Services\Ms365MailOauth2Service;
+use App\Enums\MailAuthMethod;
 
 use App\Plugins\Manage\ManagePluginBase;
 
@@ -25,6 +27,16 @@ use App\Plugins\Manage\ManagePluginBase;
 class SystemManage extends ManagePluginBase
 {
     /**
+     * Microsoft 365 OAuth2サービスを取得
+     *
+     * @return Ms365MailOauth2Service
+     */
+    protected function getMs365MailOauth2Service()
+    {
+        return app(Ms365MailOauth2Service::class);
+    }
+
+    /**
      *  権限定義
      */
     public function declareRole()
@@ -39,6 +51,9 @@ class SystemManage extends ManagePluginBase
         $role_ckeck_table["updateServer"]    = array('admin_system');
         $role_ckeck_table["mail"]            = ['admin_system'];
         $role_ckeck_table["updateMail"]      = ['admin_system'];
+        $role_ckeck_table["updateMailAuthMethod"] = ['admin_system'];
+        $role_ckeck_table["updateMailOauth2"] = ['admin_system'];
+        $role_ckeck_table["mailOauth2Disconnect"] = ['admin_system'];
         $role_ckeck_table["mailTest"]        = ['admin_system'];
         $role_ckeck_table["sendMailTest"]    = ['admin_system'];
         return $role_ckeck_table;
@@ -209,9 +224,19 @@ class SystemManage extends ManagePluginBase
      */
     public function mail($request, $id = null)
     {
+        // メール認証方式の取得
+        $mail_configs = Configs::where('category', 'mail')->get();
+        $mail_auth_method = Configs::getConfigsValue($mail_configs, 'mail_auth_method', MailAuthMethod::smtp);
+
+        // Microsoft 365連携（OAuth2）設定の取得
+        $oauth2_configs = Configs::where('category', 'mail_oauth2_ms365_app')->get();
+
         return view('plugins.manage.system.mail', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "system",
+            "mail_auth_method"   => $mail_auth_method,
+            "oauth2_configs"     => $oauth2_configs,
+            "is_oauth2_connected" => $this->getMs365MailOauth2Service()->isConnected(),
         ]);
     }
 
@@ -317,5 +342,70 @@ class SystemManage extends ManagePluginBase
         }
 
         return redirect("/manage/system/mailTest")->with('flash_message', 'メール送信しました。');
+    }
+
+    /**
+     * メール認証方式更新
+     */
+    public function updateMailAuthMethod($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // メール認証方式を保存
+        Configs::updateOrCreate(
+            ['category' => 'mail', 'name' => 'mail_auth_method'],
+            ['value' => $request->mail_auth_method]
+        );
+
+        return redirect("/manage/system/mail")->with('flash_message', '認証方式を更新しました。');
+    }
+
+    /**
+     * Microsoft 365連携（OAuth2）設定更新
+     */
+    public function updateMailOauth2($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        // バリデーション
+        $validator = $this->getMs365MailOauth2Service()->validateConfig($request->all());
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 設定保存とトークン取得
+        $result = $this->getMs365MailOauth2Service()->saveConfig($request->only([
+            'tenant_id',
+            'client_id',
+            'client_secret',
+            'mail_from_address'
+        ]));
+
+        if ($result['success']) {
+            return redirect("/manage/system/mail")->with('flash_message', $result['message']);
+        } else {
+            return redirect("/manage/system/mail")->with('error_message', $result['message']);
+        }
+    }
+
+    /**
+     * Microsoft 365連携（OAuth2）解除
+     */
+    public function mailOauth2Disconnect($request, $id = null)
+    {
+        // httpメソッド確認
+        if (!$request->isMethod('post')) {
+            abort(403, '権限がありません。');
+        }
+
+        $this->getMs365MailOauth2Service()->disconnect();
+
+        return redirect("/manage/system/mail")->with('flash_message', 'Microsoft 365との連携を解除しました。');
     }
 }

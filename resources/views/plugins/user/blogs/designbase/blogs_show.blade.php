@@ -31,6 +31,8 @@
                 <small><span class="badge badge-pill badge-danger">重要記事に設定</span></small>
             @endif
         </h2>
+        {{-- 承認待ち・一時保存マーク --}}
+        @include('plugins.user.blogs.default.include_status_badges')
     </header>
 
     {{-- 記事本文 --}}

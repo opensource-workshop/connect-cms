@@ -154,6 +154,10 @@
         @if ($post->important == 1 && Auth::user() && (Auth::user()->can('posts.update',[[$post, 'blogs', 'preview_off']]) || $post->created_id == Auth::user()->id))
             <span class="badge badge-pill badge-danger">重要記事に設定</span>
         @endif
+        {{-- 承認待ち・一時保存マーク ※タイトルのみ、タイトルのみ（サイド用）は記事内容が表示されない為、フッターエリアの状態表示で視認が事足りる為、除外する --}}
+        @if (!isset($is_template_titleindex) && !isset($is_template_sidetitleindex))
+            @include('plugins.user.blogs.default.include_status_badges')
+        @endif
 
             {{-- titleindexテンプレート・sidetitleindexテンプレートは本文表示しない --}}
             @if (isset($is_template_titleindex) || isset($is_template_sidetitleindex))

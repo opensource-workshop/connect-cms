@@ -6,6 +6,9 @@
  * @category ユーザ管理
 --}}
 @php
+use App\Enums\ConditionalOperator;
+use App\Enums\Required;
+use App\Enums\ShowType;
 use App\Models\Core\UsersColumns;
 @endphp
 {{-- 管理画面ベース画面 --}}
@@ -306,7 +309,7 @@ use App\Models\Core\UsersColumns;
                 <br>
             @endif
 
-            @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
+            @if (in_array($column->column_type, UserColumnType::supportsValidationSettings()))
                 {{-- チェック処理の設定 --}}
                 <div class="card form-group" id="div_rule">
                     <h5 class="card-header">チェック処理の設定</h5>
@@ -393,21 +396,19 @@ use App\Models\Core\UsersColumns;
                             </div>
                         @endif
 
-                        @if ($column->column_type == UserColumnType::text || $column->column_type == UserColumnType::textarea || $column->column_type == UserColumnType::mail)
-                            {{-- 正規表現設定 --}}
-                            <div class="form-group row">
-                                <label class="col-md-3 col-form-label text-md-right">正規表現</label>
-                                <div class="col-md-9 align-items-center">
-                                    <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
-                                    @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
-                                    <small class="text-muted">
-                                        ※ エラーメッセージは「正しい形式の＜項目名＞を指定してください。」と表示されるため、併せてキャプションの設定をする事をオススメします。<br>
-                                        ※ （設定例：電話番号ハイフンあり）/0\d{1,4}-\d{1,4}-\d{4}/<br>
-                                        ※ （設定例：指定ドメインのメールアドレスのみ）/@example\.com$/<br>
-                                    </small>
-                                </div>
+                        {{-- 正規表現設定 --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right">正規表現</label>
+                            <div class="col-md-9 align-items-center">
+                                <input type="text" name="rule_regex" value="{{old('rule_regex', $column->rule_regex)}}" class="form-control">
+                                @if ($errors && $errors->has('rule_regex')) <div class="text-danger">{{$errors->first('rule_regex')}}</div> @endif
+                                <small class="text-muted">
+                                    ※ エラーメッセージは「正しい形式の＜項目名＞を指定してください。」と表示されるため、併せてキャプションの設定をする事をオススメします。<br>
+                                    ※ （設定例：電話番号ハイフンあり）/0\d{1,4}-\d{1,4}-\d{4}/<br>
+                                    ※ （設定例：指定ドメインのメールアドレスのみ）/@example\.com$/<br>
+                                </small>
                             </div>
-                        @endif
+                        </div>
 
                         {{-- ボタンエリア --}}
                         <div class="form-group text-center">
@@ -759,6 +760,149 @@ use App\Models\Core\UsersColumns;
                 </div>
             </div>
 
+            {{-- 条件付き表示設定 --}}
+            <div class="card form-group">
+                <h5 class="card-header">条件付き表示設定</h5>
+                <div class="card-body">
+
+                    {{-- 現在の設定内容を文章で表示 --}}
+                    @if ($column->conditional_display_flag && $column->conditional_trigger_column_id)
+                        @php
+                            $trigger_column = $trigger_columns->firstWhere('id', $column->conditional_trigger_column_id);
+                            $operator_text = match($column->conditional_operator) {
+                                ConditionalOperator::equals => '一致する',
+                                ConditionalOperator::not_equals => '一致しない',
+                                ConditionalOperator::is_empty => '未入力である',
+                                ConditionalOperator::is_not_empty => '未入力でない',
+                                default => ''
+                            };
+                        @endphp
+                        @if ($trigger_column)
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>現在の設定：</strong>
+                                @if ($column->conditional_operator == ConditionalOperator::is_empty || $column->conditional_operator == ConditionalOperator::is_not_empty)
+                                    項目「{{ $column->column_name }}」は、項目「{{ $trigger_column->column_name }}」が<strong>{{ $operator_text }}</strong>時に表示されます。
+                                @else
+                                    項目「{{ $column->column_name }}」は、項目「{{ $trigger_column->column_name }}」の値が「{{ $column->conditional_value }}」と<strong>{{ $operator_text }}</strong>時に表示されます。
+                                @endif
+                            </div>
+                        @endif
+                    @endif
+
+                    @if (UsersColumns::isFixedColumnType($column->column_type))
+                        {{-- システム固定項目の場合は設定不可 --}}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            システム固定項目（ユーザー名、ログインID、パスワード）は条件付き表示を設定できません。
+                        </div>
+                        <input type="hidden" name="conditional_display_flag" value="{{ ShowType::not_show }}">
+                    @else
+                        {{-- 必須項目と条件付き表示の組み合わせに関する説明 --}}
+                        @if ($column->required == Required::on)
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>必須項目と条件付き表示の組み合わせ：</strong><br>
+                                必須項目に条件付き表示を設定できます。この場合、項目が<strong>表示されている時のみ</strong>入力が必須となります。<br>
+                                <small class="text-muted">
+                                    ※ 条件を満たさず非表示の場合は、必須チェックが行われません。<br>
+                                    ※ この項目を他の項目のトリガーとして使用することも可能です。
+                                </small>
+                            </div>
+                        @endif
+                        {{-- この項目を条件付きで表示する --}}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right pt-0">この項目（{{ $column->column_name }}）を条件付きで表示する</label>
+                            <div class="col-md-9 align-items-center">
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" name="conditional_display_flag" value="{{ ShowType::not_show }}"
+                                           id="conditional_display_flag_off" class="custom-control-input"
+                                           @if (old('conditional_display_flag', $column->conditional_display_flag) == ShowType::not_show) checked @endif>
+                                    <label class="custom-control-label" for="conditional_display_flag_off">OFF</label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" name="conditional_display_flag" value="{{ ShowType::show }}"
+                                           id="conditional_display_flag_on" class="custom-control-input"
+                                           @if (old('conditional_display_flag', $column->conditional_display_flag) == ShowType::show) checked @endif>
+                                    <label class="custom-control-label" for="conditional_display_flag_on">ON</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- 条件詳細（ONの場合のみ表示） --}}
+                        <div id="conditional_settings" class="collapse">
+                            {{-- トリガーとなる項目 --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">
+                                    トリガーとなる項目 <span class="badge badge-danger">必須</span>
+                                </label>
+                                <div class="col-md-9">
+                                    <select name="conditional_trigger_column_id" class="form-control @if ($errors->has('conditional_trigger_column_id')) border-danger @endif">
+                                        <option value="">選択してください</option>
+                                        @foreach($trigger_columns as $trigger_column)
+                                            <option value="{{$trigger_column->id}}"
+                                                @if (old('conditional_trigger_column_id', $column->conditional_trigger_column_id) == $trigger_column->id) selected @endif>
+                                                {{$trigger_column->column_name}}
+                                                @if ($trigger_column->required == Required::on)
+                                                    （必須）
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @include('plugins.common.errors_inline', ['name' => 'conditional_trigger_column_id'])
+                                    <small class="text-muted">
+                                        ※ 自分自身（{{ $column->column_name }}）以外が選択できます
+                                    </small>
+                                </div>
+                            </div>
+
+                            {{-- 表示する条件 --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">
+                                    表示する条件 <span class="badge badge-danger">必須</span>
+                                </label>
+                                <div class="col-md-9">
+                                    <select name="conditional_operator" id="conditional_operator" class="form-control @if ($errors->has('conditional_operator')) border-danger @endif">
+                                        <option value="">選択してください</option>
+                                        @foreach (ConditionalOperator::getMembers() as $key => $value)
+                                            <option value="{{$key}}"
+                                                @if (old('conditional_operator', $column->conditional_operator) == $key) selected @endif>
+                                                {{$value}}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @include('plugins.common.errors_inline', ['name' => 'conditional_operator'])
+                                </div>
+                            </div>
+
+                            {{-- 条件の値 --}}
+                            <div class="form-group row" id="conditional_value_row">
+                                <label class="col-md-3 col-form-label text-md-right">
+                                    条件の値 <span class="badge badge-danger" id="conditional_value_required">必須</span>
+                                </label>
+                                <div class="col-md-9">
+                                    <input type="text" name="conditional_value" id="conditional_value"
+                                           class="form-control @if ($errors->has('conditional_value')) border-danger @endif"
+                                           value="{{ old('conditional_value', $column->conditional_value) }}"
+                                           placeholder="例: はい">
+                                    @include('plugins.common.errors_inline', ['name' => 'conditional_value'])
+                                    <small class="text-muted">
+                                        ※ トリガー項目の値と比較する値を入力してください
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ボタンエリア --}}
+                    <div class="form-group text-center">
+                        <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal">
+                            <i class="fas fa-check"></i> 更新
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {{-- ボタンエリア --}}
             <div class="text-center">
                 <a href="{{url('/')}}/manage/user/editColumns/{{$columns_set->id}}" class="btn btn-secondary">
@@ -784,5 +928,43 @@ use App\Models\Core\UsersColumns;
 <script>
     {{-- 初期状態で開くもの --}}
     change_use_variable('{{old('use_variable', $column->use_variable)}}');
+
+    // 条件付き表示の制御
+    $(function() {
+        $('input[name="conditional_display_flag"]').change(function() {
+            if ($(this).val() == '1') {
+                $('#conditional_settings').collapse('show');
+            } else {
+                $('#conditional_settings').collapse('hide');
+            }
+        });
+
+        // 初期表示制御
+        if ($('input[name="conditional_display_flag"]:checked').val() == '{{ ShowType::show }}') {
+            $('#conditional_settings').collapse('show');
+        }
+
+        // 条件演算子変更時の条件の値入力欄の表示制御
+        $('#conditional_operator').change(function() {
+            toggleConditionalValueField();
+        });
+
+        // 初期状態の設定
+        toggleConditionalValueField();
+    });
+
+    // 条件の値入力欄の表示/非表示を切り替え
+    function toggleConditionalValueField() {
+        var operator = $('#conditional_operator').val();
+        if (operator === 'is_empty' || operator === 'is_not_empty') {
+            // 未入力チェックの場合は条件の値入力欄を非表示
+            $('#conditional_value_row').hide();
+            $('#conditional_value').removeAttr('required');
+        } else {
+            // その他の場合は表示
+            $('#conditional_value_row').show();
+            $('#conditional_value').attr('required', 'required');
+        }
+    }
 </script>
 @endsection

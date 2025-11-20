@@ -35,6 +35,7 @@ class FormsPluginTest extends DuskTestCase
     {
         $this->init();
         $this->login(1);
+        $this->closePhpdebugar();
 
         $this->createBuckets();
         $this->editColumn();
@@ -105,11 +106,14 @@ class FormsPluginTest extends DuskTestCase
         // 実行
         $this->browse(function (Browser $browser) {
             $browser->visit('/plugin/forms/createBuckets/' . $this->test_frame->page_id . '/' . $this->test_frame->id . '#frame-' . $this->test_frame->id)
+                    ->pause(500)
                     ->type('forms_name', 'テストのフォーム')
                     ->screenshot('user/forms/createBuckets/images/createBuckets1');
 
             $browser->scrollIntoView('#div_entry_limit')
-                    ->screenshot('user/forms/index/images/createBuckets2');
+                    ->screenshot('user/forms/index/images/createBuckets2')
+                    ->scrollIntoView('textarea[name=after_message]')
+                    ->type('after_message', 'お問い合わせありがとうございます。');
 
             $browser->scrollIntoView('footer')
                     ->screenshot('user/forms/createBuckets/images/createBuckets3')
@@ -487,6 +491,9 @@ class FormsPluginTest extends DuskTestCase
                     ->click('#label_form_mode_questionnaire')
                     ->pause(500)
                     ->screenshot('user/questionnaires/createBuckets/images/createBuckets1');
+
+            $browser->scrollIntoView('textarea[name=after_message]')
+                    ->type('after_message', 'ご回答ありがとうございます。');
 
             $browser->scrollIntoView('footer')
                     ->screenshot('user/questionnaires/createBuckets/images/createBuckets2')
