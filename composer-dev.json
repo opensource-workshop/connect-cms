@@ -24,6 +24,7 @@
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.0",
+        "league/oauth2-client": "^2.8",
         "mews/captcha": "3.3.0",
         "rlanvin/php-rrule": "^2.3",
         "setasign/fpdi": "^2.3",
