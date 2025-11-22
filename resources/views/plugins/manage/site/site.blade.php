@@ -29,7 +29,7 @@
             <div class="form-group">
                 <label class="col-form-label">サイト名</label>
                 <input type="text" name="base_site_name" value="{{Configs::getConfigsValueAndOld($configs, "base_site_name")}}" class="form-control">
-                <small class="form-text text-muted">サイト名（各ページで上書き可能 ※予定）</small>
+                <small class="form-text text-muted">サイト名（各ページで上書き可能）</small>
             </div>
 
             {{-- 基本テーマ --}}

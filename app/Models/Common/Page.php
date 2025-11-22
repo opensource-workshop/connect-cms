@@ -43,6 +43,7 @@ class Page extends Model
         'meta_robots',
         'transfer_lower_page_flag',
         'password',
+        'override_site_name',
     ];
 
     /**
@@ -734,6 +735,26 @@ class Page extends Model
             }
         }
         return;
+    }
+
+    /**
+     * ページで上書きしているサイト名を取得（自ページから親を遡って検索）
+     */
+    public function getOverrideSiteName(?Collection $page_tree = null): ?string
+    {
+        if (empty($this->id)) {
+            return null;
+        }
+
+        $page_tree = $this->getPageTreeByGoingBackParent($page_tree);
+
+        foreach ($page_tree as $page) {
+            if (!empty($page->override_site_name)) {
+                return $page->override_site_name;
+            }
+        }
+
+        return null;
     }
 
     /**
