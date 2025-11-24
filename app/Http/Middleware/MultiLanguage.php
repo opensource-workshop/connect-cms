@@ -133,7 +133,7 @@ class MultiLanguage
 
         // 多言語のページ一覧を画面に渡すためにリクエストに設定する。
         $alternates = [];
-        foreach($multilanguage_pages as $page) {
+        foreach ($multilanguage_pages as $page) {
             $alternates[$this->getLocale2Path($page->permanent_link)] = $page->permanent_link;
         }
         $request->attributes->add(['alternates' => $alternates]);
