@@ -86,7 +86,7 @@ if (! isset($cc_configs)) {
     {{-- alternate --}}
 @if (app('request')->attributes->get('alternates'))
     @foreach (app('request')->attributes->get('alternates') as $locale =>$alternate)
-        <link rel="alternate" hreflang="{{$locale}}" href="{{$alternate}}" />
+        <link rel="alternate" hreflang="{{$locale}}" href="{{ url('/') }}{{$alternate}}" />
     @endforeach
 @endif
 
