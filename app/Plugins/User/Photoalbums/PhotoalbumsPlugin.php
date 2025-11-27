@@ -20,6 +20,7 @@ use App\Models\User\Photoalbums\PhotoalbumContent;
 
 use App\Enums\UploadMaxSize;
 use App\Enums\PhotoalbumFrameConfig;
+use App\Enums\PhotoalbumPlayviewType;
 use App\Enums\PhotoalbumSort;
 
 use App\Utilities\Zip\UnzipUtils;
@@ -66,7 +67,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed'];
+        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail'];
         $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence'];
         return $functions;
     }
@@ -173,6 +174,32 @@ class PhotoalbumsPlugin extends UserPluginBase
         return $this->view('embed', [
             'photoalbum' => $photoalbum,
             'photoalbum_content' => $photoalbum_content,
+        ]);
+    }
+
+    /**
+     * 詳細画面を表示する
+     * この関数は動画用（画像でも使えるかなとは思いつつ作ってますが）
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id コンテンツID
+     * @return mixed $value テンプレートに渡す内容
+     */
+    public function detail($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        // 対象のデータを取得して詳細画面を表示する。
+        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
+
+        // バケツデータとフォトアルバムデータ取得、フォトアルバムのルート階層はphotoalbum->id == nullのもの。
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $parent = $this->fetchPhotoalbumContent($photoalbum_content_id, $photoalbum->id);
+
+        return $this->view('detail', [
+            'photoalbum' => $photoalbum,
+            'photoalbum_content' => $photoalbum_content,
+            'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
         ]);
     }
 
@@ -1592,6 +1619,24 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function saveView($request, $page_id, $frame_id, $photoalbum_id)
     {
+        // 項目のデフォルト値の設定
+        if (!intval($request->description_list_length)) {
+            $request->description_list_length = 0;
+        }
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'description_list_length' => ['nullable','numeric'],
+        ]);
+        $validator->setAttributeNames([
+            'description_list_length' => PhotoalbumFrameConfig::enum['description_list_length'],
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // フレーム設定保存
         $this->saveFrameConfigs($request, $frame_id, PhotoalbumFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす

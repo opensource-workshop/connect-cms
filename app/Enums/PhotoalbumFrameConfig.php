@@ -22,6 +22,8 @@ final class PhotoalbumFrameConfig extends EnumsBase
     const sort_file = 'sort_file';
     const download = 'download';
     const embed_code = 'embed_code';
+    const play_view = 'play_view';
+    const description_list_length = 'description_list_length';
 
     // key/valueの連想配列
     const enum = [
@@ -32,5 +34,7 @@ final class PhotoalbumFrameConfig extends EnumsBase
         self::sort_file => '写真並び順',
         self::download => 'ダウンロード',
         self::embed_code => '動画埋め込みコード',
+        self::play_view => '動画の再生形式',
+        self::description_list_length => '詳細画面がある場合の一覧での説明表示文字数',
     ];
 }
