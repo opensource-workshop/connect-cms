@@ -22,6 +22,7 @@ if ($frame->isExpandNarrow()) {
     <div class="{{$col_class}}">
         <div class="card mt-3 shadow-sm">
         @if ($photoalbum_content->upload->is_image)
+            {{-- 画像 --}}
             <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                  id="photo_{{$frame_id}}_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
@@ -51,11 +52,20 @@ if ($frame->isExpandNarrow()) {
                $("#popup_photo_{{$frame_id}}_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
             });
             </script>
+        @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::play_view))
+            {{-- 動画：一覧はサムネイル画像のみで詳細画面で再生する --}}
+            <a href="{{url('/')}}/plugin/photoalbums/detail/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
+                <img src="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}"
+                     style="width: 100%; max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                     id="popup_photo_{{$frame_id}}_{{$loop->iteration}}"
+                     class="img-fluid"/>
+            </a>
         @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype))
+            {{-- 動画：一覧で再生する --}}
             <video controls controlsList="nodownload"
                  src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
                  id="video_{{$loop->iteration}}"
-                 style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
+                 style="width: 100%; max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                  class="img-fluid"
                  @if ($photoalbum_content->poster_upload_id) poster="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}" @endif
                  oncontextmenu="return false;"
@@ -70,13 +80,43 @@ if ($frame->isExpandNarrow()) {
                         </div>
                     @endif
                     @if ($photoalbum_content->name)
-                        <h5 class="card-title d-flex text-break">{{$photoalbum_content->name}}</h5>
+                        @if ($photoalbum_content->isVideo($photoalbum_content->mimetype) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::play_view))
+                            <a href="{{url('/')}}/plugin/photoalbums/detail/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
+                                <h5 class="card-title d-flex text-break">{{$photoalbum_content->name}}</h5>
+                            </a>
+                        @else
+                            <h5 class="card-title d-flex text-break">{{$photoalbum_content->name}}</h5>
+                        @endif
                     @endif
                 </div>
                 @if ($photoalbum_content->description)
-                    <div class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</div>
+                    <div class="card-text">
+                    {{--
+                        以下の場合は文字（タグ除去済み）をトリミングする。
+                        動画 ＆ 
+                        動画の再生形式が"一覧はサムネイル画像のみで詳細画面で再生する" = 1 ＆
+                        詳細がある場合の一覧での説明表示文字数 != 0 ＆
+                        詳細がある場合の一覧での説明表示文字数 < 説明の文字数
+                    --}}
+                    @if ($photoalbum_content->isVideo($photoalbum_content->mimetype) &&
+                         FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view) &&
+                         FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length) != 0 &&
+                         FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length) < mb_strlen(strip_tags($photoalbum_content->description)))
+                        {{ mb_substr(strip_tags($photoalbum_content->description), 0, FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length)) }}...
+                    @else
+                        {!!nl2br(e($photoalbum_content->description))!!}
+                    @endif
+                    </div>
                 @endif
-                @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::embed_code))
+                {{--
+                    以下の場合は埋め込みコードを表示する。
+                    動画 ＆ 
+                    動画埋め込みコードが"表示する" = 1 ＆
+                    動画の再生形式が"一覧で再生する" = 0
+                --}}
+                @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) &&
+                      FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::embed_code) &&
+                      FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view) == 0)
                     <div class="card-text">
                         <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;" id="a_embed_code_check{{$photoalbum_content->id}}"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
                         <input type="text" name="embed_code[{{$frame_id}}]" value='<iframe width="400" height="300" src="{{url('/')}}/download/plugin/photoalbums/embed/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}" frameborder="0" scrolling="no" allowfullscreen></iframe>' class="form-control" id="embed_code{{$photoalbum_content->id}}" style="display: none;">

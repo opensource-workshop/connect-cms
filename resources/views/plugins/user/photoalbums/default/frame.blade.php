@@ -134,6 +134,51 @@
                 @endforeach
             </div>
         </div>
+        {{-- 動画の再生形式 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::play_view]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio"
+                           value="0"
+                           id="play_view_0"
+                           name="play_view"
+                           class="custom-control-input"
+                           {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, 0) == '0' ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label"
+                           for="{{ "play_view_0" }}"
+                           id="{{ "label_play_view_0" }}">
+                        一覧で再生する
+                    </label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio"
+                           value="1"
+                           id="play_view_1"
+                           name="play_view"
+                           class="custom-control-input"
+                           {{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, 1) == '1' ? 'checked' : '' }}
+                    >
+                    <label class="custom-control-label"
+                           for="{{ "play_view_1" }}"
+                           id="{{ "label_play_view_1" }}">
+                        一覧はサムネイル画像のみで詳細画面で再生する
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        {{-- 詳細画面がある場合の一覧での説明表示文字数 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::description_list_length]}}</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text" name="description_list_length" value="{{ FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length) }}" class="form-control col-sm-3 @if($errors->has('description_list_length')) border-danger @endif">
+                @include('plugins.common.errors_inline', ['name' => 'description_list_length'])
+                <small class="text-muted">※ 0の場合、全文が表示されます。</small>
+            </div>
+        </div>
+
         {{-- アルバム並び順 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::sort_folder]}}</label>
