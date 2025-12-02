@@ -409,7 +409,7 @@ class WhatsnewsPlugin extends UserPluginBase
         $visible_frame_ids = [];
         $frames = Frame::whereIn('id', $whatsnews->pluck('frame_id')->unique())->get();
         foreach ($frames as $frame) {
-            // 非公開・限定公開フレームが非表示か
+            // 非公開・期間限定公開フレームが非表示か
             if ($frame->isInvisiblePrivateFrame()) {
                 // 見れないフレーム
                 continue;

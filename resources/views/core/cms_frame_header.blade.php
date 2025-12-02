@@ -98,7 +98,7 @@ if ($can_edit_frame) {
         @endif
     @endif
 
-    {{-- 権限あり & 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、限定公開）のみステータス表示を行う --}}
+    {{-- 権限あり & 公開以外の場合にステータス表示 ※デフォルト状態の公開もステータス表示すると画面表示が煩雑になる為、意識的な設定（非公開、又は、期間限定公開）のみステータス表示を行う --}}
     @can('frames.edit',[[null, null, null, $frame]])
         @if ($frame->content_open_type != ContentOpenType::always_open)
             <small>
