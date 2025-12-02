@@ -531,7 +531,12 @@ class DatabasesPluginTest extends DuskTestCase
             'user',
             '/test/database',
             ['databases', 'データベース'],
-            ['table' => 'table', 'default-left-col-3' => 'default-left-col-3', 'card_02' => 'カードタイプ（２列）']
+            [
+                'table' => 'table',
+                'default-left-col-3' => 'default-left-col-3',
+                'card_02' => 'カード表示（2列）',
+                'card_03' => 'カード表示（3列）',
+            ]
         );
     }
 }
