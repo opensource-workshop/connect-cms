@@ -71,7 +71,9 @@
                 [{{$post->created_name}}]
             @endif
             {{-- カテゴリ --}}
-            @if ($post->category_view_flag)<span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>@endif
+            @if ($post->category_view_flag)
+                <span class="badge {{ $post->category_classname ? 'cc_category_' . $post->category_classname : '' }}" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span>
+            @endif
         </dt>
 
         <dd>
