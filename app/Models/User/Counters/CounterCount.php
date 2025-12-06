@@ -44,6 +44,8 @@ class CounterCount extends Model
                     $join->on('yesterday_counts.counter_id', '=', 'counter_counts.counter_id')
                             ->where('yesterday_counts.counted_at', (new Carbon($counted_at))->subDay()->format('Y-m-d'));
                 })
+                // yesterday_counts の updated_at で降順（新しい順）に並び替え
+                ->orderBy('yesterday_counts.updated_at', 'desc')
                 ->first();
 
         return $counter_count;
