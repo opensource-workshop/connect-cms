@@ -92,6 +92,7 @@ class PageManageTest extends DuskTestCase
         // クリックできるのは、label タグになるため、label タグにセレクタを追加して、ckick() メソッドで値を設定する。
         $this->browse(function (Browser $browser) {
             $browser->visit('/manage/page/edit')
+                    ->waitFor("input[name='page_name']")
                     ->type('page_name', 'プラグイン・テスト')
                     ->type('permanent_link', '/test')
                     ->click('#label_base_display_flag')
@@ -166,10 +167,10 @@ class PageManageTest extends DuskTestCase
             $browser->visit('/manage/page')
                     ->screenshot('manage/page/movePage/images/movePage1')
                     ->click("#move_level_" . $sub_page->id)
-                    ->pause(500)
+                    ->waitFor("#level_move_page_" . $test_page->id)
                     ->screenshot('manage/page/movePage/images/movePage2')
                     ->click("#level_move_page_" . $test_page->id)
-                    ->pause(500)
+                    ->waitForText('決定')
                     ->screenshot('manage/page/movePage/images/movePage3')
                     ->press("決定");
         });
@@ -263,8 +264,8 @@ class PageManageTest extends DuskTestCase
                 ->clickLink('管理者グループ')
                 ->assertSourceHas('ページ権限設定');
 
-            // collapseが表示されるまで、ちょっと待つ
-            $browser->pause(500);
+            // collapseの展開待機
+            $browser->waitFor("label[for='role_reporter1']");
 
             //$this->screenshot($browser);
             $browser->screenshot('manage/page/pageRole/images/pageRole');
@@ -283,8 +284,8 @@ class PageManageTest extends DuskTestCase
             $browser->click("label[for='role_reporter1']")
                 ->assertTitleContains('Connect-CMS');
 
-            // チェックボックスのクリックが反映されるまで、ちょっと待つ
-            $browser->pause(500);
+            // 反映待機（最低限、要素の存在を担保）
+            $browser->waitFor("label[for='role_reporter1']");
 
             //$this->screenshot($browser);
             $browser->screenshot('manage/page/pageRoleUpdate/images/pageRoleUpdate');
