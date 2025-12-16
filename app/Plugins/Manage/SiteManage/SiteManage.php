@@ -507,7 +507,7 @@ class SiteManage extends ManagePluginBase
         ------------------------------------ */
         // サイト管理用カテゴリバリデーションを使用
         $validator = Categories::validateSiteCategories($request);
-        
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
@@ -1443,14 +1443,13 @@ class SiteManage extends ManagePluginBase
 
         // --- フレーム管理
 
-        // Page モデルのwithDepth() を使いたかったので、フレーム取得だけれど、Page をメインにしてFrame をJOIN させています。
-        $frames = Page::select('pages.page_name', 'buckets.bucket_name', 'frames.*')
+        // ページ深さは pages.depth を使うため、Page をメインにして Frame をJOIN しています。
+        $frames = Page::select('pages.page_name', 'pages.depth', 'buckets.bucket_name', 'frames.*')
                        ->join('frames', 'pages.id', '=', 'frames.page_id')
                        ->leftJoin('buckets', 'frames.bucket_id', '=', 'buckets.id')
                        ->orderBy('pages._lft')
                        ->orderByRaw('FIELD(frames.area_id, 0, 1, 3, 4, 2)')
                        ->orderBy('frames.display_sequence')
-                       ->withDepth()
                        ->get();
 
         // フレーム設定

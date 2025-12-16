@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request as FacadeRequest;
 
 use Kalnoy\Nestedset\NodeTrait;
@@ -77,7 +78,7 @@ class Page extends Model
         // current_page_obj がない場合は、ページデータを全て取得（管理画面など）
         // 表示順は入れ子集合モデルの順番
         if (empty($current_page_obj)) {
-            return self::defaultOrder()->with('page_roles')->withDepth()->get();
+            return self::defaultOrder()->with('page_roles')->get();
         }
 
         // メニューで表示するページが絞られている場合は、選択したページのみ取得する。
@@ -97,7 +98,7 @@ class Page extends Model
                 if (!empty($where_page_ids)) {
                     $query_menu->whereIn('id', $where_page_ids);
                 }
-            })->with('page_roles')->withDepth()->get();
+            })->with('page_roles')->get();
         }
 
         // 使用する言語リストの取得
@@ -138,7 +139,6 @@ class Page extends Model
                         }
                        })
                        ->with('page_roles')
-                       ->withDepth()
                        ->get();
 
 //\Log::debug(json_encode( $ret, JSON_UNESCAPED_UNICODE));
@@ -158,7 +158,6 @@ class Page extends Model
                         }
                        })
                        ->with('page_roles')
-                       ->withDepth()
                        ->get();
         }
     }
@@ -189,15 +188,10 @@ class Page extends Model
             $where_page_ids = explode(',', $menu->page_ids);
         }
 
-        // クロージャでページ配列を再帰ループ. 深さは withDepth() で自動設定できるため、ここでは設定しない。
-        // テンプレートでは深さをもとにデザイン処理する。
-        // $traverse = function ($pages, $prefix = '-', $depth = -1, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
+        // クロージャでページ配列を再帰ループし表示フラグを設定する。
+        // 深さはDBカラムの値をそのまま利用する。
         $traverse = function ($pages, $display_flag = 1) use (&$traverse, $where_page_ids, $menu) {
-            // $depth = $depth+1;
             foreach ($pages as $page) {
-                // $page->depth = $depth;
-                //$page->page_name = $page->page_name;
-
                 // 表示フラグを親を引き継いで保持
                 // 表示フラグはローカル変数に保持して、子要素の再帰呼び出し処理へ引き継ぐ
                 // (自身のページの表示/非表示はこの後、メニュー設定で変更されるため)
@@ -216,7 +210,6 @@ class Page extends Model
                 }
 
                 // 再帰呼び出し(表示フラグはメニュー設定の反映されていないページ情報のものを渡す)
-                // $traverse($page->children, $prefix.'-', $depth, $page_display_flag);
                 $traverse($page->children, $page_display_flag);
             }
         };
@@ -228,6 +221,93 @@ class Page extends Model
 
         //\Log::debug(json_encode( $tree, JSON_UNESCAPED_UNICODE));
         return $tree;
+    }
+
+    /**
+     * 自身と子孫の depth を再計算して更新する。
+     */
+    public function recalcDepthWithDescendants(): void
+    {
+        // 基点の深さ（祖先の数）を取得
+        $base_depth = $this->ancestors()->count();
+
+        $depths = [];
+        $nodes = self::whereBetween('_lft', [$this->_lft, $this->_rgt])
+            ->orderBy('_lft')
+            ->get(['id', 'parent_id']);
+
+        foreach ($nodes as $node) {
+            if ($node->id === $this->id) {
+                $depths[$node->id] = $base_depth;
+                continue;
+            }
+
+            $parent_depth = $depths[$node->parent_id] ?? $base_depth;
+            $depths[$node->id] = $parent_depth + 1;
+        }
+
+        self::bulkUpdateDepths($depths);
+
+        if (array_key_exists($this->id, $depths)) {
+            $this->depth = $depths[$this->id];
+        }
+    }
+
+    /**
+     * 全ページの depth を再計算して更新する。
+     */
+    public static function recalcAllDepths(): void
+    {
+        $stack = [];
+        $depths = [];
+        $chunk_size = 500;
+
+        foreach (DB::table('pages')->select('id', '_lft', '_rgt')->orderBy('_lft')->cursor() as $page) {
+            while (!empty($stack) && $page->_lft > $stack[count($stack) - 1]['_rgt']) {
+                array_pop($stack);
+            }
+
+            $depth = count($stack);
+            $depths[$page->id] = $depth;
+            $stack[] = ['_rgt' => $page->_rgt];
+
+            if (count($depths) >= $chunk_size) {
+                self::bulkUpdateDepths($depths);
+                $depths = [];
+            }
+        }
+
+        if (!empty($depths)) {
+            self::bulkUpdateDepths($depths);
+        }
+    }
+
+    /**
+     * depth をまとめて更新する。
+     *
+     * @param array<int,int> $depths key=id, value=depth
+     */
+    protected static function bulkUpdateDepths(array $depths): void
+    {
+        if (empty($depths)) {
+            return;
+        }
+
+        $ids = array_keys($depths);
+        $case = 'CASE id';
+        foreach ($depths as $id => $depth) {
+            $id = (int) $id;
+            $depth = (int) $depth;
+            $case .= " WHEN {$id} THEN {$depth}";
+        }
+        $case .= ' END';
+
+        DB::table((new self())->getTable())
+            ->whereIn('id', $ids)
+            ->update([
+                'depth' => DB::raw($case),
+                'updated_at' => now(),
+            ]);
     }
 
     /**

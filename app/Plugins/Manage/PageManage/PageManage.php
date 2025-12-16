@@ -296,6 +296,7 @@ class PageManage extends ManagePluginBase
         $page->class                = $request->class;
         $page->override_site_name   = $request->override_site_name;
         $page->save();
+        $page->recalcDepthWithDescendants();
 
         // ページ管理画面に戻る
         return redirect("/manage/page");
@@ -432,6 +433,7 @@ class PageManage extends ManagePluginBase
             // 移動元のオブジェクトを取得
             $page = Page::find($page_id);
             $page->saveAsRoot();
+            $page->recalcDepthWithDescendants();
         } else {
             // その他の場所へ移動
 
@@ -443,6 +445,7 @@ class PageManage extends ManagePluginBase
 
             // 移動
             $source_page->appendToNode($destination_page)->save();
+            $source_page->recalcDepthWithDescendants();
         }
 
         // ページ管理画面に戻る
