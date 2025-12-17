@@ -745,6 +745,7 @@ class PageManage extends ManagePluginBase
                 }
             }
 
+            Page::recalcAllDepths();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
