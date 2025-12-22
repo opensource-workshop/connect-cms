@@ -20,6 +20,9 @@
         @include('plugins.user.databases.default.databases_include_view_count')
         {{-- 現在表示している件数テキスト --}}
         @include('plugins.user.databases.default.databases_include_page_total_views')
+        @php
+            $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+        @endphp
         @if($inputs->isNotEmpty())
             {{-- データのループ --}}
             <table class="table table-bordered">
@@ -35,6 +38,9 @@
                     </th>
                     @endif
                 @endforeach
+                @if ($database_frame->use_like && $database_show_like_list)
+                    <th class="text-nowrap">いいね</th>
+                @endif
                 </tr>
                 </thead>
 
@@ -64,6 +70,18 @@
                             @endif
                         @endif
                     @endforeach
+                    @if ($database_frame->use_like && $database_show_like_list)
+                        <td class="text-nowrap">
+                            @include('plugins.common.like', [
+                                'use_like' => ($database_frame->use_like && $database_show_like_list),
+                                'like_button_name' => $database_frame->like_button_name,
+                                'contents_id' => $input->id,
+                                'like_id' => $input->like_id,
+                                'like_count' => $input->like_count,
+                                'like_users_id' => $input->like_users_id,
+                            ])
+                        </td>
+                    @endif
                 </tr>
                 @endforeach
                 </tbody>

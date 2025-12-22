@@ -19,6 +19,8 @@ use App\Models\Common\Buckets;
 use App\Models\Common\BucketsMail;
 use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
+use App\Models\Common\Like;
+use App\Models\Common\LikeUser;
 use App\Models\Common\Uploads;
 use App\Models\User\Databases\Databases;
 use App\Models\User\Databases\DatabasesColumns;
@@ -101,6 +103,7 @@ class DatabasesPlugin extends UserPluginBase
         $functions['get']  = [
             'detail',
             'input',
+            'saveLikeJson',
             'search',
             'trendWords',
         ];
@@ -167,8 +170,14 @@ class DatabasesPlugin extends UserPluginBase
         }
 
         // 登録データ行の取得
-        $this->post = DatabasesInputs::
-            where(function ($query) {
+        $databases_inputs_query = DatabasesInputs::
+            select(
+                'databases_inputs.*',
+                'likes.id as like_id',
+                'likes.count as like_count',
+                'like_users.id as like_users_id'    // idあればいいね済み
+            )
+            ->where(function ($query) {
                 // 権限によって表示する記事を絞る
                 $query = $this->appendAuthWhereBase($query, 'databases_inputs');
             })
@@ -177,8 +186,17 @@ class DatabasesPlugin extends UserPluginBase
                       ->from('databases')
                       ->whereRaw('databases_inputs.databases_id = databases.id')
                       ->where('databases.bucket_id', $this->frame->bucket_id);
-            })
-            ->firstOrNew(['id' => $id]);
+            });
+
+        // いいねのleftJoin
+        $databases_inputs_query = Like::appendLikeLeftJoin(
+            $databases_inputs_query,
+            $this->frame->plugin_name,
+            'databases_inputs.id',
+            'databases_inputs.databases_id'
+        );
+
+        $this->post = $databases_inputs_query->firstOrNew(['databases_inputs.id' => $id]);
 
         return $this->post;
     }
@@ -267,6 +285,8 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_frames.id as databases_frames_id',
                 'databases.databases_name',
                 'databases.search_results_empty_message',
+                'databases.use_like',
+                'databases.like_button_name',
                 'use_search_flag',
                 'placeholder_search',
                 'use_select_flag',
@@ -452,10 +472,23 @@ class DatabasesPlugin extends UserPluginBase
 
             // ソートなし or ソートするカラムIDが数値じゃない（=入力なしと同じ扱いにする）
             if (empty($sort_column_id) || !ctype_digit($sort_column_id)) {
-                $inputs_query = DatabasesInputs::select('databases_inputs.*')->where('databases_id', $database->id);
+                $inputs_query = DatabasesInputs::
+                    select(
+                        'databases_inputs.*',
+                        'likes.id as like_id',
+                        'likes.count as like_count',
+                        'like_users.id as like_users_id'    // idあればいいね済み
+                    )
+                    ->where('databases_id', $database->id);
             } else {
                 // ソートあり
-                $inputs_query = DatabasesInputs::select('databases_inputs.*', 'databases_input_cols.value')
+                $inputs_query = DatabasesInputs::select(
+                    'databases_inputs.*',
+                    'databases_input_cols.value',
+                    'likes.id as like_id',
+                    'likes.count as like_count',
+                    'like_users.id as like_users_id'    // idあればいいね済み
+                )
                                                 ->leftjoin('databases_input_cols', function ($join) use ($sort_column_id) {
                                                     $join->on('databases_input_cols.databases_inputs_id', '=', 'databases_inputs.id')
                                                          ->where('databases_input_cols.databases_columns_id', '=', $sort_column_id);
@@ -477,6 +510,14 @@ class DatabasesPlugin extends UserPluginBase
             $inputs_query = $inputs_query->leftJoin('categories', 'categories.id', '=', 'databases_inputs.categories_id')
                                 ->addSelect('categories.classname as category_classname')
                                 ->addSelect('categories.category as category');
+
+            // いいねのleftJoin
+            $inputs_query = Like::appendLikeLeftJoin(
+                $inputs_query,
+                $this->frame->plugin_name,
+                'databases_inputs.id',
+                'databases_inputs.databases_id'
+            );
 
             $databases_columns_ids = [];
             foreach ($databases_columns as $databases_column) {
@@ -752,6 +793,8 @@ class DatabasesPlugin extends UserPluginBase
                 $inputs_query->orderBy('databases_inputs.views', 'asc');
             } elseif ($sort_column_id == DatabaseSortFlag::views && $sort_column_order == DatabaseSortFlag::order_desc) {
                 $inputs_query->orderBy('databases_inputs.views', 'desc');
+            } elseif ($sort_column_id == DatabaseSortFlag::like && $sort_column_order == DatabaseSortFlag::order_desc) {
+                $inputs_query->orderByRaw('COALESCE(likes.count, 0) desc');
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_asc) {
                 if ($sort_column_option === 'downloadcount') {
                     $inputs_query->orderBy('uploads.download_count', 'asc');
@@ -2138,6 +2181,8 @@ class DatabasesPlugin extends UserPluginBase
         $databases->databases_name      = $request->databases_name;
         $databases->posted_role_display_control_flag = (empty($request->posted_role_display_control_flag)) ? 0 : $request->posted_role_display_control_flag;
         $databases->search_results_empty_message = $request->search_results_empty_message;
+        $databases->use_like = $request->use_like ?? 0;
+        $databases->like_button_name = $request->like_button_name;
 
         $databases->mail_send_flag      = (empty($request->mail_send_flag))      ? 0 : $request->mail_send_flag;
         $databases->mail_send_address   = $request->mail_send_address;
@@ -2297,6 +2342,10 @@ class DatabasesPlugin extends UserPluginBase
 
             // データベース権限データ(表示順の権限毎の制御)を削除する。
             DatabasesRole::where('databases_id', $databases_id)->delete();
+
+            // いいねデータを削除する（孤児データ防止）
+            LikeUser::where('target', $this->frame->plugin_name)->where('target_id', $databases_id)->delete();
+            Like::where('target', $this->frame->plugin_name)->where('target_id', $databases_id)->delete();
 
             // bugfix: backets, buckets_rolesは $frame->bucket_id で消さない。選択したDBのbucket_idで消す
             $databases = Databases::find($databases_id);
@@ -4590,6 +4639,29 @@ AND databases_inputs.posted_at <= NOW()
             $frame = Frame::with('page')->find($this->frame->id);
         }
         return $frame;
+    }
+
+    /**
+     * いいねをJSON形式で返す
+     */
+    public function saveLikeJson($request, $page_id, $frame_id, $id = null)
+    {
+        if (empty($id) || !ctype_digit((string) $id)) {
+            return;
+        }
+
+        $database = $this->getDatabases($frame_id);
+        if (empty($database) || empty($database->id) || empty($database->use_like)) {
+            return;
+        }
+
+        // 不正なIDによる増加を避けるため、最低限の存在チェックを行う
+        if (!DatabasesInputs::where('id', $id)->where('databases_id', $database->id)->exists()) {
+            return;
+        }
+
+        $count = Like::saveLike($this->frame->plugin_name, $database->id, (int) $id);
+        return $count;
     }
 
     /**
