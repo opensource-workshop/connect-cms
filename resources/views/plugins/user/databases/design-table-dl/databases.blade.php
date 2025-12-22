@@ -22,6 +22,7 @@
         @include('plugins.user.databases.default.databases_include_page_total_views')
         @php
             $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+            $like_button_caption = $database_frame->like_button_name ?: Like::like_button_default;
         @endphp
         @if($inputs->isNotEmpty())
             {{-- データのループ --}}
@@ -39,7 +40,7 @@
                     @endif
                 @endforeach
                 @if ($database_frame->use_like && $database_show_like_list)
-                    <th class="text-nowrap">いいね</th>
+                    <th class="text-nowrap">{{$like_button_caption}}</th>
                 @endif
                 </tr>
                 </thead>
