@@ -4655,9 +4655,11 @@ AND databases_inputs.posted_at <= NOW()
             return;
         }
 
-        // 不正なIDによる増加を避けるため、最低限の存在チェックを行う
-        if (!DatabasesInputs::where('id', $id)->where('databases_id', $database->id)->exists()) {
-            return;
+        // 閲覧権限のある投稿のみいいねできる
+        $inputs_query = DatabasesInputs::where('id', $id)->where('databases_id', $database->id);
+        $inputs_query = $this->appendAuthWhereBase($inputs_query, 'databases_inputs');
+        if (!$inputs_query->exists()) {
+            abort(404);
         }
 
         $count = Like::saveLike($this->frame->plugin_name, $database->id, (int) $id);
