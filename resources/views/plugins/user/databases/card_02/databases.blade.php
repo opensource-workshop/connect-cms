@@ -19,6 +19,9 @@
     @else
 
 <div class="row" >
+    @php
+        $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+    @endphp
 
     @forelse($inputs as $input)
         @php
@@ -67,7 +70,19 @@
                 {{-- 編集 --}}
                 <div class="row mt-2">
                     <div class="col">
-                        <div class="text-right">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="mb-1">
+                                {{-- いいねボタン --}}
+                                @include('plugins.common.like', [
+                                    'use_like' => ($database_frame->use_like && $database_show_like_list),
+                                    'like_button_name' => $database_frame->like_button_name,
+                                    'contents_id' => $input->id,
+                                    'like_id' => $input->like_id,
+                                    'like_count' => $input->like_count,
+                                    'like_users_id' => $input->like_users_id,
+                                ])
+                            </div>
+                            <div class="text-right mb-1">
                             @if ($input->status == 2)
                                 @can('role_update_or_approval',[[$input, $frame->plugin_name, $buckets]])
                                     <span class="badge badge-warning align-bottom">承認待ち</span>
@@ -99,6 +114,7 @@
                                     <i class="far fa-edit"></i> 編集
                                 </button>
                             @endcan
+                            </div>
                         </div>
                     </div>
                 </div>
