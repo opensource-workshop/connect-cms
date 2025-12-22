@@ -54,9 +54,9 @@
 
             var tokenMeta = document.querySelector('meta[name=\"csrf-token\"]');
             var token = tokenMeta ? tokenMeta.getAttribute('content') : '';
-            var origin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+            var baseUrl = @json(url('/'));
 
-            fetch(origin + '/api/uploads/play/' + id, {
+            fetch(baseUrl + '/api/uploads/play/' + id, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': token,
