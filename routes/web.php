@@ -57,6 +57,9 @@ Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassCon
 // コアのpost処理(Frame関係)
 Route::post('/core/{action_type}/{action}/{page_id?}/{frame_id?}/{arg?}', 'Core\ClassController@invokePostCore')->name('post_core');
 
+// 再生回数のカウント
+Route::post('/api/uploads/play/{id}', 'Core\UploadController@playCount')->name('post_api_uploads_play');
+
 // コアのAPI処理
 Route::get('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('get_api');
 Route::post('/api/{plugin_name}/{action}/{arg1?}/{arg2?}/{arg3?}/{arg4?}/{arg5?}', 'Core\ApiController@invokeApi')->name('post_api');
