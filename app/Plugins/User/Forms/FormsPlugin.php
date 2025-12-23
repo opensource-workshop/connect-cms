@@ -613,7 +613,7 @@ class FormsPlugin extends UserPluginBase
             $validator_rule[] = 'min:' . $forms_column->rule_min;
         }
         // 正規表現チェック
-        if ($forms_column->rule_regex) {
+        if ($forms_column->rule_regex !== null && $forms_column->rule_regex !== '') {
             if ($this->isValidRegex($forms_column->rule_regex)) {
                 $validator_rule[] = 'nullable';
                 $validator_rule[] = 'regex:' . $forms_column->rule_regex;
@@ -2298,7 +2298,7 @@ class FormsPlugin extends UserPluginBase
             $validator_attributes['rule_word_count'] = '入力文字数';
         }
         // 正規表現の指定時、書式が正しいかチェック
-        if ($request->rule_regex) {
+        if ($request->rule_regex !== null && $request->rule_regex !== '') {
             $validator_values['rule_regex'] = [
                 function ($attribute, $value, $fail) {
                     if (! $this->isValidRegex($value)) {
