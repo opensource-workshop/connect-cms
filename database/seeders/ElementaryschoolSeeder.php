@@ -18,6 +18,7 @@ use App\Models\User\Calendars\CalendarPost;
 use App\User;
 use App\Models\Core\UsersRoles;
 use App\Models\Core\Configs;
+use App\Models\Common\Page;
 
 
 
@@ -102,6 +103,8 @@ class ElementaryschoolSeeder extends Seeder
                 $this->insertCountersData($page_id, $counters_data[$row['permanent_link']]);
             }
         }
+
+        Page::recalcAllDepths();
 
         // サイト管理関係
         if($configs_data) {
