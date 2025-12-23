@@ -205,6 +205,86 @@ class UploadController extends ConnectController
     }
 
     /**
+     * 再生回数カウント
+     */
+    public function playCount(Request $request, $id = null)
+    {
+        // 不正なIDは404で終了
+        if (empty($id)) {
+            abort(404);
+        }
+
+        // 対象のアップロード情報がなければ終了
+        $uploads = Uploads::where('id', $id)->first();
+        if (empty($uploads)) {
+            abort(404);
+        }
+
+        // 実体ファイルがない場合は終了
+        if (!Storage::exists($this->getDirectory($id) . '/' . $id . '.' . $uploads->extension)) {
+            abort(404);
+        }
+
+        // 動画・音声以外は対象外
+        $is_media = false;
+        if (!empty($uploads->mimetype)) {
+            if (strpos($uploads->mimetype, 'video/') === 0 || strpos($uploads->mimetype, 'audio/') === 0) {
+                $is_media = true;
+            }
+        }
+        if (!$is_media) {
+            $extension = strtolower($uploads->extension ?? '');
+            $media_extensions = ['mp4', 'webm', 'ogv', 'mp3', 'wav', 'ogg', 'oga', 'm4a'];
+            if (in_array($extension, $media_extensions, true)) {
+                $is_media = true;
+            }
+        }
+        if (!$is_media) {
+            abort(404);
+        }
+
+        // 一時保存ファイルは所有者のみカウント可能
+        if ($uploads->temporary_flag == 1) {
+            $user_id = Auth::id();
+            if ($user_id === null) {
+                abort(404);
+            }
+            if ($uploads->created_id != $user_id) {
+                abort(404);
+            }
+        }
+
+        // ページに紐づくファイルは閲覧権限・パスワード設定を確認
+        if ($uploads->page_id) {
+            $page = Page::find($uploads->page_id);
+            if (is_null($page)) {
+                abort(404);
+            }
+
+            $page_tree = Page::reversed()->ancestorsAndSelf($page->id);
+            if ($page->isRequestPassword($request, $page_tree)) {
+                abort(403);
+            }
+            if (!$page->isVisibleAncestorsAndSelf($page_tree)) {
+                abort(403);
+            }
+        }
+
+        // ファイル固有のチェック関数がある場合は判定する
+        if (!empty($uploads->check_method)) {
+            list($return_boolean, $return_message) = $this->callCheckMethod($request, $uploads);
+            if (!$return_boolean) {
+                abort(403);
+            }
+        }
+
+        // 再生回数を加算して返す
+        $uploads->increment('play_count', 1);
+
+        return response()->json(['play_count' => $uploads->play_count]);
+    }
+
+    /**
      * Cache-Controlにprivateを含むならprivateをセット
      * - Laravel特有対応
      *   - headerでCache-Control にprivateを指定しても、Laravelだと自動的にpublicが付き２重定義になったため、setPrivate()で対応

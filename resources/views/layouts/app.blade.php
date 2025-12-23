@@ -489,5 +489,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
         </script>
     @endif
 
+    @include('common.media_play_count')
+
 </body>
 </html>

@@ -71,6 +71,15 @@
                 <div class="col-md-8 col-form-label">{{$upload->download_count}}</div>
             </div>
 
+            {{-- 再生回数 --}}
+            <div class="form-group row">
+                <label class="col-md-4 col-form-label text-md-right">
+                    再生回数
+                    <i class="fas fa-question-circle text-muted ml-1" data-toggle="tooltip" data-placement="top" title="動画/音声ファイルの再生開始時に回数が増えます。"></i>
+                </label>
+                <div class="col-md-8 col-form-label">{{$upload->play_count}}</div>
+            </div>
+
             {{-- アップロード・ページ --}}
             <div class="form-group row">
                 <label class="col-md-4 col-form-label text-md-right">アップロード・ページ</label>
@@ -142,5 +151,11 @@
         </div>
     </div>
 </div>
+
+<script>
+    $(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
 
 @endsection

@@ -197,6 +197,10 @@
                 <th nowrap>アップロード日時</th>
                 <th nowrap>プラグイン</th>
                 <th nowrap>ダウンロード数</th>
+                <th nowrap>
+                    再生回数
+                    <i class="fas fa-question-circle text-muted ml-1" data-toggle="tooltip" data-placement="top" title="動画/音声ファイルの再生開始時に回数が増えます。"></i>
+                </th>
                 <th nowrap>ページ</th>
                 {{-- <th nowrap>private</th> --}}
                 <th nowrap>一時保存フラグ</th>
@@ -222,6 +226,7 @@
                     <td>{{$upload->created_at}}</td>
                     <td>{{$upload->getPluginNameFull()}}</td>
                     <td>{{$upload->download_count}}</td>
+                    <td>{{$upload->play_count}}</td>
                     <td>{!!$upload->getPageLinkTag('_blank')!!}</td>
                     {{-- <td>{{$upload->private}}</td> --}}
                     <td>{{$upload->getTemporaryFlagStr()}}</td>
