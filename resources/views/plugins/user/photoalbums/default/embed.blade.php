@@ -6,6 +6,10 @@
  * @category フォトアルバム・プラグイン
 --}}
 <html>
+<head>
+    <meta charset="utf-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
 <body style="margin: 0px; padding: 0px;">
 <video controls controlsList="nodownload"
      src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
@@ -15,5 +19,6 @@
      @if ($photoalbum_content->poster_upload_id) poster="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}" @endif
      oncontextmenu="return false;"
 ></video>
+@include('common.media_play_count')
 </body>
 </html>

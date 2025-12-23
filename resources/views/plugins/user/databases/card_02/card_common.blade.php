@@ -15,6 +15,10 @@
 
 <div class="row">
 
+    @php
+        $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+    @endphp
+
     @forelse($inputs as $input)
         @php
             $first_column_flag = true;
@@ -62,38 +66,51 @@
                 {{-- 編集 --}}
                 <div class="row mt-2">
                     <div class="col">
-                        <div class="text-right">
-                            @if ($input->status == 2)
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="mb-1">
+                                {{-- いいねボタン --}}
+                                @include('plugins.common.like', [
+                                    'use_like' => ($database_frame->use_like && $database_show_like_list),
+                                    'like_button_name' => $database_frame->like_button_name,
+                                    'contents_id' => $input->id,
+                                    'like_id' => $input->like_id,
+                                    'like_count' => $input->like_count,
+                                    'like_users_id' => $input->like_users_id,
+                                ])
+                            </div>
+                            <div class="text-right mb-1">
+                                @if ($input->status == 2)
+                                    @can('role_update_or_approval',[[$input, $frame->plugin_name, $buckets]])
+                                        <span class="badge badge-warning align-bottom">承認待ち</span>
+                                    @endcan
+                                    @can('posts.approval',[[$input, $frame->plugin_name, $buckets]])
+                                        <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
+                                            {{ csrf_field() }}
+                                            <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
+                                                <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
+                                            </button>
+                                        </form>
+                                    @endcan
+                                @endif
                                 @can('role_update_or_approval',[[$input, $frame->plugin_name, $buckets]])
-                                    <span class="badge badge-warning align-bottom">承認待ち</span>
-                                @endcan
-                                @can('posts.approval',[[$input, $frame->plugin_name, $buckets]])
-                                    <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
-                                        {{ csrf_field() }}
-                                        <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                                            <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
-                                        </button>
-                                    </form>
-                                @endcan
-                            @endif
-                            @can('role_update_or_approval',[[$input, $frame->plugin_name, $buckets]])
-                                @if (!empty($input->expires_at) && $input->expires_at <= Carbon::now())
-                                    <span class="badge badge-secondary align-bottom">公開終了</span>
-                                @endif
+                                    @if (!empty($input->expires_at) && $input->expires_at <= Carbon::now())
+                                        <span class="badge badge-secondary align-bottom">公開終了</span>
+                                    @endif
 
-                                @if ($input->posted_at > Carbon::now())
-                                    <span class="badge badge-info align-bottom">公開前</span>
-                                @endif
-                            @endcan
-                            @can('posts.update',[[$input, $frame->plugin_name, $buckets]])
-                                @if ($input->status == 1)
-                                    <span class="badge badge-warning align-bottom">一時保存</span>
-                                @endif
+                                    @if ($input->posted_at > Carbon::now())
+                                        <span class="badge badge-info align-bottom">公開前</span>
+                                    @endif
+                                @endcan
+                                @can('posts.update',[[$input, $frame->plugin_name, $buckets]])
+                                    @if ($input->status == 1)
+                                        <span class="badge badge-warning align-bottom">一時保存</span>
+                                    @endif
 
-                                <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}'">
-                                    <i class="far fa-edit"></i> 編集
-                                </button>
-                            @endcan
+                                    <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}'">
+                                        <i class="far fa-edit"></i> 編集
+                                    </button>
+                                @endcan
+                            </div>
                         </div>
                     </div>
                 </div>
