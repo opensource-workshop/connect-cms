@@ -15,7 +15,13 @@
         <ol class="breadcrumb">
         @foreach($ancestors_breadcrumbs as $ancestor)
             {{-- パンくずはdisplay_flag を継承した値を持っていないので、ページの表示フラグを参照 --}}
-            @if ($ancestor->base_display_flag == 1)
+            @php
+                $is_display_ancestor = ($ancestor->base_display_flag == 1);
+                if (!$is_display_ancestor && $menu && $menu->select_flag == 1 && $menu->onPage($ancestor->id)) {
+                    $is_display_ancestor = true;
+                }
+            @endphp
+            @if ($is_display_ancestor)
                 @if ($loop->last)
                     <li class="breadcrumb-item {{$ancestor->getClass()}} active" aria-current="page">{{$ancestor->page_name}}</li>
                 @else
