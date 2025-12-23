@@ -321,6 +321,7 @@ class DatabasesPlugin extends UserPluginBase
                 'databases_columns.body_flag',
                 'uploads.client_original_name',
                 'uploads.download_count',
+                'uploads.play_count',
             )
             ->leftJoin('databases_columns', 'databases_columns.id', '=', 'databases_input_cols.databases_columns_id')
             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
@@ -495,7 +496,7 @@ class DatabasesPlugin extends UserPluginBase
                                                 })
                                                ->where('databases_id', $database->id);
                 // ダウンロード件数でのソート
-                if ($sort_column_option === 'downloadcount') {
+                if ($sort_column_option === 'downloadcount' || $sort_column_option === 'playcount') {
                     $inputs_query = $inputs_query->leftjoin('uploads', 'databases_input_cols.value', 'uploads.id');
                 }
             }
@@ -798,12 +799,16 @@ class DatabasesPlugin extends UserPluginBase
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_asc) {
                 if ($sort_column_option === 'downloadcount') {
                     $inputs_query->orderBy('uploads.download_count', 'asc');
+                } elseif ($sort_column_option === 'playcount') {
+                    $inputs_query->orderBy('uploads.play_count', 'asc');
                 } else {
                     $inputs_query->orderBy('databases_input_cols.value', 'asc');
                 }
             } elseif ($sort_column_id && ctype_digit($sort_column_id) && $sort_column_order == DatabaseSortFlag::order_desc) {
                 if ($sort_column_option === 'downloadcount') {
                     $inputs_query->orderBy('uploads.download_count', 'desc');
+                } elseif ($sort_column_option === 'playcount') {
+                    $inputs_query->orderBy('uploads.play_count', 'desc');
                 } else {
                     $inputs_query->orderBy('databases_input_cols.value', 'desc');
                 }
@@ -848,7 +853,7 @@ class DatabasesPlugin extends UserPluginBase
             // Log::debug(var_export(DB::getQueryLog(), true));
 
             // 登録データ詳細の取得
-            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name', 'uploads.download_count')
+            $input_cols = DatabasesInputCols::select('databases_input_cols.*', 'uploads.client_original_name', 'uploads.download_count', 'uploads.play_count')
                                             ->leftJoin('uploads', 'uploads.id', '=', 'databases_input_cols.value')
                                             ->whereIn('databases_inputs_id', $inputs->pluck('id'))
                                             ->orderBy('databases_inputs_id', 'asc')->orderBy('databases_columns_id', 'asc')
@@ -2888,6 +2893,10 @@ class DatabasesPlugin extends UserPluginBase
         $column->show_download_button = (empty($request->show_download_button)) ? 0 : $request->show_download_button;
         // ダウンロード件数で並び替え
         $column->sort_download_count = (empty($request->sort_download_count)) ? 0 : $request->sort_download_count;
+        // 再生回数を表示する
+        $column->show_play_count = (empty($request->show_play_count)) ? 0 : $request->show_play_count;
+        // 再生回数で並び替え
+        $column->sort_play_count = (empty($request->sort_play_count)) ? 0 : $request->sort_play_count;
         // 行グループ
         $column->row_group = $request->row_group;
         // 列グループ
