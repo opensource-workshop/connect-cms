@@ -492,6 +492,8 @@ class SlideshowsPlugin extends UserPluginBase
         $slideshows_item->display_sequence = $max_display_sequence;
         $slideshows_item->save();
 
+        session()->flash('slideshow_highlight_item_ids', [$slideshows_item->id]);
+
         // フラッシュメッセージ設定
         $request->merge([
             'flash_message' => 'スライドショー項目を登録しました。'
@@ -604,6 +606,7 @@ class SlideshowsPlugin extends UserPluginBase
     private function savePdfImages(\Illuminate\Http\Request $request, array $base64_images)
     {
         $index = 1;
+        $added_item_ids = [];
         foreach ($base64_images as $base64_image) {
 
             // 画像をUploadsへ登録する
@@ -638,8 +641,13 @@ class SlideshowsPlugin extends UserPluginBase
             $slideshows_item->display_flag = ShowType::show;
             $slideshows_item->display_sequence = $max_display_sequence;
             $slideshows_item->save();
+            $added_item_ids[] = $slideshows_item->id;
 
             $index++;
+        }
+
+        if (!empty($added_item_ids)) {
+            session()->flash('slideshow_highlight_item_ids', $added_item_ids);
         }
     }
 
