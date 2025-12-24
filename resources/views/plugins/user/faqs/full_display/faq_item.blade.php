@@ -97,12 +97,31 @@
                         </a>
                     @endcan
 
-                    {{-- 詳細画面 --}}
-                    <a class="btn btn-success btn-sm" href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" title="{{$post->getNobrPostTitle()}}の詳細">
-                        詳細 <i class="fas fa-angle-right"></i>
-                    </a>
+                    {{-- 共有用リンク操作（控えめ表示） --}}
+                    <div class="d-inline-flex align-items-center small text-muted" aria-label="FAQリンク操作">
+                        <button type="button"
+                                class="btn btn-link btn-sm p-0 mr-3 text-muted"
+                                data-url="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"
+                                data-toggle="tooltip"
+                                data-placement="top"
+                                onclick="connectFaqCopyLink(this, 'faq-copy-message-{{$frame_id}}-{{$post->id}}')"
+                                title="リンクをコピー" aria-label="リンクをコピー">
+                            <i class="fas fa-link"></i>
+                        </button>
+                        <a class="text-muted"
+                           href="{{url('/')}}/plugin/faqs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"
+                           target="_blank" rel="noopener"
+                           data-toggle="tooltip"
+                           data-placement="top"
+                           title="{{$post->getNobrPostTitle()}}を別タブで開く" aria-label="{{$post->getNobrPostTitle()}}を別タブで開く">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                    <div id="faq-copy-message-{{$frame_id}}-{{$post->id}}" class="small text-muted mt-1 text-right" style="display: none;"></div>
                 </div>
             </div>
         </footer>
     </div>
 </article>
+
+@include('plugins.user.faqs.faq_copy_link_script')
