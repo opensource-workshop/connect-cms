@@ -294,7 +294,9 @@ class PageManage extends ManagePluginBase
         $page->transfer_lower_page_flag = $request->transfer_lower_page_flag ?? 0;
         $page->meta_robots          = $meta_robots;
         $page->class                = $request->class;
+        $page->override_site_name   = $request->override_site_name;
         $page->save();
+        $page->recalcDepthWithDescendants();
 
         // ページ管理画面に戻る
         return redirect("/manage/page");
@@ -341,6 +343,7 @@ class PageManage extends ManagePluginBase
                 'transfer_lower_page_flag' => $request->transfer_lower_page_flag ?? 0,
                 'meta_robots'          => $meta_robots,
                 'class'                => $request->class,
+                'override_site_name'   => $request->override_site_name,
         ]);
 
         // ページ管理画面に戻る
@@ -430,6 +433,7 @@ class PageManage extends ManagePluginBase
             // 移動元のオブジェクトを取得
             $page = Page::find($page_id);
             $page->saveAsRoot();
+            $page->recalcDepthWithDescendants();
         } else {
             // その他の場所へ移動
 
@@ -441,6 +445,7 @@ class PageManage extends ManagePluginBase
 
             // 移動
             $source_page->appendToNode($destination_page)->save();
+            $source_page->recalcDepthWithDescendants();
         }
 
         // ページ管理画面に戻る
@@ -740,6 +745,7 @@ class PageManage extends ManagePluginBase
                 }
             }
 
+            Page::recalcAllDepths();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();

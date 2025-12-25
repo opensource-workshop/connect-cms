@@ -49,7 +49,11 @@
             $value = '';
         }
         else {
-            $value = '<video src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" controls />';
+            $value = '<video src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" controls></video>';
+            if ($column->show_play_count) {
+                $value .= '<span class="ml-4 databases-media-play-count-label">再生回数：</span>';
+                $value .= '<span class="databases-media-play-count">'. $obj->play_count . '</span>';
+            }
         }
     }
     // リンク型

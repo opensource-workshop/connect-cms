@@ -708,6 +708,23 @@
                 </div>
                 @endif
 
+                {{-- 再生回数でのソートを行う --}}
+                @if ($column->column_type == DatabaseColumnType::video)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">再生回数で並べ替え</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="sort_play_count_0" name="sort_play_count" class="custom-control-input" @if(old('sort_play_count', $column->sort_play_count) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="sort_play_count_0">使用しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="sort_play_count_1" name="sort_play_count" class="custom-control-input" @if(old('sort_play_count', $column->sort_play_count) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="sort_play_count_1">使用する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- 検索対象指定 --}}
                 <div class="form-group row">
                     <label class="{{$frame->getSettingLabelClass(true)}}">検索対象指定</label>
@@ -769,6 +786,23 @@
                         <div class="custom-control custom-radio custom-control-inline">
                             <input type="radio" value="1" id="show_download_count_1" name="show_download_count" class="custom-control-input" @if(old('show_download_count', $column->show_download_count) == 1) checked="checked" @endif>
                             <label class="custom-control-label" for="show_download_count_1" id="label_show_download_count_1">表示する</label>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- 再生回数を表示する --}}
+                @if ($column->column_type == DatabaseColumnType::video)
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass(true)}}">再生回数を表示する</label>
+                    <div class="{{$frame->getSettingInputClass(true)}}">
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="0" id="show_play_count_0" name="show_play_count" class="custom-control-input" @if(old('show_play_count', $column->show_play_count) == 0) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_play_count_0" id="label_show_play_count_0">表示しない</label>
+                        </div>
+                        <div class="custom-control custom-radio custom-control-inline">
+                            <input type="radio" value="1" id="show_play_count_1" name="show_play_count" class="custom-control-input" @if(old('show_play_count', $column->show_play_count) == 1) checked="checked" @endif>
+                            <label class="custom-control-label" for="show_play_count_1" id="label_show_play_count_1">表示する</label>
                         </div>
                     </div>
                 </div>

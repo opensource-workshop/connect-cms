@@ -250,6 +250,57 @@
         </div>
     </div>
 
+    {{-- いいねボタンの表示（一覧） --}}
+    @php
+        $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+        $database_use_like = (bool) ($database->use_like ?? 0);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{DatabaseFrameConfig::getDescription('database_show_like_list')}}</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @if ($database_use_like)
+                @foreach (ShowType::getMembers() as $key => $type)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="{{$key}}" id="database_show_like_list_{{$key}}" name="database_show_like_list" class="custom-control-input" @if ($database_show_like_list == $key) checked="checked" @endif>
+                    <label class="custom-control-label" for="database_show_like_list_{{$key}}">{{$type}}</label>
+                </div>
+                @endforeach
+                <small class="form-text text-muted">
+                    ※ DB設定の「いいねボタンの表示」が「表示する」の場合に利用できます。
+                </small>
+            @else
+                <p class="form-control-plaintext mb-0 text-muted small">
+                    DB設定の「いいねボタンの表示」を「表示する」にすると設定できます。
+                </p>
+            @endif
+        </div>
+    </div>
+
+    {{-- いいねボタンの表示（詳細） --}}
+    @php
+        $database_show_like_detail = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_detail, ShowType::show);
+    @endphp
+    <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">{{DatabaseFrameConfig::getDescription('database_show_like_detail')}}</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @if ($database_use_like)
+                @foreach (ShowType::getMembers() as $key => $type)
+                <div class="custom-control custom-radio custom-control-inline">
+                    <input type="radio" value="{{$key}}" id="database_show_like_detail_{{$key}}" name="database_show_like_detail" class="custom-control-input" @if ($database_show_like_detail == $key) checked="checked" @endif>
+                    <label class="custom-control-label" for="database_show_like_detail_{{$key}}">{{$type}}</label>
+                </div>
+                @endforeach
+                <small class="form-text text-muted">
+                    ※ DB設定の「いいねボタンの表示」が「表示する」の場合に利用できます。
+                </small>
+            @else
+                <p class="form-control-plaintext mb-0 text-muted small">
+                    DB設定の「いいねボタンの表示」を「表示する」にすると設定できます。
+                </p>
+            @endif
+        </div>
+    </div>
+
     {{-- 初期表示での並び順 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass(true)}}">初期表示での並び順</label>
@@ -273,8 +324,15 @@
                 @foreach($columns->whereIn('sort_flag', [1, 2, 3]) as $sort_column)
 
                     @php
-                        $sort_option = $sort_column->sort_download_count ? '_downloadcount' : null;
-                        $sort_option_name = $sort_column->sort_download_count ? 'ダウンロード数' : null;
+                        $sort_option = null;
+                        $sort_option_name = null;
+                        if ($sort_column->column_type == DatabaseColumnType::file && $sort_column->sort_download_count) {
+                            $sort_option = '_downloadcount';
+                            $sort_option_name = 'ダウンロード数';
+                        } elseif ($sort_column->column_type == DatabaseColumnType::video && $sort_column->sort_play_count) {
+                            $sort_option = '_playcount';
+                            $sort_option_name = '再生回数';
+                        }
                     @endphp
 
                     @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)

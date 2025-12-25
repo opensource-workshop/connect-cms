@@ -311,7 +311,7 @@
 
                 <div class="form-group">
                     <label for="newItemName{{$frame_id}}">新しい名前</label>
-                    <input type="text" class="form-control" id="newItemName{{$frame_id}}" v-model="newItemName" maxlength="100" @keyup.enter="!isRenameInProgress && confirmRename()" :disabled="isRenameInProgress">
+                    <input type="text" class="form-control" id="newItemName{{$frame_id}}" v-model="newItemName" maxlength="100" :disabled="isRenameInProgress">
                 </div>
             </div>
             <div class="modal-footer">

@@ -42,6 +42,7 @@
 
 {{-- FAQ表示 --}}
 @if (isset($faqs_posts))
+<div class="accordion" id="accordionFaq{{$frame_id}}">
     {{-- 検索フォーム --}}
     @include('plugins.user.faqs.search_form')
     
@@ -77,7 +78,7 @@
         @if ($loop->first || $sorted_posts[$loop->index - 1]->categories_id !== $post->categories_id)
             {{-- カテゴリ名 --}}
             <h2 class="faq-category-title mt-1" id="{{$post->category}}"><span class="badge" style="color:{{$post->category_color}};background-color:{{$post->category_background_color}};">{{$post->category}}</span></h1>
-            <div class="accordion faq-category" id="accordionFaq{{$frame_id}}">
+            <div class="accordion faq-category" id="accordionFaq{{$frame_id}}_category_{{$post->categories_id}}">
         @endif
         {{-- FAQの要素呼び出し --}}
         @include('plugins.user.faqs.default.faq', ['post' => $post, 'hide_category' => true])
@@ -89,6 +90,6 @@
 
     {{-- ページング処理 --}}
     @include('plugins.common.user_paginate', ['posts' => $faqs_posts, 'frame' => $frame, 'aria_label_name' => $faq_frame->faq_name, 'class' => 'mt-3'])
-
+</div>
 @endif
 @endsection

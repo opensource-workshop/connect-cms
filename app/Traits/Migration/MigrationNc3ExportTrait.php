@@ -5669,7 +5669,7 @@ trait MigrationNc3ExportTrait
             $frame_ini .= "content_open_type = \"{$content_open_type}\"\n";
 
             if ($content_open_type == ContentOpenType::limited_open) {
-                // Connectの限定公開はFrom-Toどちらも必須&timestamp型のため、nullの場合はtimestamp型上限加減の値をセットする
+                // Connectの期間限定公開はFrom-Toどちらも必須&timestamp型のため、nullの場合はtimestamp型上限加減の値をセットする
                 $publish_start = $this->getCCDatetime($nc3_frame->publish_start) ?? new Carbon('1970-01-02 00:00:00');
                 $publish_end   = $this->getCCDatetime($nc3_frame->publish_end) ?? new Carbon('2038-01-01 00:00:00');
                 $frame_ini .= "content_open_date_from = \"{$publish_start}\"\n";

@@ -15,6 +15,8 @@ class Databases extends Model
     protected $fillable = [
         'bucket_id',
         'databases_name',
+        'use_like',
+        'like_button_name',
         'posted_role_display_control_flag',
         'data_save_flag',
     ];
