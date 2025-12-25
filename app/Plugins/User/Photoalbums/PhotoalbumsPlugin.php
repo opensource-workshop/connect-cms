@@ -1733,7 +1733,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         foreach ($frame_config_names as $key => $value) {
 
             // 空の場合はレコード削除
-            if (empty($request->$value)) {
+            if ($request->$value === null || $request->$value === '') {
                 FrameConfig::where('frame_id', $frame_id)->where('name', $value)->forceDelete();
                 continue;
             }
