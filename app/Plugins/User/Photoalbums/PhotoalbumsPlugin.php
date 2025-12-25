@@ -189,17 +189,20 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function detail($request, $page_id, $frame_id, $photoalbum_content_id)
     {
-        // 対象のデータを取得して詳細画面を表示する。
-        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
-
         // バケツデータとフォトアルバムデータ取得、フォトアルバムのルート階層はphotoalbum->id == nullのもの。
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
-        $parent = $this->fetchPhotoalbumContent($photoalbum_content_id, $photoalbum->id);
+        $photoalbum_content = PhotoalbumContent::where('id', $photoalbum_content_id)
+            ->where('photoalbum_id', $photoalbum->id)
+            ->first();
+
+        if (empty($photoalbum_content)) {
+            abort(404, 'コンテンツがありません。');
+        }
 
         return $this->view('detail', [
             'photoalbum' => $photoalbum,
             'photoalbum_content' => $photoalbum_content,
-            'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
+            'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $photoalbum_content->id),
         ]);
     }
 
