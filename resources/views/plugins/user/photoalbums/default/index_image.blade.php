@@ -16,6 +16,10 @@ if ($frame->isExpandNarrow()) {
     // メインエリア・フッターエリア
     $col_class = 'col-md-4';
 }
+
+$play_view_default = \App\Enums\PhotoalbumPlayviewType::play_in_list;
+$play_view = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, $play_view_default);
+$description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length);
 @endphp
 <div class="row">
     @foreach($photoalbum_contents->where('is_folder', 0) as $photoalbum_content)
@@ -52,7 +56,7 @@ if ($frame->isExpandNarrow()) {
                $("#popup_photo_{{$frame_id}}_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
             });
             </script>
-        @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::play_view))
+        @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype) && $play_view == PhotoalbumPlayviewType::play_in_detail)
             {{-- 動画：一覧はサムネイル画像のみで詳細画面で再生する --}}
             <a href="{{url('/')}}/plugin/photoalbums/detail/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
                 <img src="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}"
@@ -80,7 +84,7 @@ if ($frame->isExpandNarrow()) {
                         </div>
                     @endif
                     @if ($photoalbum_content->name)
-                        @if ($photoalbum_content->isVideo($photoalbum_content->mimetype) && FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::play_view))
+                        @if ($photoalbum_content->isVideo($photoalbum_content->mimetype) && $play_view == PhotoalbumPlayviewType::play_in_detail)
                             <a href="{{url('/')}}/plugin/photoalbums/detail/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
                                 <h5 class="card-title d-flex text-break">{{$photoalbum_content->name}}</h5>
                             </a>
@@ -92,9 +96,8 @@ if ($frame->isExpandNarrow()) {
                 @if ($photoalbum_content->description)
                     <div class="card-text">
                     {{-- 一覧での説明文字数によって切り取って出力する --}}
-                    @php $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length); @endphp
                     @if ($photoalbum_content->isVideo($photoalbum_content->mimetype) &&
-                         FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view) &&
+                         $play_view == PhotoalbumPlayviewType::play_in_detail &&
                          $description_list_length !== '' && $description_list_length < mb_strlen(strip_tags($photoalbum_content->description)))
                         {{ mb_substr(strip_tags($photoalbum_content->description), 0, $description_list_length) }}...
                     @else
@@ -105,7 +108,7 @@ if ($frame->isExpandNarrow()) {
                 {{-- 動画を一覧で再生する設定の場合は埋め込みコードを表示する--}}
                 @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) &&
                       FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::embed_code) &&
-                      FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view) == 0)
+                      $play_view == PhotoalbumPlayviewType::play_in_list)
                     <div class="card-text">
                         <a class="embed_code_check" data-name="embed_code{{$photoalbum_content->id}}" style="color: #007bff; cursor: pointer;" id="a_embed_code_check{{$photoalbum_content->id}}"><small>埋め込みコード</small> <i class="fas fa-caret-right"></i></a>
                         <input type="text" name="embed_code[{{$frame_id}}]" value='<iframe width="400" height="300" src="{{url('/')}}/download/plugin/photoalbums/embed/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}" frameborder="0" scrolling="no" allowfullscreen></iframe>' class="form-control" id="embed_code{{$photoalbum_content->id}}" style="display: none;">
