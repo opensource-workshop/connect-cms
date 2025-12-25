@@ -294,6 +294,7 @@ $app_array = [
         'SmartphoneMenuTemplateType' => \App\Enums\SmartphoneMenuTemplateType::class,
         'MenuFrameConfig' => \App\Enums\MenuFrameConfig::class,
         'MailAuthMethod' => \App\Enums\MailAuthMethod::class,
+        'PhotoalbumPlayviewType' => \App\Enums\PhotoalbumPlayviewType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
