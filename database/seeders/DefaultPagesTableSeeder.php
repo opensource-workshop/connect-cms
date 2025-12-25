@@ -22,6 +22,7 @@ class DefaultPagesTableSeeder extends Seeder
                         'page_name' => 'home',
                         'permanent_link' => '/',
                         'base_display_flag' => '1',
+                        'depth' => 0,
                         // bugfix: tree構造で _lft, _rgtが両方0は間違った値で、上から2番目のページを上に移動するとNode must exists.エラーになるため修正
                         // '_lft'=>'0',
                         // '_rgt'=>'0',

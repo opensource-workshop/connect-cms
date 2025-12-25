@@ -121,6 +121,28 @@
     </div>
 
     <div class="form-group row">
+        <label class="{{$frame->getSettingLabelClass(true)}}">いいねボタンの表示</label>
+        <div class="{{$frame->getSettingInputClass(true)}}">
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="0" id="use_like_off" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name.show" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $database->use_like) == 0) checked="checked" @endif>
+                <label class="custom-control-label" for="use_like_off" id="label_use_like_off">表示しない</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                <input type="radio" value="1" id="use_like_on" name="use_like" class="custom-control-input" data-toggle="collapse" data-target="#collapse_like_button_name:not(.show)" aria-expanded="false" aria-controls="collapse_like_button_name" @if (old('use_like', $database->use_like) == 1) checked="checked" @endif>
+                <label class="custom-control-label" for="use_like_on" id="label_use_like_on">表示する</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group row collapse" id="collapse_like_button_name">
+        <label class="{{$frame->getSettingLabelClass()}}">いいねボタン名</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            <input type="text" name="like_button_name" value="{{old('like_button_name', $database->like_button_name)}}" class="form-control">
+            <small class="form-text text-muted">空の場合「{{Like::like_button_default}}」を表示します。</small>
+        </div>
+    </div>
+
+    <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">全文検索</label>
         <div class="{{$frame->getSettingInputClass()}}">
             @foreach (UseType::enum as $key => $value)
@@ -336,5 +358,13 @@
     })
 </script>
 --}}
+
+{{-- 初期状態で開くもの --}}
+@if(old('use_like', $database->use_like) == 1)
+    <script>
+        $('#collapse_like_button_name').collapse('show')
+    </script>
+@endif
+
 @endif
 @endsection

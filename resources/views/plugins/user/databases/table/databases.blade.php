@@ -17,6 +17,11 @@
 
     @if ($default_hide_list)
     @else
+        @php
+            $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+            $like_button_caption = $database_frame->like_button_name ?: Like::like_button_default;
+        @endphp
+
         @if($inputs->isNotEmpty())
             {{-- データのループ --}}
             <div class="table-responsive">
@@ -33,6 +38,9 @@
                     </th>
                     @endif
                 @endforeach
+                @if ($database_frame->use_like && $database_show_like_list)
+                    <th class="text-nowrap">{{$like_button_caption}}</th>
+                @endif
                 </tr>
                 </thead>
 
@@ -62,6 +70,18 @@
                             @endif
                         @endif
                     @endforeach
+                    @if ($database_frame->use_like && $database_show_like_list)
+                        <td class="text-nowrap">
+                            @include('plugins.common.like', [
+                                'use_like' => ($database_frame->use_like && $database_show_like_list),
+                                'like_button_name' => $database_frame->like_button_name,
+                                'contents_id' => $input->id,
+                                'like_id' => $input->like_id,
+                                'like_count' => $input->like_count,
+                                'like_users_id' => $input->like_users_id,
+                            ])
+                        </td>
+                    @endif
                 </tr>
                 @endforeach
                 </tbody>

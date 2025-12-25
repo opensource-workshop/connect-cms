@@ -117,6 +117,8 @@ class PTASeeder extends Seeder
 //            }
         }
 
+        Page::recalcAllDepths();
+
         // サイト管理関係
         if($configs_data) {
             $this->insertConfigsData($configs_data);

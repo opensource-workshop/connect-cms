@@ -49,6 +49,23 @@
     @endforeach
 </div>
 
+@php
+    $database_show_like_detail = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_detail, ShowType::show);
+@endphp
+<div class="row mt-2">
+    <div class="col-12">
+        {{-- いいねボタン --}}
+        @include('plugins.common.like', [
+            'use_like' => ($database->use_like && $database_show_like_detail),
+            'like_button_name' => $database->like_button_name,
+            'contents_id' => $inputs->id,
+            'like_id' => $inputs->like_id,
+            'like_count' => $inputs->like_count,
+            'like_users_id' => $inputs->like_users_id,
+        ])
+    </div>
+</div>
+
 @can('role_update_or_approval', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row mt-2">
     <div class="col-12 text-right mb-1">

@@ -21,6 +21,11 @@
         @include('plugins.user.databases.default.databases_include_view_count')
         {{-- 現在表示している件数テキスト --}}
         @include('plugins.user.databases.default.databases_include_page_total_views')
+
+        @php
+            $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
+        @endphp
+
         @forelse($inputs as $input)
             <div class="container @if(! $loop->first) mt-4 @endif">
                 {{-- 行グループ ループ --}}
@@ -98,6 +103,16 @@
                                 <i class="far fa-edit"></i> 編集
                             </button>
                         @endcan
+
+                        {{-- いいねボタン --}}
+                        @include('plugins.common.like', [
+                            'use_like' => ($database_frame->use_like && $database_show_like_list),
+                            'like_button_name' => $database_frame->like_button_name,
+                            'contents_id' => $input->id,
+                            'like_id' => $input->like_id,
+                            'like_count' => $input->like_count,
+                            'like_users_id' => $input->like_users_id,
+                        ])
 
                         <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" class="ml-2" @if ($input->title) title="{{$input->title}}の詳細" @endif>
                             <span class="btn btn-success btn-sm">詳細 <i class="fas fa-angle-right"></i></span>

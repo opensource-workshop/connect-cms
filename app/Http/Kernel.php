@@ -88,6 +88,9 @@ class Kernel extends HttpKernel
 
         // Connect-CMS マイページ処理
         'connect.mypage' => \App\Http\Middleware\ConnectMypage::class,
+
+        // Connect-CMS 多言語処理
+        'connect.multilanguage' => \App\Http\Middleware\MultiLanguage::class,
     ];
 
     /**

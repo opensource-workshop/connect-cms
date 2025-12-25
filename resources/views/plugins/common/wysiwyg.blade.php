@@ -268,6 +268,10 @@
     window.cc_templates = {{!!$templates_file!!}};
 </script>
 <script type="text/javascript">
+    {{-- 翻訳カスタム --}}
+    tinymce.util.I18n.add('ja', {
+        'Source': 'URL / ファイル'
+    });
     tinymce.init({
         // see) https://www.tiny.cloud/docs/tinymce/latest/content-filtering/#sandbox-iframes-exclusions
         sandbox_iframes: true,

@@ -44,6 +44,7 @@ if (! isset($cc_configs)) {
 {{-- 検索避け設定 --}}
 @php
     $meta_robots = null;
+    $page_tree = null;
     if (isset($page)) {
         $page_tree = app('request')->attributes->get('page_tree');
         $meta_robots = $page->getMetaRobots($page_tree);
@@ -81,6 +82,13 @@ if (! isset($cc_configs)) {
     <meta name="csrf-token" content="{{csrf_token()}}">
     {{-- cc_configsのセット場所は、app\Http\Middleware\ConnectInit::handle(). 管理画面・一般画面全てのviewで参照できる --}}
     <title>@if(isset($page)){{$page->page_name}} | @endif{{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}</title>
+
+    {{-- alternate --}}
+@if (app('request')->attributes->get('alternates'))
+    @foreach (app('request')->attributes->get('alternates') as $locale =>$alternate)
+        <link rel="alternate" hreflang="{{$locale}}" href="{{ url('/') }}{{$alternate}}" />
+    @endforeach
+@endif
 
     <!-- Styles -->
     <link href="{{ url('/') }}{{ mix('css/app.css') }}" rel="stylesheet">
@@ -166,7 +174,17 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand cc-custom-brand" href="{{ url('/') }}">
-        {{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}
+        @php
+            $override_site_name = null;
+            if (isset($page) && isset($page_tree)) {
+                $override_site_name = $page->getOverrideSiteName($page_tree);
+            }
+        @endphp
+        @if(empty($override_site_name))
+            {{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}
+        @else
+            {{$override_site_name}}
+        @endif
     </a>
 
     <!-- SmartPhone Button -->
@@ -470,6 +488,8 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
             }
         </script>
     @endif
+
+    @include('common.media_play_count')
 
 </body>
 </html>

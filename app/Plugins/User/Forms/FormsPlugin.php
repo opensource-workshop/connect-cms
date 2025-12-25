@@ -536,6 +536,21 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
+     * 正規表現が有効かチェックする
+     */
+    private function isValidRegex($pattern): bool
+    {
+        if (! is_string($pattern) || $pattern === '') {
+            return false;
+        }
+
+        // preg_match は不正なパターンで警告を出すため抑止し、結果のみで判定する
+        $result = @preg_match($pattern, '');
+
+        return $result !== false;
+    }
+
+    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param [array] $validator_array 二次元配列
@@ -598,9 +613,16 @@ class FormsPlugin extends UserPluginBase
             $validator_rule[] = 'min:' . $forms_column->rule_min;
         }
         // 正規表現チェック
-        if ($forms_column->rule_regex) {
-            $validator_rule[] = 'nullable';
-            $validator_rule[] = 'regex:' . $forms_column->rule_regex;
+        if ($forms_column->rule_regex !== null && $forms_column->rule_regex !== '') {
+            if ($this->isValidRegex($forms_column->rule_regex)) {
+                $validator_rule[] = 'nullable';
+                $validator_rule[] = 'regex:' . $forms_column->rule_regex;
+            } else {
+                Log::warning('フォーム項目の正規表現が不正のためスキップしました。', [
+                    'forms_columns_id' => $forms_column->id,
+                    'column_name' => $forms_column->column_name,
+                ]);
+            }
         }
         // ～日以降を許容
         if ($forms_column->rule_date_after_equal) {
@@ -2274,6 +2296,17 @@ class FormsPlugin extends UserPluginBase
         if ($request->rule_word_count) {
             $validator_values['rule_word_count'] = ['numeric'];
             $validator_attributes['rule_word_count'] = '入力文字数';
+        }
+        // 正規表現の指定時、書式が正しいかチェック
+        if ($request->rule_regex !== null && $request->rule_regex !== '') {
+            $validator_values['rule_regex'] = [
+                function ($attribute, $value, $fail) {
+                    if (! $this->isValidRegex($value)) {
+                        $fail('正規表現の書式が正しくありません。デリミタを含む有効な正規表現を指定してください。');
+                    }
+                },
+            ];
+            $validator_attributes['rule_regex'] = '正規表現';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
         if ($request->rule_date_after_equal) {

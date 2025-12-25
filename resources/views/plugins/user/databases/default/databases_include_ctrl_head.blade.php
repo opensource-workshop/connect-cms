@@ -192,8 +192,15 @@
                         @foreach($sort_columns as $sort_column)
 
                             @php
-                                $sort_option = $sort_column->sort_download_count ? '_downloadcount' : null;
-                                $sort_option_name = $sort_column->sort_download_count ? 'ダウンロード数' : null;
+                                $sort_option = null;
+                                $sort_option_name = null;
+                                if ($sort_column->column_type == DatabaseColumnType::file && $sort_column->sort_download_count) {
+                                    $sort_option = '_downloadcount';
+                                    $sort_option_name = 'ダウンロード数';
+                                } elseif ($sort_column->column_type == DatabaseColumnType::video && $sort_column->sort_play_count) {
+                                    $sort_option = '_playcount';
+                                    $sort_option_name = '再生回数';
+                                }
                             @endphp
 
                             @if($sort_column->sort_flag == 1 || $sort_column->sort_flag == 2)

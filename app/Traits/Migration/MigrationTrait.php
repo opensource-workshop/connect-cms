@@ -1184,6 +1184,9 @@ trait MigrationTrait
                 $this->importHtmlImpl($page, $path);
             }
 
+            // ページ階層が変化したため、depth を再計算
+            Page::recalcAllDepths();
+
             $this->putMonitor(3, "Pages import End.", $this->timerEnd($timer_start));
         }
 
