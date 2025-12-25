@@ -91,29 +91,18 @@ if ($frame->isExpandNarrow()) {
                 </div>
                 @if ($photoalbum_content->description)
                     <div class="card-text">
-                    {{--
-                        以下の場合は文字（タグ除去済み）をトリミングする。
-                        動画 ＆ 
-                        動画の再生形式が"一覧はサムネイル画像のみで詳細画面で再生する" = 1 ＆
-                        詳細がある場合の一覧での説明表示文字数 != 0 ＆
-                        詳細がある場合の一覧での説明表示文字数 < 説明の文字数
-                    --}}
+                    {{-- 一覧での説明文字数によって切り取って出力する --}}
+                    @php $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length); @endphp
                     @if ($photoalbum_content->isVideo($photoalbum_content->mimetype) &&
                          FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view) &&
-                         FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length) != 0 &&
-                         FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length) < mb_strlen(strip_tags($photoalbum_content->description)))
-                        {{ mb_substr(strip_tags($photoalbum_content->description), 0, FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length)) }}...
+                         $description_list_length !== '' && $description_list_length < mb_strlen(strip_tags($photoalbum_content->description)))
+                        {{ mb_substr(strip_tags($photoalbum_content->description), 0, $description_list_length) }}...
                     @else
                         {!!nl2br(e($photoalbum_content->description))!!}
                     @endif
                     </div>
                 @endif
-                {{--
-                    以下の場合は埋め込みコードを表示する。
-                    動画 ＆ 
-                    動画埋め込みコードが"表示する" = 1 ＆
-                    動画の再生形式が"一覧で再生する" = 0
-                --}}
+                {{-- 動画を一覧で再生する設定の場合は埋め込みコードを表示する--}}
                 @if (($photoalbum_content->isVideo($photoalbum_content->mimetype)) &&
                       FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::embed_code) &&
                       FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view) == 0)

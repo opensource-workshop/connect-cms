@@ -35,6 +35,6 @@ final class PhotoalbumFrameConfig extends EnumsBase
         self::download => 'ダウンロード',
         self::embed_code => '動画埋め込みコード',
         self::play_view => '動画の再生形式',
-        self::description_list_length => '詳細画面がある場合の一覧での説明表示文字数',
+        self::description_list_length => '一覧の説明表示文字数',
     ];
 }

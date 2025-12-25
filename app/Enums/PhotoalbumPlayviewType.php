@@ -3,17 +3,17 @@
 namespace App\Enums;
 
 /**
- * 表示する・表示しない区分
+ * 動画の再生形式区分
  */
 final class PhotoalbumPlayviewType extends EnumsBase
 {
     // 定数メンバ
-    const all = 'all';
-    const part = 'part';
+    const play_in_list = 0;
+    const play_in_detail = 1;
 
     // key/valueの連想配列
     const enum = [
-        self::all => 0,
-        self::part => 1,
+        self::play_in_list => '一覧で再生する',
+        self::play_in_detail => '詳細画面で再生する',
     ];
 }

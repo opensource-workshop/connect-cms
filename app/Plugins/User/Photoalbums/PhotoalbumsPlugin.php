@@ -20,7 +20,6 @@ use App\Models\User\Photoalbums\PhotoalbumContent;
 
 use App\Enums\UploadMaxSize;
 use App\Enums\PhotoalbumFrameConfig;
-use App\Enums\PhotoalbumPlayviewType;
 use App\Enums\PhotoalbumSort;
 
 use App\Utilities\Zip\UnzipUtils;
@@ -1622,14 +1621,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function saveView($request, $page_id, $frame_id, $photoalbum_id)
     {
-        // 項目のデフォルト値の設定
-        if (!intval($request->description_list_length)) {
-            $request->description_list_length = 0;
-        }
-
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'description_list_length' => ['nullable','numeric'],
+            'description_list_length' => ['nullable', 'integer', 'min:1'],
         ]);
         $validator->setAttributeNames([
             'description_list_length' => PhotoalbumFrameConfig::enum['description_list_length'],
@@ -1738,8 +1732,10 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         foreach ($frame_config_names as $key => $value) {
 
-            if (!$request->$value == '0' && empty($request->$value)) {
-                return;
+            // 空の場合はレコード削除
+            if (empty($request->$value)) {
+                FrameConfig::where('frame_id', $frame_id)->where('name', $value)->forceDelete();
+                continue;
             }
 
             FrameConfig::updateOrCreate(
