@@ -66,7 +66,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed'];
+        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail'];
         $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence'];
         return $functions;
     }
@@ -173,6 +173,35 @@ class PhotoalbumsPlugin extends UserPluginBase
         return $this->view('embed', [
             'photoalbum' => $photoalbum,
             'photoalbum_content' => $photoalbum_content,
+        ]);
+    }
+
+    /**
+     * 詳細画面を表示する
+     * この関数は動画用（画像でも使えるかなとは思いつつ作ってますが）
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id コンテンツID
+     * @return mixed $value テンプレートに渡す内容
+     */
+    public function detail($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        // バケツデータとフォトアルバムデータ取得、フォトアルバムのルート階層はphotoalbum->id == nullのもの。
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $photoalbum_content = PhotoalbumContent::where('id', $photoalbum_content_id)
+            ->where('photoalbum_id', $photoalbum->id)
+            ->first();
+
+        if (empty($photoalbum_content)) {
+            abort(404, 'コンテンツがありません。');
+        }
+
+        return $this->view('detail', [
+            'photoalbum' => $photoalbum,
+            'photoalbum_content' => $photoalbum_content,
+            'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $photoalbum_content->id),
         ]);
     }
 
@@ -1592,6 +1621,19 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     public function saveView($request, $page_id, $frame_id, $photoalbum_id)
     {
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'description_list_length' => ['nullable', 'integer', 'min:1'],
+        ]);
+        $validator->setAttributeNames([
+            'description_list_length' => PhotoalbumFrameConfig::enum['description_list_length'],
+        ]);
+
+        // エラーがあった場合は入力画面に戻る。
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         // フレーム設定保存
         $this->saveFrameConfigs($request, $frame_id, PhotoalbumFrameConfig::getMemberKeys());
         // 更新したので、frame_configsを設定しなおす
@@ -1690,8 +1732,10 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         foreach ($frame_config_names as $key => $value) {
 
-            if (!$request->$value == '0' && empty($request->$value)) {
-                return;
+            // 空の場合はレコード削除
+            if (empty($request->$value)) {
+                FrameConfig::where('frame_id', $frame_id)->where('name', $value)->forceDelete();
+                continue;
             }
 
             FrameConfig::updateOrCreate(

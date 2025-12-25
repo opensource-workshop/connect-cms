@@ -10,6 +10,24 @@
 
 @section("plugin_setting_$frame->id")
 
+<script type="text/javascript">
+    $(function () {
+        var detailValue = '{{ \App\Enums\PhotoalbumPlayviewType::play_in_detail }}';
+
+        function togglePlayViewOptions(value) {
+            var isDetail = value == detailValue;
+            $('#description_list_length').prop('disabled', !isDetail);
+            $('.photoalbum-playview__detail-options').toggleClass('text-muted', !isDetail);
+        }
+
+        $('input[name="play_view"]').on('change', function () {
+            togglePlayViewOptions($(this).val());
+        });
+
+        togglePlayViewOptions($('input[name="play_view"]:checked').val());
+    });
+</script>
+
 {{-- 共通エラーメッセージ 呼び出し --}}
 @include('plugins.common.errors_form_line')
 
@@ -40,6 +58,10 @@
         @php
             $current_sort_folder = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::sort_folder);
             $current_sort_file = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::sort_file);
+            $play_view_types = \App\Enums\PhotoalbumPlayviewType::getMembers();
+            $play_view_default = \App\Enums\PhotoalbumPlayviewType::play_in_list;
+            $current_play_view = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, $play_view_default);
+            $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length);
         @endphp
 
         {{-- ダウンロード --}}
@@ -134,6 +156,46 @@
                 @endforeach
             </div>
         </div>
+        {{-- 動画の再生形式 --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::play_view]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach ($play_view_types as $play_view_value => $play_view_label)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio"
+                               value="{{ $play_view_value }}"
+                               id="play_view_{{ $play_view_value }}"
+                               name="play_view"
+                               class="custom-control-input"
+                               {{ $current_play_view == $play_view_value ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label"
+                               for="play_view_{{ $play_view_value }}"
+                               id="label_play_view_{{ $play_view_value }}">
+                            {{ $play_view_label }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- 詳細画面がある場合の一覧での説明表示文字数 --}}
+        <div class="form-group row photoalbum-playview__detail-options {{ $current_play_view == \App\Enums\PhotoalbumPlayviewType::play_in_detail ? '' : 'text-muted' }}">
+            <label class="{{$frame->getSettingLabelClass(true)}}" for="description_list_length">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::description_list_length]}}</label>
+            <div class="{{$frame->getSettingInputClass()}}">
+                <input type="text"
+                       name="description_list_length"
+                       id="description_list_length"
+                       value="{{ $description_list_length }}"
+                       class="form-control col-sm-3 @if($errors->has('description_list_length')) border-danger @endif"
+                       {{ $current_play_view == \App\Enums\PhotoalbumPlayviewType::play_in_detail ? '' : 'disabled' }}
+                >
+                @include('plugins.common.errors_inline', ['name' => 'description_list_length'])
+                <small class="text-info d-block">詳細画面で再生する場合、一覧の説明は指定文字数で切り詰め、長文で一覧が見づらくなるのを抑えます。</small>
+                <small class="text-muted">※ 空欄の場合は全文が表示されます。</small>
+            </div>
+        </div>
+
         {{-- アルバム並び順 --}}
         <div class="form-group row">
             <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::sort_folder]}}</label>
