@@ -130,12 +130,14 @@ class MicrosoftGraphTransport extends Transport
         } elseif ($message->getFrom()) {
             // Fromアドレスを取得
             $from_addresses = $message->getFrom();
-            // 最初のFromアドレスを取得
-            $from_address = key($from_addresses);
+            if (!empty($from_addresses)) {
+                // 最初のFromアドレスを取得
+                $from_address = key($from_addresses);
 
-            // FromアドレスがOAuth2設定の送信者アドレスと異なる場合のみ、Reply-Toを設定
-            if ($from_address !== $this->from_address) {
-                $reply_to_addresses = $from_addresses;
+                // FromアドレスがOAuth2設定の送信者アドレスと異なる場合のみ、Reply-Toを設定
+                if ($from_address !== $this->from_address) {
+                    $reply_to_addresses = $from_addresses;
+                }
             }
         }
 

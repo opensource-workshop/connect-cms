@@ -465,4 +465,58 @@ class MicrosoftGraphTransportTest extends TestCase
         $this->assertEquals('explicit-reply@example.com', $graph_message['replyTo'][0]['emailAddress']['address']);
         $this->assertEquals('Explicit Reply', $graph_message['replyTo'][0]['emailAddress']['name']);
     }
+
+    /**
+     * Reply-To設定テスト：Fromがnullの場合
+     */
+    public function testReplyToNotSetWhenFromIsNull(): void
+    {
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getSubject')->willReturn('件名');
+        $message->method('getContentType')->willReturn('text/plain');
+        $message->method('getBody')->willReturn('本文');
+        $message->method('getTo')->willReturn(['to@example.com' => 'To User']);
+        $message->method('getCc')->willReturn(null);
+        $message->method('getBcc')->willReturn(null);
+        $message->method('getReplyTo')->willReturn(null);
+        // Fromがnull
+        $message->method('getFrom')->willReturn(null);
+        $message->method('getChildren')->willReturn([]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていないことを確認
+        $this->assertArrayNotHasKey('replyTo', $graph_message);
+    }
+
+    /**
+     * Reply-To設定テスト：Fromが空配列の場合
+     */
+    public function testReplyToNotSetWhenFromIsEmpty(): void
+    {
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getSubject')->willReturn('件名');
+        $message->method('getContentType')->willReturn('text/plain');
+        $message->method('getBody')->willReturn('本文');
+        $message->method('getTo')->willReturn(['to@example.com' => 'To User']);
+        $message->method('getCc')->willReturn(null);
+        $message->method('getBcc')->willReturn(null);
+        $message->method('getReplyTo')->willReturn(null);
+        // Fromが空配列
+        $message->method('getFrom')->willReturn([]);
+        $message->method('getChildren')->willReturn([]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていないことを確認
+        $this->assertArrayNotHasKey('replyTo', $graph_message);
+    }
 }
