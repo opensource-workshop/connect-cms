@@ -121,8 +121,7 @@ class MicrosoftGraphTransport extends Transport
             $graph_message['bccRecipients'] = $this->convertAddresses($message->getBcc());
         }
 
-        // Reply-To設定
-        // MS365認証時、FromアドレスとOAuth2設定の送信者アドレスが異なる場合は、FromアドレスをReply-Toに設定する
+        // Reply-To設定（FromとOAuth2送信者アドレスが異なる場合は自動設定）
         $reply_to_addresses = null;
 
         if ($message->getReplyTo()) {
