@@ -121,9 +121,27 @@ class MicrosoftGraphTransport extends Transport
             $graph_message['bccRecipients'] = $this->convertAddresses($message->getBcc());
         }
 
-        // From (Reply-To)
+        // Reply-To設定
+        // MS365認証時、FromアドレスとOAuth2設定の送信者アドレスが異なる場合は、FromアドレスをReply-Toに設定する
+        $reply_to_addresses = null;
+
         if ($message->getReplyTo()) {
-            $graph_message['replyTo'] = $this->convertAddresses($message->getReplyTo());
+            // 明示的にReply-Toが設定されている場合はそれを使用
+            $reply_to_addresses = $message->getReplyTo();
+        } elseif ($message->getFrom()) {
+            // Fromアドレスを取得
+            $from_addresses = $message->getFrom();
+            // 最初のFromアドレスを取得
+            $from_address = key($from_addresses);
+
+            // FromアドレスがOAuth2設定の送信者アドレスと異なる場合のみ、Reply-Toを設定
+            if ($from_address !== $this->from_address) {
+                $reply_to_addresses = $from_addresses;
+            }
+        }
+
+        if ($reply_to_addresses) {
+            $graph_message['replyTo'] = $this->convertAddresses($reply_to_addresses);
         }
 
         return $graph_message;

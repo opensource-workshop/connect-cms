@@ -377,4 +377,92 @@ class MicrosoftGraphTransportTest extends TestCase
         // デフォルト本文が返される
         $this->assertEquals('シングルパート本文', $body);
     }
+
+    /**
+     * Reply-To設定テスト：FromがOAuth2設定アドレスと異なる場合
+     */
+    public function testReplyToSetWhenFromDifferentFromOauth2Address(): void
+    {
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getSubject')->willReturn('件名');
+        $message->method('getContentType')->willReturn('text/plain');
+        $message->method('getBody')->willReturn('本文');
+        $message->method('getTo')->willReturn(['to@example.com' => 'To User']);
+        $message->method('getCc')->willReturn(null);
+        $message->method('getBcc')->willReturn(null);
+        $message->method('getReplyTo')->willReturn(null);
+        // FromアドレスをOAuth2設定アドレス（sender@example.com）と異なるアドレスに設定
+        $message->method('getFrom')->willReturn(['different@example.com' => 'Different User']);
+        $message->method('getChildren')->willReturn([]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていることを確認
+        $this->assertArrayHasKey('replyTo', $graph_message);
+        $this->assertCount(1, $graph_message['replyTo']);
+        $this->assertEquals('different@example.com', $graph_message['replyTo'][0]['emailAddress']['address']);
+        $this->assertEquals('Different User', $graph_message['replyTo'][0]['emailAddress']['name']);
+    }
+
+    /**
+     * Reply-To設定テスト：FromがOAuth2設定アドレスと同じ場合
+     */
+    public function testReplyToNotSetWhenFromSameAsOauth2Address(): void
+    {
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getSubject')->willReturn('件名');
+        $message->method('getContentType')->willReturn('text/plain');
+        $message->method('getBody')->willReturn('本文');
+        $message->method('getTo')->willReturn(['to@example.com' => 'To User']);
+        $message->method('getCc')->willReturn(null);
+        $message->method('getBcc')->willReturn(null);
+        $message->method('getReplyTo')->willReturn(null);
+        // FromアドレスをOAuth2設定アドレス（sender@example.com）と同じに設定
+        $message->method('getFrom')->willReturn(['sender@example.com' => 'Sender User']);
+        $message->method('getChildren')->willReturn([]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていないことを確認
+        $this->assertArrayNotHasKey('replyTo', $graph_message);
+    }
+
+    /**
+     * Reply-To設定テスト：明示的なReply-Toが優先される
+     */
+    public function testExplicitReplyToTakesPriority(): void
+    {
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getSubject')->willReturn('件名');
+        $message->method('getContentType')->willReturn('text/plain');
+        $message->method('getBody')->willReturn('本文');
+        $message->method('getTo')->willReturn(['to@example.com' => 'To User']);
+        $message->method('getCc')->willReturn(null);
+        $message->method('getBcc')->willReturn(null);
+        // 明示的なReply-Toを設定
+        $message->method('getReplyTo')->willReturn(['explicit-reply@example.com' => 'Explicit Reply']);
+        // FromアドレスをOAuth2設定アドレスと異なるアドレスに設定
+        $message->method('getFrom')->willReturn(['different@example.com' => 'Different User']);
+        $message->method('getChildren')->willReturn([]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // 明示的なReply-Toが優先されていることを確認
+        $this->assertArrayHasKey('replyTo', $graph_message);
+        $this->assertCount(1, $graph_message['replyTo']);
+        $this->assertEquals('explicit-reply@example.com', $graph_message['replyTo'][0]['emailAddress']['address']);
+        $this->assertEquals('Explicit Reply', $graph_message['replyTo'][0]['emailAddress']['name']);
+    }
 }
