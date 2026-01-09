@@ -20,6 +20,19 @@
             @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
         @endfor
         {{$children->page_name}}
+        @php
+            $menu_display_label = $children->display_flag ? 'メニュー表示: 表示' : 'メニュー表示: 非表示';
+            if (!$children->display_flag && $children->base_display_flag == 1) {
+                $menu_display_label .= '（親ページの非表示を継承）';
+            }
+        @endphp
+        <span class="cc-menu-page-conditions js-page-condition-item ml-2 {{ $is_page_condition ? '' : 'd-none' }}">
+            @if ($children->display_flag == 1)
+                <i class="far fa-eye" title="{{$menu_display_label}}"></i>
+            @else
+                <i class="far fa-eye-slash text-muted" title="{{$menu_display_label}}"></i>
+            @endif
+        </span>
         </label>
     </div>
 

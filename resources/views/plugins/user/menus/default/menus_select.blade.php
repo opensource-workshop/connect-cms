@@ -9,6 +9,7 @@
     $can_use_setting_menu = $can_use_setting_menu ?? false;
     $layout = $can_use_setting_menu ? 'core.cms_frame_base_setting' : 'core.cms_frame_base';
     $section = $can_use_setting_menu ? "plugin_setting_{$frame->id}" : "plugin_contents_{$frame->id}";
+    $is_page_condition = !isset($menu) || $menu->select_flag == 0;
 @endphp
 
 @extends($layout)
@@ -43,10 +44,23 @@
         </div>
     </div>
 
+    <div id="page-condition-summary" class="alert alert-info small {{ $is_page_condition ? '' : 'd-none' }}">
+        <div class="font-weight-bold">ページ管理のメニュー表示が適用されます。</div>
+        <div>メニューの表示対象は、ページ管理の「メニュー表示」に従います。</div>
+        <div>詳細は <a href="{{url('/manage/page')}}" target="_blank" rel="noopener">ページ管理</a> で確認できます。</div>
+        <div class="mt-2">
+            <span class="mr-2"><i class="far fa-eye"></i>表示</span>
+            <span class="mr-2"><i class="far fa-eye-slash"></i>非表示</span>
+        </div>
+        <div class="text-muted">※ 親ページの設定を継承している場合があります。</div>
+    </div>
+
 @if ($pages)
     <div class="form-group">
         <label class="col-form-label">ページの選択</label><br />
-    <div class="list-group mb-0">
+        <small id="page-select-note" class="form-text text-info {{ $is_page_condition ? '' : 'd-none' }}">ページ管理の条件が選択されているため、ページ選択は編集できません。表示ページを個別に選ぶ場合は「選択したもののみ」を選んでください。</small>
+        <div id="page-select-wrapper" class="{{ $is_page_condition ? 'cc-menu-select-locked' : '' }}" aria-disabled="{{ $is_page_condition ? 'true' : 'false' }}">
+            <div id="page-select-list" class="list-group mb-0">
     @foreach($pages as $page_record)
 
         {{-- 非表示のページは対象外 --}}
@@ -67,6 +81,19 @@
                         @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
                     @endfor
                     {{$page_record->page_name}}
+                    @php
+                        $menu_display_label = $page_record->display_flag ? 'メニュー表示: 表示' : 'メニュー表示: 非表示';
+                        if (!$page_record->display_flag && $page_record->base_display_flag == 1) {
+                            $menu_display_label .= '（親ページの非表示を継承）';
+                        }
+                    @endphp
+                    <span class="cc-menu-page-conditions js-page-condition-item ml-2 {{ $is_page_condition ? '' : 'd-none' }}">
+                        @if ($page_record->display_flag == 1)
+                            <i class="far fa-eye" title="{{$menu_display_label}}"></i>
+                        @else
+                            <i class="far fa-eye-slash text-muted" title="{{$menu_display_label}}"></i>
+                        @endif
+                    </span>
                     </label>
                 </div>
 
@@ -86,6 +113,19 @@
                         @if ($i+1==$children->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
                     @endfor
                     {{$page_record->page_name}}
+                    @php
+                        $menu_display_label = $page_record->display_flag ? 'メニュー表示: 表示' : 'メニュー表示: 非表示';
+                        if (!$page_record->display_flag && $page_record->base_display_flag == 1) {
+                            $menu_display_label .= '（親ページの非表示を継承）';
+                        }
+                    @endphp
+                    <span class="cc-menu-page-conditions js-page-condition-item ml-2 {{ $is_page_condition ? '' : 'd-none' }}">
+                        @if ($page_record->display_flag == 1)
+                            <i class="far fa-eye" title="{{$menu_display_label}}"></i>
+                        @else
+                            <i class="far fa-eye-slash text-muted" title="{{$menu_display_label}}"></i>
+                        @endif
+                    </span>
                     </label>
                 </div>
             @endif
@@ -93,7 +133,8 @@
         @endif
         --}}
     @endforeach
-    </div>
+            </div>
+        </div>
     </div>
 @endif
 
@@ -134,4 +175,67 @@
         </div>
     </div>
 </form>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var selectOn = document.getElementById('select_on');
+    var selectOff = document.getElementById('select_off');
+    var wrapper = document.getElementById('page-select-wrapper');
+    var list = document.getElementById('page-select-list');
+    var note = document.getElementById('page-select-note');
+    var summary = document.getElementById('page-condition-summary');
+
+    function updateLockState() {
+        var locked = selectOn && selectOn.checked;
+        if (note) {
+            note.classList.toggle('d-none', !locked);
+        }
+        if (summary) {
+            summary.classList.toggle('d-none', !locked);
+        }
+        var items = document.querySelectorAll('.js-page-condition-item');
+        items.forEach(function (item) {
+            item.classList.toggle('d-none', !locked);
+        });
+        if (!wrapper || !list) {
+            return;
+        }
+        wrapper.classList.toggle('cc-menu-select-locked', locked);
+        wrapper.setAttribute('aria-disabled', locked ? 'true' : 'false');
+        var checkboxes = list.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(function (checkbox) {
+            if (locked) {
+                checkbox.setAttribute('tabindex', '-1');
+                checkbox.setAttribute('aria-disabled', 'true');
+                checkbox.blur();
+            } else {
+                checkbox.removeAttribute('tabindex');
+                checkbox.removeAttribute('aria-disabled');
+            }
+        });
+    }
+
+    if (selectOn) {
+        selectOn.addEventListener('change', updateLockState);
+    }
+    if (selectOff) {
+        selectOff.addEventListener('change', updateLockState);
+    }
+    if (list) {
+        list.addEventListener('click', function (event) {
+            if (wrapper && wrapper.classList.contains('cc-menu-select-locked')) {
+                event.preventDefault();
+            }
+        });
+        list.addEventListener('keydown', function (event) {
+            if (wrapper && wrapper.classList.contains('cc-menu-select-locked')) {
+                if (event.key === ' ' || event.key === 'Enter') {
+                    event.preventDefault();
+                }
+            }
+        });
+    }
+
+    updateLockState();
+});
+</script>
 @endsection
