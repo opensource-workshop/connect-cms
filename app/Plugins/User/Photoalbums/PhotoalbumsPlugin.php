@@ -1593,6 +1593,7 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         $preview_root = null;
         $sorted_children_map = [];
+        $focus_open_ids = [];
         if (!empty($photoalbum->id)) {
             $all_contents = PhotoalbumContent::with(['upload', 'posterUpload'])
                 ->where('photoalbum_id', $photoalbum->id)
@@ -1605,6 +1606,17 @@ class PhotoalbumsPlugin extends UserPluginBase
                 $grouped_children = $all_contents->groupBy('parent_id');
                 $sorted_children_map = $this->buildSortedChildrenMap($preview_root, $sort_folder, $sort_file, $grouped_children);
             }
+
+            $focus_content_id = session('photoalbum_sort_focus');
+            if (!empty($focus_content_id)) {
+                $contents_by_id = $all_contents->keyBy('id');
+                $current = $contents_by_id->get($focus_content_id);
+                while (!empty($current) && !is_null($current->parent_id)) {
+                    $focus_open_ids[] = $current->parent_id;
+                    $current = $contents_by_id->get($current->parent_id);
+                }
+                $focus_open_ids = array_values(array_unique($focus_open_ids));
+            }
         }
         // 表示テンプレートを呼び出す。
         return $this->view('frame', [
@@ -1613,6 +1625,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'sort_folder' => $sort_folder,
             'sort_file' => $sort_file,
             'sorted_children_map' => $sorted_children_map,
+            'focus_open_ids' => $focus_open_ids,
         ]);
     }
 
