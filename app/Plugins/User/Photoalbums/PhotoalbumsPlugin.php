@@ -1607,16 +1607,7 @@ class PhotoalbumsPlugin extends UserPluginBase
                 $sorted_children_map = $this->buildSortedChildrenMap($preview_root, $sort_folder, $sort_file, $grouped_children);
             }
 
-            $focus_content_id = session('photoalbum_sort_focus');
-            if (!empty($focus_content_id)) {
-                $contents_by_id = $all_contents->keyBy('id');
-                $current = $contents_by_id->get($focus_content_id);
-                while (!empty($current) && !is_null($current->parent_id)) {
-                    $focus_open_ids[] = $current->parent_id;
-                    $current = $contents_by_id->get($current->parent_id);
-                }
-                $focus_open_ids = array_values(array_unique($focus_open_ids));
-            }
+            $focus_open_ids = $this->buildFocusOpenIds($all_contents, session('photoalbum_sort_focus'));
         }
         // 表示テンプレートを呼び出す。
         return $this->view('frame', [
@@ -1627,6 +1618,34 @@ class PhotoalbumsPlugin extends UserPluginBase
             'sorted_children_map' => $sorted_children_map,
             'focus_open_ids' => $focus_open_ids,
         ]);
+    }
+
+    /**
+     * 並び替え直後に開くべきフォルダIDを取得する。
+     *
+     * @param \Illuminate\Support\Collection $contents
+     * @param int|null $focus_content_id
+     * @return array
+     */
+    private function buildFocusOpenIds($contents, $focus_content_id)
+    {
+        if (empty($focus_content_id)) {
+            return [];
+        }
+
+        $contents_by_id = $contents->keyBy('id');
+        $current = $contents_by_id->get($focus_content_id);
+        if (empty($current)) {
+            return [];
+        }
+
+        $focus_open_ids = [];
+        while (!empty($current) && !is_null($current->parent_id)) {
+            $focus_open_ids[] = $current->parent_id;
+            $current = $contents_by_id->get($current->parent_id);
+        }
+
+        return array_values(array_unique($focus_open_ids));
     }
 
     /**
