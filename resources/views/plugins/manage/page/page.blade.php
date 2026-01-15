@@ -8,6 +8,13 @@
 @php
 use App\Enums\PageMetaRobots;
 use App\Models\Common\Page;
+use App\Models\Core\Configs;
+
+$layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+$base_layout = Configs::getSharedConfigsValue('base_layout', $layout_default);
+$base_layout = $base_layout ?: $layout_default;
+$base_layout_page = new Page();
+$base_layout_page->layout = $base_layout;
 @endphp
 
 {{-- 管理画面ベース画面 --}}
@@ -374,7 +381,14 @@ use App\Models\Common\Page;
                     </td>
                     <td class="table-text p-1 text-center">
                         @if ($page_item->getSimpleLayout())
-                            <div><img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}"></div>
+                            @php
+                            $layout_inherit_flag = (string)($page_item->layout_inherit_flag ?? '1');
+                            $layout_scope_label = ($layout_inherit_flag === '0') ? 'このページのみ' : '下層にも適用';
+                            @endphp
+                            <div>
+                                <img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}（{{$layout_scope_label}}）">
+                                <div class="small text-muted">{{$layout_scope_label}}</div>
+                            </div>
                         @else
 
                             @php
@@ -382,6 +396,9 @@ use App\Models\Common\Page;
                             // 自分及び先祖ページを遡る
                             foreach ($page_tree as $page_tmp) {
                                 if ($page_tmp->getSimpleLayout()) {
+                                    if (!is_null($page_tmp->layout_inherit_flag) && (int)$page_tmp->layout_inherit_flag === 0) {
+                                        continue;
+                                    }
                                     $layout_page_parent = $page_tmp;
                                     break;
                                 }
@@ -390,7 +407,7 @@ use App\Models\Common\Page;
                             @if ($layout_page_parent->getSimpleLayout())
                                 <div class="border border-warning"><img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}（親ページを継承）"></div>
                             @else
-                                <div></div>
+                                <div class="border border-info"><img src="{{asset('/images/core/layout/' . $base_layout_page->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$base_layout_page->getLayoutTitle()}}（基本レイアウト）"></div>
                             @endif
 
                         @endif

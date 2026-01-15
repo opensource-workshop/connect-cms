@@ -64,6 +64,9 @@ return [
     // 設定メニューの折り畳みcol
     'CC_SETTING_EXPAND_COL' => 6,
 
+    // レイアウトの初期値
+    'BASE_LAYOUT_DEFAULT' => '1|1|0|1',
+
     // Cache-Control
     'CACHE_CONTROL' => env('CACHE_CONTROL', 'max-age=604800'),
 

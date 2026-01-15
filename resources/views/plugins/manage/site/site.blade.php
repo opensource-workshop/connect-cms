@@ -71,6 +71,147 @@
                 <small class="form-text text-muted">基本テーマとは別のテーマを追加で読み込みます。スタイルの読み込み順は追加テーマの方が後になる為、スタイル競合時は追加テーマのものが優先されます。</small>
             </div>
 
+            @php
+                $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+                $base_layout_value = Configs::getConfigsValue($configs, 'base_layout', $layout_default);
+                $base_layout_value = $base_layout_value ?: $layout_default;
+            @endphp
+            {{-- 基本レイアウト --}}
+            <div class="form-group">
+                <label class="col-form-label">基本レイアウト</label>
+                <div class="d-flex flex-wrap">
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|0|0|0')
+                            <input type="radio" value="0|0|0|0" id="base_layout_0000" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|0|0|0" id="base_layout_0000" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0000"><img src="{{asset('/images/core/layout/0000.png')}}" title="メインのみ" alt="メインのみ"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|0|0|1')
+                            <input type="radio" value="0|0|0|1" id="base_layout_0001" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|0|0|1" id="base_layout_0001" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0001"><img src="{{asset('/images/core/layout/0001.png')}}" title="フッター" alt="フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|0|1|0')
+                            <input type="radio" value="0|0|1|0" id="base_layout_0010" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|0|1|0" id="base_layout_0010" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0010"><img src="{{asset('/images/core/layout/0010.png')}}" title="右" alt="右"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|0|1|1')
+                            <input type="radio" value="0|0|1|1" id="base_layout_0011" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|0|1|1" id="base_layout_0011" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0011"><img src="{{asset('/images/core/layout/0011.png')}}" title="右、フッター" alt="右、フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|1|0|0')
+                            <input type="radio" value="0|1|0|0" id="base_layout_0100" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|1|0|0" id="base_layout_0100" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0100"><img src="{{asset('/images/core/layout/0100.png')}}" title="左" alt="左"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|1|0|1')
+                            <input type="radio" value="0|1|0|1" id="base_layout_0101" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|1|0|1" id="base_layout_0101" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0101"><img src="{{asset('/images/core/layout/0101.png')}}" title="左、フッター" alt="左、フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|1|1|0')
+                            <input type="radio" value="0|1|1|0" id="base_layout_0110" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|1|1|0" id="base_layout_0110" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0110"><img src="{{asset('/images/core/layout/0110.png')}}" title="左、右" alt="左、右"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '0|1|1|1')
+                            <input type="radio" value="0|1|1|1" id="base_layout_0111" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0|1|1|1" id="base_layout_0111" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_0111"><img src="{{asset('/images/core/layout/0111.png')}}" title="左、右、フッター" alt="左、右、フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|0|0|0')
+                            <input type="radio" value="1|0|0|0" id="base_layout_1000" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|0|0|0" id="base_layout_1000" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1000"><img src="{{asset('/images/core/layout/1000.png')}}" title="ヘッダー" alt="ヘッダー"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|0|0|1')
+                            <input type="radio" value="1|0|0|1" id="base_layout_1001" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|0|0|1" id="base_layout_1001" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1001"><img src="{{asset('/images/core/layout/1001.png')}}" title="ヘッダー、フッター" alt="ヘッダー、フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|0|1|0')
+                            <input type="radio" value="1|0|1|0" id="base_layout_1010" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|0|1|0" id="base_layout_1010" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1010"><img src="{{asset('/images/core/layout/1010.png')}}" title="ヘッダー、右" alt="ヘッダー、右"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|0|1|1')
+                            <input type="radio" value="1|0|1|1" id="base_layout_1011" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|0|1|1" id="base_layout_1011" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1011"><img src="{{asset('/images/core/layout/1011.png')}}" title="ヘッダー、右、フッター" alt="ヘッダー、右、フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|1|0|0')
+                            <input type="radio" value="1|1|0|0" id="base_layout_1100" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|1|0|0" id="base_layout_1100" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1100"><img src="{{asset('/images/core/layout/1100.png')}}" title="ヘッダー、左" alt="ヘッダー、左"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|1|0|1')
+                            <input type="radio" value="1|1|0|1" id="base_layout_1101" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|1|0|1" id="base_layout_1101" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1101"><img src="{{asset('/images/core/layout/1101.png')}}" title="ヘッダー、左、フッター" alt="ヘッダー、左、フッター"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|1|1|0')
+                            <input type="radio" value="1|1|1|0" id="base_layout_1110" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|1|1|0" id="base_layout_1110" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1110"><img src="{{asset('/images/core/layout/1110.png')}}" title="ヘッダー、左、右" alt="ヘッダー、左、右"></label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline mb-2">
+                        @if (old('base_layout', $base_layout_value) == '1|1|1|1')
+                            <input type="radio" value="1|1|1|1" id="base_layout_1111" name="base_layout" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1|1|1|1" id="base_layout_1111" name="base_layout" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="base_layout_1111"><img src="{{asset('/images/core/layout/1111.png')}}" title="ヘッダー、左、右、フッター" alt="ヘッダー、左、右、フッター"></label>
+                    </div>
+                </div>
+                <small class="form-text text-muted">全ページに適用する基本レイアウトです。各ページのレイアウト設定で上書きできます。</small>
+            </div>
+
             <div id="app">
                 @php
                     $placeholder_message = 'HTMLカラーコードを入力';

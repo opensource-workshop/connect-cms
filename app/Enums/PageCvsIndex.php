@@ -21,7 +21,8 @@ final class PageCvsIndex extends EnumsBase
     const header_color = 3;
     const theme = 4;
     const layout = 5;
-    const base_display_flag = 6;
+    const layout_inherit_flag = 6;
+    const base_display_flag = 7;
 
     /** key/valueの連想配列 */
     const enum = [
@@ -31,6 +32,7 @@ final class PageCvsIndex extends EnumsBase
         self::header_color => 'header_color',
         self::theme => 'theme',
         self::layout => 'layout',
+        self::layout_inherit_flag => 'layout_inherit_flag',
         self::base_display_flag => 'base_display_flag',
     ];
 }
