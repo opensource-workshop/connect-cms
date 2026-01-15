@@ -7,6 +7,9 @@
         $children = $children_map[$node->id];
     }
     $show_controls = isset($show_controls) ? $show_controls : true;
+    $focus_open_ids = $focus_open_ids ?? [];
+    $focus_open_map = array_fill_keys($focus_open_ids, true);
+    $focus_content_id = session('photoalbum_sort_focus');
 @endphp
 
 @if ($children->isNotEmpty())
@@ -34,6 +37,9 @@
                 });
                 $can_move_up = $manual_enabled && !is_null($previous_same);
                 $can_move_down = $manual_enabled && !is_null($next_same);
+                $has_children = $is_folder && array_key_exists($child->id, $children_map) && $children_map[$child->id]->isNotEmpty();
+                $collapse_id = 'photoalbum-sort-children-' . $child->id;
+                $should_open_children = $has_children && (isset($focus_open_map[$child->id]) || $child->id == $focus_content_id);
             @endphp
             {{-- 各行にアンカーIDを付与し並び替え後に同じ位置へ戻れるようにする --}}
             <li class="list-group-item photoalbum-manual-sort__item {{ session('photoalbum_sort_focus') == $child->id ? 'photoalbum-manual-sort__item--active' : '' }}" id="photoalbum-sort-item-{{ $child->id }}">
@@ -48,10 +54,27 @@
                                 @endif
                             </span>
                         @endif
-                        @if ($child->is_folder)
-                            <i class="fas fa-folder text-warning mr-2"></i>
+                        @if ($is_folder && $has_children)
+                            <button
+                                type="button"
+                                class="btn btn-link p-0 text-left photoalbum-manual-sort__toggle {{ $should_open_children ? '' : 'collapsed' }}"
+                                data-toggle="collapse"
+                                data-target="#{{ $collapse_id }}"
+                                aria-expanded="{{ $should_open_children ? 'true' : 'false' }}"
+                                aria-controls="{{ $collapse_id }}"
+                            >
+                                <i class="fas fa-chevron-right mr-2 photoalbum-manual-sort__toggle-icon"></i>
+                                <i class="fas fa-folder text-warning mr-2"></i>
+                                <span class="font-weight-bold">{{ $child->displayName }}</span>
+                            </button>
+                        @elseif ($is_folder)
+                            <span class="d-flex align-items-center">
+                                <i class="fas fa-folder text-warning mr-2"></i>
+                                <span class="font-weight-bold">{{ $child->displayName }}</span>
+                            </span>
+                        @else
+                            <span class="font-weight-bold">{{ $child->displayName }}</span>
                         @endif
-                        <span class="font-weight-bold">{{ $child->displayName }}</span>
                     </div>
                     @if ($show_controls && $manual_enabled)
                         <div class="text-nowrap d-flex align-items-center">
@@ -85,18 +108,23 @@
                     @endif
                 </div>
 
-                @include('plugins.user.photoalbums.default.partials.manual_sort_tree', [
-                    'node' => $child,
-                    'sorted_children_map' => $children_map,
-                    'level' => ($level ?? 0) + 1,
-                    'page' => $page,
-                    'frame_id' => $frame_id,
-                    'photoalbum' => $photoalbum,
-                    'redirect_path' => $redirect_path,
-                    'sort_folder' => $current_sort_folder,
-                    'sort_file' => $current_sort_file,
-                    'show_controls' => $show_controls,
-                ])
+                @if ($has_children)
+                    <div id="{{ $collapse_id }}" class="collapse {{ $should_open_children ? 'show' : '' }}">
+                        @include('plugins.user.photoalbums.default.partials.manual_sort_tree', [
+                            'node' => $child,
+                            'sorted_children_map' => $children_map,
+                            'level' => ($level ?? 0) + 1,
+                            'page' => $page,
+                            'frame_id' => $frame_id,
+                            'photoalbum' => $photoalbum,
+                            'redirect_path' => $redirect_path,
+                            'sort_folder' => $current_sort_folder,
+                            'sort_file' => $current_sort_file,
+                            'show_controls' => $show_controls,
+                            'focus_open_ids' => $focus_open_ids,
+                        ])
+                    </div>
+                @endif
             </li>
         @endforeach
     </ul>

@@ -264,6 +264,7 @@
             $is_manual_sort_folder = ($sort_folder ?? '') === PhotoalbumSort::manual_order;
             $is_manual_sort_file = ($sort_file ?? '') === PhotoalbumSort::manual_order;
             $is_manual_sort_active = $is_manual_sort_folder || $is_manual_sort_file;
+            $focus_open_ids = $focus_open_ids ?? [];
         @endphp
         <div class="card {{ $is_manual_sort_active ? 'photoalbum-manual-sort__card' : '' }}" id="manual-sort-preview">
             <div class="card-header font-weight-bold d-flex align-items-center justify-content-between">
@@ -297,6 +298,7 @@
                         'sort_folder' => $sort_folder,
                         'sort_file' => $sort_file,
                         'show_controls' => true,
+                        'focus_open_ids' => $focus_open_ids,
                     ])
                 @endif
             </div>
