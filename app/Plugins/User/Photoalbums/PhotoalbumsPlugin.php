@@ -1833,7 +1833,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         $content = PhotoalbumContent::find($request->photoalbum_content_id);
         if (empty($content)) {
-            return;
+            return $this->respondViewSequenceError($request, 'コンテンツが見つかりません。', 404);
         }
 
         $this->refreshFrameConfigs();
@@ -1842,10 +1842,10 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         $is_folder = $content->is_folder == PhotoalbumContent::is_folder_on;
         if ($is_folder && $sort_folder != PhotoalbumSort::manual_order) {
-            return;
+            return $this->respondViewSequenceError($request, 'フォルダの並び順がカスタム順ではありません。');
         }
         if (!$is_folder && $sort_file != PhotoalbumSort::manual_order) {
-            return;
+            return $this->respondViewSequenceError($request, 'ファイルの並び順がカスタム順ではありません。');
         }
 
         $siblings = PhotoalbumContent::where('parent_id', $content->parent_id)
@@ -1859,7 +1859,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         });
 
         if ($target_index === false) {
-            return;
+            return $this->respondViewSequenceError($request, '並び替え対象が見つかりません。');
         }
 
         $pair = null;
@@ -1877,21 +1877,29 @@ class PhotoalbumsPlugin extends UserPluginBase
                     break;
                 }
             }
+        } else {
+            return $this->respondViewSequenceError($request, '並び替えの指定が正しくありません。');
         }
 
-        if ($pair) {
-            $current_sequence = $content->display_sequence;
-            $content->display_sequence = $pair->display_sequence;
-            $content->save();
+        if (!$pair) {
+            return $this->respondViewSequenceError($request, '並び順の変更ができません。');
+        }
 
-            $pair->display_sequence = $current_sequence;
-            $pair->save();
+        $current_sequence = $content->display_sequence;
+        $content->display_sequence = $pair->display_sequence;
+        $content->save();
 
-            $this->normalizeDisplaySequence($content->parent_id);
+        $pair->display_sequence = $current_sequence;
+        $pair->save();
 
-            $request->merge(['flash_message' => '並び順を更新しました。']);
-            // ハイライト対象をセッションに保持し、次回描画で視覚的に示す
-            Session::flash('photoalbum_sort_focus', $content->id);
+        $this->normalizeDisplaySequence($content->parent_id);
+
+        $request->merge(['flash_message' => '並び順を更新しました。']);
+        // ハイライト対象をセッションに保持し、次回描画で視覚的に示す
+        Session::flash('photoalbum_sort_focus', $content->id);
+
+        if ($request->expectsJson()) {
+            return $this->respondViewSequenceJson($content);
         }
 
         if (!empty($request->redirect_path)) {
@@ -1903,6 +1911,42 @@ class PhotoalbumsPlugin extends UserPluginBase
 
             return new Collection(['redirect_path' => $redirect_path]);
         }
+    }
+
+    /**
+     * 表示設定の並び替え失敗レスポンスを返す
+     */
+    private function respondViewSequenceError($request, string $message, int $status = 422)
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message], $status);
+        }
+
+        return;
+    }
+
+    /**
+     * 表示設定の並び替え成功レスポンスを返す（JSON）
+     */
+    private function respondViewSequenceJson(PhotoalbumContent $content)
+    {
+        $siblings = PhotoalbumContent::where('parent_id', $content->parent_id)
+            ->orderBy('is_folder', 'desc')
+            ->orderBy('display_sequence')
+            ->orderBy('id')
+            ->get(['id', 'is_folder']);
+
+        return response()->json([
+            'message' => '並び順を更新しました。',
+            'parent_id' => $content->parent_id,
+            'moved_id' => $content->id,
+            'siblings' => $siblings->map(function ($sibling) {
+                return [
+                    'id' => $sibling->id,
+                    'is_folder' => $sibling->is_folder,
+                ];
+            })->values(),
+        ]);
     }
 
     /**
