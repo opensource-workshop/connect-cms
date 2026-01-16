@@ -1216,9 +1216,18 @@ class PhotoalbumsPlugin extends UserPluginBase
                 continue;
             }
 
-            // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
-            if ($content->is_folder === PhotoalbumContent::is_folder_on && $content->isLeaf()) {
-                $zip->addEmptyDir($save_path . $content->name);
+            $children = $content->children;
+
+            // 非表示を除外した後に子要素がない場合は空フォルダを追加
+            if ($content->is_folder === PhotoalbumContent::is_folder_on) {
+                if (!empty($hidden_folder_ids)) {
+                    $children = $children->reject(function ($child) use ($hidden_folder_ids, $contents_by_id) {
+                        return $this->isHiddenPhotoalbumContent($child, $hidden_folder_ids, $contents_by_id);
+                    });
+                }
+                if ($children->isEmpty()) {
+                    $zip->addEmptyDir($save_path . $content->name);
+                }
 
             // ファイル追加
             } elseif ($content->is_folder === PhotoalbumContent::is_folder_off) {
@@ -1237,7 +1246,7 @@ class PhotoalbumsPlugin extends UserPluginBase
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($zip, $content->children, $save_path . $content->name, $hidden_folder_ids, $contents_by_id);
+            $this->addContentsToZip($zip, $children, $save_path . $content->name, $hidden_folder_ids, $contents_by_id);
         }
     }
 
