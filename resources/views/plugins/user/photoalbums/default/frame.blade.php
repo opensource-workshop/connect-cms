@@ -22,9 +22,12 @@
 
         var isVisibilitySaving = false;
         var pendingVisibilitySave = false;
+        var $frameForm = $('#photoalbum-frame-settings-{{ $frame_id }}');
+        var $submitButton = $frameForm.find('button[type="submit"]');
 
         function setVisibilitySaving(isSaving) {
             $('.photoalbum-visibility-toggle__input').prop('disabled', isSaving);
+            $submitButton.prop('disabled', isSaving);
         }
 
         function syncHiddenInitialState() {
@@ -139,6 +142,13 @@
         $('.photoalbum-visibility-toggle__input').on('change', function () {
             refreshHiddenPreview();
             saveHiddenFolders();
+        });
+
+        $frameForm.on('submit', function (event) {
+            if (isVisibilitySaving || pendingVisibilitySave) {
+                event.preventDefault();
+                alert('表示設定の保存中です。完了してから変更確定してください。');
+            }
         });
 
         togglePlayViewOptions($('input[name="play_view"]:checked').val());
