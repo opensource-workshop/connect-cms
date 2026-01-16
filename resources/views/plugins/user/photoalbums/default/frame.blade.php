@@ -405,10 +405,23 @@
                 @endif
             </div>
             <div class="card-body">
-                <p class="text-muted mb-3">
-                    現在の表示設定でのプレビューです。非表示フォルダは背景が灰色になります。切り替え直後（保存中）は斜線入りの背景で表示します（非表示にした場合は灰色、表示に戻した場合は薄い黄色）。<br>
-                    カスタム順が選択されている対象は、このプレビュー内の上下ボタンで並び替えできます。フォルダの表示切替は <i class="fas fa-eye" aria-hidden="true"></i> で行います。
-                </p>
+                <div class="border-bottom pb-2 mb-3">
+                    <p class="mb-2">このプレビューでは、フォルダの表示/非表示と並び替えができます。</p>
+                    <div class="table-responsive-sm">
+                        <table class="table table-sm table-borderless text-muted mb-0">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="text-nowrap">表示切替</th>
+                                    <td><i class="fas fa-eye" aria-hidden="true"></i> 表示 / <i class="fas fa-eye-slash" aria-hidden="true"></i> 非表示</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-nowrap">並び替え</th>
+                                    <td>カスタム順のときのみ <i class="fas fa-arrow-up" aria-hidden="true"></i><i class="fas fa-arrow-down" aria-hidden="true"></i></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
                 @if (empty($manual_sort_root))
                     <p class="text-muted mb-0">表示できるコンテンツがありません。</p>
