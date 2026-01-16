@@ -79,6 +79,42 @@ class MicrosoftGraphTransportTest extends TestCase
     }
 
     /**
+     * 基本的なメッセージモックを作成
+     *
+     * @param array $overrides デフォルト値を上書きする設定
+     * @return Swift_Mime_SimpleMessage
+     */
+    private function createBasicMessageMock(array $overrides = []): Swift_Mime_SimpleMessage
+    {
+        $defaults = [
+            'subject' => '件名',
+            'contentType' => 'text/plain',
+            'body' => '本文',
+            'to' => ['to@example.com' => 'To User'],
+            'cc' => null,
+            'bcc' => null,
+            'replyTo' => null,
+            'from' => null,
+            'children' => [],
+        ];
+
+        $config = array_merge($defaults, $overrides);
+
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getSubject')->willReturn($config['subject']);
+        $message->method('getContentType')->willReturn($config['contentType']);
+        $message->method('getBody')->willReturn($config['body']);
+        $message->method('getTo')->willReturn($config['to']);
+        $message->method('getCc')->willReturn($config['cc']);
+        $message->method('getBcc')->willReturn($config['bcc']);
+        $message->method('getReplyTo')->willReturn($config['replyTo']);
+        $message->method('getFrom')->willReturn($config['from']);
+        $message->method('getChildren')->willReturn($config['children']);
+
+        return $message;
+    }
+
+    /**
      * メッセージ変換テスト：基本
      */
     public function testConvertToGraphMessageBasic(): void
@@ -376,5 +412,111 @@ class MicrosoftGraphTransportTest extends TestCase
 
         // デフォルト本文が返される
         $this->assertEquals('シングルパート本文', $body);
+    }
+
+    /**
+     * Reply-To設定テスト：FromがOAuth2設定アドレスと異なる場合
+     */
+    public function testReplyToSetWhenFromDifferentFromOauth2Address(): void
+    {
+        // FromアドレスをOAuth2設定アドレス（sender@example.com）と異なるアドレスに設定
+        $message = $this->createBasicMessageMock([
+            'from' => ['different@example.com' => 'Different User']
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていることを確認
+        $this->assertArrayHasKey('replyTo', $graph_message);
+        $this->assertCount(1, $graph_message['replyTo']);
+        $this->assertEquals('different@example.com', $graph_message['replyTo'][0]['emailAddress']['address']);
+        $this->assertEquals('Different User', $graph_message['replyTo'][0]['emailAddress']['name']);
+    }
+
+    /**
+     * Reply-To設定テスト：FromがOAuth2設定アドレスと同じ場合
+     */
+    public function testReplyToNotSetWhenFromSameAsOauth2Address(): void
+    {
+        // FromアドレスをOAuth2設定アドレス（sender@example.com）と同じに設定
+        $message = $this->createBasicMessageMock([
+            'from' => ['sender@example.com' => 'Sender User']
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていないことを確認
+        $this->assertArrayNotHasKey('replyTo', $graph_message);
+    }
+
+    /**
+     * Reply-To設定テスト：明示的なReply-Toが優先される
+     */
+    public function testExplicitReplyToTakesPriority(): void
+    {
+        $message = $this->createBasicMessageMock([
+            // 明示的なReply-Toを設定
+            'replyTo' => ['explicit-reply@example.com' => 'Explicit Reply'],
+            // FromアドレスをOAuth2設定アドレスと異なるアドレスに設定
+            'from' => ['different@example.com' => 'Different User']
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // 明示的なReply-Toが優先されていることを確認
+        $this->assertArrayHasKey('replyTo', $graph_message);
+        $this->assertCount(1, $graph_message['replyTo']);
+        $this->assertEquals('explicit-reply@example.com', $graph_message['replyTo'][0]['emailAddress']['address']);
+        $this->assertEquals('Explicit Reply', $graph_message['replyTo'][0]['emailAddress']['name']);
+    }
+
+    /**
+     * Reply-To設定テスト：Fromがnullの場合
+     */
+    public function testReplyToNotSetWhenFromIsNull(): void
+    {
+        // Fromがnull（デフォルト値）
+        $message = $this->createBasicMessageMock();
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていないことを確認
+        $this->assertArrayNotHasKey('replyTo', $graph_message);
+    }
+
+    /**
+     * Reply-To設定テスト：Fromが空配列の場合
+     */
+    public function testReplyToNotSetWhenFromIsEmpty(): void
+    {
+        // Fromが空配列
+        $message = $this->createBasicMessageMock([
+            'from' => []
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // Reply-Toが設定されていないことを確認
+        $this->assertArrayNotHasKey('replyTo', $graph_message);
     }
 }
