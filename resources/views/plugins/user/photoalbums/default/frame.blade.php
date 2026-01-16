@@ -20,8 +20,125 @@
             $('.photoalbum-playview__detail-options').toggleClass('text-muted', !isDetail);
         }
 
+        var isVisibilitySaving = false;
+        var pendingVisibilitySave = false;
+
+        function setVisibilitySaving(isSaving) {
+            $('.photoalbum-visibility-toggle__input').prop('disabled', isSaving);
+        }
+
+        function syncHiddenInitialState() {
+            $('.photoalbum-visibility-toggle__input').each(function () {
+                var isChecked = $(this).is(':checked');
+                $(this).data('initial-hidden', isChecked ? 1 : 0);
+                $(this).attr('data-initial-hidden', isChecked ? 1 : 0);
+            });
+        }
+
+        function restoreHiddenFromInitial() {
+            $('.photoalbum-visibility-toggle__input').each(function () {
+                var initialHidden = $(this).data('initial-hidden') == 1;
+                $(this).prop('checked', initialHidden);
+            });
+        }
+
+        function getItemToggle($item) {
+            return $item.children('div').first().find('.photoalbum-visibility-toggle__input');
+        }
+
+        function getHiddenState($item, useInitial) {
+            var $current = $item;
+            while ($current.length) {
+                var $toggle = getItemToggle($current);
+                if ($toggle.length) {
+                    var isHidden = useInitial ? ($toggle.data('initial-hidden') == 1) : $toggle.is(':checked');
+                    if (isHidden) {
+                        return true;
+                    }
+                }
+                $current = $current.parent().closest('.photoalbum-manual-sort__item');
+            }
+            return false;
+        }
+
+        function refreshHiddenPreview() {
+            $('.photoalbum-manual-sort__item').each(function () {
+                var $item = $(this);
+                var savedHidden = getHiddenState($item, true);
+                var currentHidden = getHiddenState($item, false);
+
+                $item.removeClass('photoalbum-manual-sort__item--hidden photoalbum-manual-sort__item--pending-hidden photoalbum-manual-sort__item--pending-show');
+
+                if (savedHidden === currentHidden) {
+                    if (currentHidden) {
+                        $item.addClass('photoalbum-manual-sort__item--hidden');
+                    }
+                    return;
+                }
+
+                if (currentHidden) {
+                    $item.addClass('photoalbum-manual-sort__item--pending-hidden');
+                } else {
+                    $item.addClass('photoalbum-manual-sort__item--pending-show');
+                }
+            });
+        }
+
+        function collectHiddenFolderIds() {
+            return $('.photoalbum-visibility-toggle__input:checked').map(function () {
+                return $(this).val();
+            }).get();
+        }
+
+        function saveHiddenFolders() {
+            if (isVisibilitySaving) {
+                pendingVisibilitySave = true;
+                return;
+            }
+
+            isVisibilitySaving = true;
+            pendingVisibilitySave = false;
+            setVisibilitySaving(true);
+
+            var formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            var hiddenIds = collectHiddenFolderIds();
+            hiddenIds.forEach(function (id) {
+                formData.append('hidden_folder_ids[]', id);
+            });
+
+            axios.post('{{ url('/') }}/json/photoalbums/updateHiddenFolders/{{$page->id}}/{{$frame_id}}', formData)
+                .then(function () {
+                    syncHiddenInitialState();
+                    refreshHiddenPreview();
+                })
+                .catch(function (error) {
+                    restoreHiddenFromInitial();
+                    refreshHiddenPreview();
+                    var message = '表示設定の更新に失敗しました。';
+                    if (error.response && error.response.data && error.response.data.message) {
+                        message = error.response.data.message;
+                    }
+                    alert(message);
+                })
+                .finally(function () {
+                    isVisibilitySaving = false;
+                    setVisibilitySaving(false);
+                    if (pendingVisibilitySave) {
+                        pendingVisibilitySave = false;
+                        saveHiddenFolders();
+                    }
+                });
+        }
+
         $('input[name="play_view"]').on('change', function () {
             togglePlayViewOptions($(this).val());
+        });
+
+        refreshHiddenPreview();
+        $('.photoalbum-visibility-toggle__input').on('change', function () {
+            refreshHiddenPreview();
+            saveHiddenFolders();
         });
 
         togglePlayViewOptions($('input[name="play_view"]:checked').val());
@@ -42,9 +159,10 @@
         フレームごとの表示設定を変更します。
     </div>
 
-    <form action="{{url('/')}}/redirect/plugin/photoalbums/saveView/{{$page->id}}/{{$frame_id}}/{{$photoalbum->id}}#frame-{{$frame->id}}" method="POST" class="">
+    <form action="{{url('/')}}/redirect/plugin/photoalbums/saveView/{{$page->id}}/{{$frame_id}}/{{$photoalbum->id}}#frame-{{$frame->id}}" method="POST" class="" id="photoalbum-frame-settings-{{ $frame_id }}">
         {{ csrf_field() }}
         <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/photoalbums/editView/{{$page->id}}/{{$frame_id}}/{{$photoalbum->bucket_id}}#frame-{{$frame_id}}">
+        <input type="hidden" name="hidden_folder_ids[]" value="">
 
         {{-- 1ページの表示件数 --}}
         {{-- 現時点では、データ読み込み後にソートしているので、ページングする際は、ソートロジックも見直してから。
@@ -62,6 +180,14 @@
             $play_view_default = \App\Enums\PhotoalbumPlayviewType::play_in_list;
             $current_play_view = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, $play_view_default);
             $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length);
+            $hidden_folder_value = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::hidden_folder_ids, '');
+            $hidden_folder_ids = is_array($hidden_folder_value)
+                ? $hidden_folder_value
+                : explode(FrameConfig::CHECKBOX_SEPARATOR, (string) $hidden_folder_value);
+            $hidden_folder_ids = array_values(array_filter(array_map('intval', $hidden_folder_ids), function ($id) {
+                return $id > 0;
+            }));
+            $hidden_folder_map = array_fill_keys($hidden_folder_ids, true);
         @endphp
 
         {{-- ダウンロード --}}
@@ -212,7 +338,7 @@
                 </select>
                 @if (($current_sort_folder ?? '') === PhotoalbumSort::manual_order)
                     <small class="form-text text-muted">
-                        カスタム順の変更は <a href="#manual-sort-preview">現在の並び順プレビュー</a> の上下ボタンから行えます。
+                        カスタム順の変更は <a href="#manual-sort-preview">表示プレビュー</a> の上下ボタンから行えます。
                     </small>
                 @endif
             </div>
@@ -233,7 +359,7 @@
                 </select>
                 @if (($current_sort_file ?? '') === PhotoalbumSort::manual_order)
                     <small class="form-text text-muted">
-                        カスタム順の変更は <a href="#manual-sort-preview">現在の並び順プレビュー</a> の上下ボタンから行えます。
+                        カスタム順の変更は <a href="#manual-sort-preview">表示プレビュー</a> の上下ボタンから行えます。
                     </small>
                 @endif
             </div>
@@ -269,7 +395,7 @@
         <div class="card {{ $is_manual_sort_active ? 'photoalbum-manual-sort__card' : '' }}" id="manual-sort-preview">
             <div class="card-header font-weight-bold d-flex align-items-center justify-content-between">
                 <span>
-                    <i class="fas fa-list mr-2"></i>現在の並び順プレビュー
+                    <i class="fas fa-eye mr-2"></i>表示プレビュー
                 </span>
                 {{-- カスタム順が有効な時だけバッジを表示して操作可能であることを明示 --}}
                 @if ($is_manual_sort_active)
@@ -280,8 +406,8 @@
             </div>
             <div class="card-body">
                 <p class="text-muted mb-3">
-                    現在の表示設定での並び順です。利用者画面と同じ順序で表示されます。<br>
-                    カスタム順が選択されている対象は、このプレビュー内の上下ボタンで並び替えできます。
+                    現在の表示設定でのプレビューです。非表示フォルダは背景が灰色になります。切り替え直後（保存中）は斜線入りの背景で表示します（非表示にした場合は灰色、表示に戻した場合は薄い黄色）。<br>
+                    カスタム順が選択されている対象は、このプレビュー内の上下ボタンで並び替えできます。フォルダの表示切替は <i class="fas fa-eye" aria-hidden="true"></i> で行います。
                 </p>
 
                 @if (empty($manual_sort_root))
@@ -299,9 +425,22 @@
                         'sort_file' => $sort_file,
                         'show_controls' => true,
                         'focus_open_ids' => $focus_open_ids,
+                        'hidden_folder_map' => $hidden_folder_map,
+                        'hidden_parent' => false,
                     ])
                 @endif
             </div>
+        </div>
+        <div class="text-center mt-3">
+            <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}">
+                <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
+            </a>
+            <button type="submit" class="btn btn-primary form-horizontal" form="photoalbum-frame-settings-{{ $frame_id }}">
+                <i class="fas fa-check"></i>
+                <span class="{{$frame->getSettingButtonCaptionClass()}}">
+                    変更確定
+                </span>
+            </button>
         </div>
     @endif
 @endif
