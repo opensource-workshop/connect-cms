@@ -338,7 +338,7 @@
                 </select>
                 @if (($current_sort_folder ?? '') === PhotoalbumSort::manual_order)
                     <small class="form-text text-muted">
-                        カスタム順の変更は <a href="#manual-sort-preview">表示プレビュー</a> の上下ボタンから行えます。
+                        カスタム順の変更は <a href="#photoalbum-preview">表示プレビュー</a> の上下ボタンから行えます。
                     </small>
                 @endif
             </div>
@@ -359,7 +359,7 @@
                 </select>
                 @if (($current_sort_file ?? '') === PhotoalbumSort::manual_order)
                     <small class="form-text text-muted">
-                        カスタム順の変更は <a href="#manual-sort-preview">表示プレビュー</a> の上下ボタンから行えます。
+                        カスタム順の変更は <a href="#photoalbum-preview">表示プレビュー</a> の上下ボタンから行えます。
                     </small>
                 @endif
             </div>
@@ -392,17 +392,21 @@
             $is_manual_sort_active = $is_manual_sort_folder || $is_manual_sort_file;
             $focus_open_ids = $focus_open_ids ?? [];
         @endphp
-        <div class="card {{ $is_manual_sort_active ? 'photoalbum-manual-sort__card' : '' }}" id="manual-sort-preview">
+        <div class="card photoalbum-preview__card" id="photoalbum-preview">
             <div class="card-header font-weight-bold d-flex align-items-center justify-content-between">
                 <span>
                     <i class="fas fa-eye mr-2"></i>表示プレビュー
                 </span>
-                {{-- カスタム順が有効な時だけバッジを表示して操作可能であることを明示 --}}
-                @if ($is_manual_sort_active)
-                    <span class="photoalbum-manual-sort__badge">
-                        カスタム順操作可
+                <div class="d-flex align-items-center">
+                    <span class="photoalbum-manual-sort__badge mr-2">
+                        表示切替可
                     </span>
-                @endif
+                    @if ($is_manual_sort_active)
+                        <span class="photoalbum-manual-sort__badge">
+                            カスタム順操作可
+                        </span>
+                    @endif
+                </div>
             </div>
             <div class="card-body">
                 <div class="border-bottom pb-2 mb-3">
