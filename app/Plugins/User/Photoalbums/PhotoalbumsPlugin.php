@@ -67,7 +67,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
         $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail'];
-        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence'];
+        $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence', 'updateHiddenFolders'];
         return $functions;
     }
 
@@ -88,6 +88,7 @@ class PhotoalbumsPlugin extends UserPluginBase
         $role_check_table["editVideo"] = array('posts.update');
         $role_check_table["deleteContents"] = array('posts.delete');
         $role_check_table["updateViewSequence"] = array('frames.edit');
+        $role_check_table["updateHiddenFolders"] = array('frames.edit');
         return $role_check_table;
     }
 
@@ -135,11 +136,22 @@ class PhotoalbumsPlugin extends UserPluginBase
             return;
         }
 
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if ($this->isHiddenPhotoalbumContent($parent, $hidden_folder_ids)) {
+            return;
+        }
+
         // フォルダ、ファイルの比較条件の取得
         $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
         $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
 
         $photoalbum_contents = $this->getSortedChildren($parent, $sort_folder, $sort_file);
+        if (!empty($hidden_folder_ids)) {
+            $photoalbum_contents = $photoalbum_contents->reject(function ($content) use ($hidden_folder_ids) {
+                return $content->is_folder == PhotoalbumContent::is_folder_on
+                    && in_array($content->id, $hidden_folder_ids, true);
+            });
+        }
 
         // カバー写真に指定されている写真
         $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))->where('is_cover', PhotoalbumContent::is_cover_on)->get();
@@ -166,9 +178,22 @@ class PhotoalbumsPlugin extends UserPluginBase
     public function embed($request, $page_id, $frame_id, $photoalbum_content_id)
     {
         // 対象のデータを取得して編集画面を表示する。
-        $photoalbum_content = PhotoalbumContent::find($photoalbum_content_id);
-
         $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $photoalbum_content = PhotoalbumContent::where('id', $photoalbum_content_id)
+            ->where('photoalbum_id', $photoalbum->id)
+            ->first();
+
+        if (empty($photoalbum_content)) {
+            abort(404, 'コンテンツがありません。');
+        }
+
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if (!empty($hidden_folder_ids)) {
+            $ancestors = PhotoalbumContent::ancestorsAndSelf($photoalbum_content->id);
+            if ($this->isHiddenPhotoalbumContent($photoalbum_content, $hidden_folder_ids, $ancestors->keyBy('id'))) {
+                abort(404, 'コンテンツがありません。');
+            }
+        }
 
         return $this->view('embed', [
             'photoalbum' => $photoalbum,
@@ -196,6 +221,14 @@ class PhotoalbumsPlugin extends UserPluginBase
 
         if (empty($photoalbum_content)) {
             abort(404, 'コンテンツがありません。');
+        }
+
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if (!empty($hidden_folder_ids)) {
+            $ancestors = PhotoalbumContent::ancestorsAndSelf($photoalbum_content->id);
+            if ($this->isHiddenPhotoalbumContent($photoalbum_content, $hidden_folder_ids, $ancestors->keyBy('id'))) {
+                abort(404, 'コンテンツがありません。');
+            }
         }
 
         return $this->view('detail', [
@@ -286,6 +319,54 @@ class PhotoalbumsPlugin extends UserPluginBase
                 ->get();
         }
         return PhotoalbumContent::ancestorsAndSelf($photoalbum_content_id);
+    }
+
+    /**
+     * 非表示対象のフォルダIDを取得する
+     */
+    private function getHiddenFolderIds(Collection $frame_configs): array
+    {
+        $hidden_folder_value = FrameConfig::getConfigValue($frame_configs, PhotoalbumFrameConfig::hidden_folder_ids);
+        if (empty($hidden_folder_value)) {
+            return [];
+        }
+
+        $hidden_folder_ids = is_array($hidden_folder_value)
+            ? $hidden_folder_value
+            : explode(FrameConfig::CHECKBOX_SEPARATOR, (string) $hidden_folder_value);
+
+        $hidden_folder_ids = array_map('intval', $hidden_folder_ids);
+        $hidden_folder_ids = array_filter($hidden_folder_ids, static function ($id) {
+            return $id > 0;
+        });
+
+        return array_values(array_unique($hidden_folder_ids));
+    }
+
+    /**
+     * 非表示設定に該当するフォトアルバムコンテンツか判定する
+     */
+    private function isHiddenPhotoalbumContent(PhotoalbumContent $content, array $hidden_folder_ids, ?Collection $contents_by_id = null): bool
+    {
+        if (empty($hidden_folder_ids)) {
+            return false;
+        }
+
+        $current = $content;
+        while (!empty($current)) {
+            if ($current->is_folder == PhotoalbumContent::is_folder_on
+                && in_array($current->id, $hidden_folder_ids, true)) {
+                return true;
+            }
+
+            if (is_null($current->parent_id)) {
+                break;
+            }
+
+            $current = $contents_by_id ? $contents_by_id->get($current->parent_id) : PhotoalbumContent::find($current->parent_id);
+        }
+
+        return false;
     }
 
     /**
@@ -1032,13 +1113,26 @@ class PhotoalbumsPlugin extends UserPluginBase
             return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
         }
 
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if (!empty($hidden_folder_ids)) {
+            $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+            $visible_ids = $this->filterVisibleDownloadContentIds($photoalbum, $request->photoalbum_content_id, $hidden_folder_ids);
+            $request->merge(['photoalbum_content_id' => $visible_ids]);
+            if (empty($visible_ids)) {
+                return back()
+                    ->withErrors(['photoalbum_content_id' => 'ダウンロードできるコンテンツがありません。'])
+                    ->withInput()
+                    ->with('parent_id', $request->parent_id);
+            }
+        }
+
         // ファイルの単数選択ならZIP化せずダウンロードレスポンスを返す
         if ($this->isSelectedSingleFile($request)) {
             return redirect($this->download_url);
         }
 
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
-        $this->makeZip($save_path, $request);
+        $this->makeZip($save_path, $request, $hidden_folder_ids ?? []);
 
         // 一時ファイルは削除して、ダウンロードレスポンスを返す. download()でAllowed memory sizeエラー時にtmpファイル削除対応
         $response = response()->download(
@@ -1056,8 +1150,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      *
      * @param string $save_path 保存先パス
      * @param \Illuminate\Http\Request $request リクエスト
+     * @param array $hidden_folder_ids 非表示フォルダID
      */
-    private function makeZip($save_path, $request)
+    private function makeZip($save_path, $request, array $hidden_folder_ids = [])
     {
         $zip = new \ZipArchive();
         $zip->open($save_path, \ZipArchive::CREATE);
@@ -1066,7 +1161,15 @@ class PhotoalbumsPlugin extends UserPluginBase
             $contents = PhotoalbumContent::select('photoalbum_contents.*', 'uploads.client_original_name')
                         ->leftJoin('uploads', 'photoalbum_contents.upload_id', '=', 'uploads.id')
                         ->descendantsAndSelf($photoalbum_content_id);
-            if (!$this->canDownload($request, $contents)) {
+            $contents_by_id = $contents->keyBy('id');
+            $download_contents = $contents;
+            if (!empty($hidden_folder_ids)) {
+                $download_contents = $contents->reject(function ($content) use ($hidden_folder_ids, $contents_by_id) {
+                    return $this->isHiddenPhotoalbumContent($content, $hidden_folder_ids, $contents_by_id);
+                });
+            }
+
+            if (!$this->canDownload($request, $download_contents)) {
                 // zipファイル後始末
                 $zip->close();
                 if (file_exists($save_path)) {
@@ -1079,7 +1182,7 @@ class PhotoalbumsPlugin extends UserPluginBase
                 mkdir($this->getTmpDirectory(), 0777, true);
             }
 
-            $this->addContentsToZip($zip, $contents->toTree());
+            $this->addContentsToZip($zip, $contents->toTree(), '', $hidden_folder_ids, $contents_by_id);
         }
 
         // 空のZIPファイルが出来たら404
@@ -1100,16 +1203,31 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \ZipArchive $zip ZIPアーカイブ
      * @param \Illuminate\Support\Collection $contents フォトアルバムコンテンツのコレクション
      * @param string $parent_name 親フォトアルバムの名称
+     * @param array $hidden_folder_ids 非表示フォルダID
+     * @param \Illuminate\Support\Collection|null $contents_by_id コンテンツIDマップ
      */
-    private function addContentsToZip(&$zip, $contents, $parent_name = '')
+    private function addContentsToZip(&$zip, $contents, $parent_name = '', array $hidden_folder_ids = [], ?Collection $contents_by_id = null)
     {
         // 保存先のパス
         $save_path = $parent_name === '' ? $parent_name : $parent_name .'/';
 
         foreach ($contents as $content) {
-            // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
-            if ($content->is_folder === PhotoalbumContent::is_folder_on && $content->isLeaf()) {
-                $zip->addEmptyDir($save_path . $content->name);
+            if (!empty($hidden_folder_ids) && $this->isHiddenPhotoalbumContent($content, $hidden_folder_ids, $contents_by_id)) {
+                continue;
+            }
+
+            $children = $content->children;
+
+            // 非表示を除外した後に子要素がない場合は空フォルダを追加
+            if ($content->is_folder === PhotoalbumContent::is_folder_on) {
+                if (!empty($hidden_folder_ids)) {
+                    $children = $children->reject(function ($child) use ($hidden_folder_ids, $contents_by_id) {
+                        return $this->isHiddenPhotoalbumContent($child, $hidden_folder_ids, $contents_by_id);
+                    });
+                }
+                if ($children->isEmpty()) {
+                    $zip->addEmptyDir($save_path . $content->name);
+                }
 
             // ファイル追加
             } elseif ($content->is_folder === PhotoalbumContent::is_folder_off) {
@@ -1128,8 +1246,42 @@ class PhotoalbumsPlugin extends UserPluginBase
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($zip, $content->children, $save_path . $content->name);
+            $this->addContentsToZip($zip, $children, $save_path . $content->name, $hidden_folder_ids, $contents_by_id);
         }
+    }
+
+    /**
+     * 非表示対象を除外したダウンロード対象IDを取得する
+     */
+    private function filterVisibleDownloadContentIds(Photoalbum $photoalbum, $content_ids, array $hidden_folder_ids): array
+    {
+        $content_ids = is_array($content_ids) ? $content_ids : [$content_ids];
+        $content_ids = array_values(array_filter(array_map('intval', $content_ids), static function ($id) {
+            return $id > 0;
+        }));
+
+        if (empty($content_ids) || empty($photoalbum->id)) {
+            return [];
+        }
+
+        $contents = PhotoalbumContent::where('photoalbum_id', $photoalbum->id)
+            ->whereIn('id', $content_ids)
+            ->get();
+
+        if (empty($hidden_folder_ids)) {
+            return $contents->pluck('id')->all();
+        }
+
+        $visible_ids = [];
+        foreach ($contents as $content) {
+            $ancestors = PhotoalbumContent::ancestorsAndSelf($content->id);
+            if ($this->isHiddenPhotoalbumContent($content, $hidden_folder_ids, $ancestors->keyBy('id'))) {
+                continue;
+            }
+            $visible_ids[] = $content->id;
+        }
+
+        return $visible_ids;
     }
 
     /**
@@ -1754,6 +1906,56 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
+     * 表示設定の非表示フォルダを更新する（JSON）
+     */
+    public function updateHiddenFolders($request, $page_id, $frame_id)
+    {
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        if (empty($photoalbum->id)) {
+            return response()->json(['message' => 'フォトアルバムが見つかりません。'], 404);
+        }
+
+        $hidden_folder_ids = $request->input('hidden_folder_ids', []);
+        if (!is_array($hidden_folder_ids)) {
+            $hidden_folder_ids = [$hidden_folder_ids];
+        }
+
+        $hidden_folder_ids = array_values(array_filter(array_map('intval', $hidden_folder_ids), static function ($id) {
+            return $id > 0;
+        }));
+
+        if (!empty($hidden_folder_ids)) {
+            $valid_folder_ids = PhotoalbumContent::where('photoalbum_id', $photoalbum->id)
+                ->where('is_folder', PhotoalbumContent::is_folder_on)
+                ->whereIn('id', $hidden_folder_ids)
+                ->pluck('id')
+                ->all();
+
+            if (count($valid_folder_ids) !== count($hidden_folder_ids)) {
+                return response()->json(['message' => '指定されたフォルダが存在しません。'], 422);
+            }
+        }
+
+        if (empty($hidden_folder_ids)) {
+            FrameConfig::where('frame_id', $frame_id)
+                ->where('name', PhotoalbumFrameConfig::hidden_folder_ids)
+                ->forceDelete();
+        } else {
+            FrameConfig::updateOrCreate(
+                ['frame_id' => $frame_id, 'name' => PhotoalbumFrameConfig::hidden_folder_ids],
+                ['value' => implode(FrameConfig::CHECKBOX_SEPARATOR, $hidden_folder_ids)]
+            );
+        }
+
+        $this->refreshFrameConfigs();
+
+        return response()->json([
+            'message' => '表示設定を更新しました。',
+            'hidden_folder_ids' => $hidden_folder_ids,
+        ]);
+    }
+
+    /**
      * フレーム設定を保存する。
      *
      * @param Illuminate\Http\Request $request リクエスト
@@ -1763,16 +1965,22 @@ class PhotoalbumsPlugin extends UserPluginBase
     private function saveFrameConfigs(\Illuminate\Http\Request $request, int $frame_id, array $frame_config_names)
     {
         foreach ($frame_config_names as $key => $value) {
+            $request_value = $request->$value;
+            if (is_array($request_value)) {
+                $request_value = array_values(array_filter($request_value, static function ($item) {
+                    return $item !== '' && $item !== null;
+                }));
+            }
 
             // 空の場合はレコード削除
-            if ($request->$value === null || $request->$value === '') {
+            if ($request_value === null || $request_value === '' || (is_array($request_value) && empty($request_value))) {
                 FrameConfig::where('frame_id', $frame_id)->where('name', $value)->forceDelete();
                 continue;
             }
 
             FrameConfig::updateOrCreate(
                 ['frame_id' => $frame_id, 'name' => $value],
-                ['value' => $request->$value]
+                ['value' => is_array($request_value) ? implode(FrameConfig::CHECKBOX_SEPARATOR, $request_value) : $request_value]
             );
         }
     }
