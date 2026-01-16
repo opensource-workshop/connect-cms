@@ -444,17 +444,6 @@
                 @endif
             </div>
         </div>
-        <div class="text-center mt-3">
-            <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}">
-                <i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass('md')}}"> キャンセル</span>
-            </a>
-            <button type="submit" class="btn btn-primary form-horizontal" form="photoalbum-frame-settings-{{ $frame_id }}">
-                <i class="fas fa-check"></i>
-                <span class="{{$frame->getSettingButtonCaptionClass()}}">
-                    変更確定
-                </span>
-            </button>
-        </div>
     @endif
 @endif
 @endsection
