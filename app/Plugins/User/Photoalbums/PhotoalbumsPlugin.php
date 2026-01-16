@@ -1113,13 +1113,26 @@ class PhotoalbumsPlugin extends UserPluginBase
             return back()->withErrors($validator)->withInput()->with('parent_id', $request->parent_id);
         }
 
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if (!empty($hidden_folder_ids)) {
+            $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+            $visible_ids = $this->filterVisibleDownloadContentIds($photoalbum, $request->photoalbum_content_id, $hidden_folder_ids);
+            $request->merge(['photoalbum_content_id' => $visible_ids]);
+            if (empty($visible_ids)) {
+                return back()
+                    ->withErrors(['photoalbum_content_id' => 'ダウンロードできるコンテンツがありません。'])
+                    ->withInput()
+                    ->with('parent_id', $request->parent_id);
+            }
+        }
+
         // ファイルの単数選択ならZIP化せずダウンロードレスポンスを返す
         if ($this->isSelectedSingleFile($request)) {
             return redirect($this->download_url);
         }
 
         $save_path = $this->getTmpDirectory() . uniqid('', true) . '.zip';
-        $this->makeZip($save_path, $request);
+        $this->makeZip($save_path, $request, $hidden_folder_ids ?? []);
 
         // 一時ファイルは削除して、ダウンロードレスポンスを返す. download()でAllowed memory sizeエラー時にtmpファイル削除対応
         $response = response()->download(
@@ -1137,8 +1150,9 @@ class PhotoalbumsPlugin extends UserPluginBase
      *
      * @param string $save_path 保存先パス
      * @param \Illuminate\Http\Request $request リクエスト
+     * @param array $hidden_folder_ids 非表示フォルダID
      */
-    private function makeZip($save_path, $request)
+    private function makeZip($save_path, $request, array $hidden_folder_ids = [])
     {
         $zip = new \ZipArchive();
         $zip->open($save_path, \ZipArchive::CREATE);
@@ -1147,7 +1161,15 @@ class PhotoalbumsPlugin extends UserPluginBase
             $contents = PhotoalbumContent::select('photoalbum_contents.*', 'uploads.client_original_name')
                         ->leftJoin('uploads', 'photoalbum_contents.upload_id', '=', 'uploads.id')
                         ->descendantsAndSelf($photoalbum_content_id);
-            if (!$this->canDownload($request, $contents)) {
+            $contents_by_id = $contents->keyBy('id');
+            $download_contents = $contents;
+            if (!empty($hidden_folder_ids)) {
+                $download_contents = $contents->reject(function ($content) use ($hidden_folder_ids, $contents_by_id) {
+                    return $this->isHiddenPhotoalbumContent($content, $hidden_folder_ids, $contents_by_id);
+                });
+            }
+
+            if (!$this->canDownload($request, $download_contents)) {
                 // zipファイル後始末
                 $zip->close();
                 if (file_exists($save_path)) {
@@ -1160,7 +1182,7 @@ class PhotoalbumsPlugin extends UserPluginBase
                 mkdir($this->getTmpDirectory(), 0777, true);
             }
 
-            $this->addContentsToZip($zip, $contents->toTree());
+            $this->addContentsToZip($zip, $contents->toTree(), '', $hidden_folder_ids, $contents_by_id);
         }
 
         // 空のZIPファイルが出来たら404
@@ -1181,13 +1203,19 @@ class PhotoalbumsPlugin extends UserPluginBase
      * @param \ZipArchive $zip ZIPアーカイブ
      * @param \Illuminate\Support\Collection $contents フォトアルバムコンテンツのコレクション
      * @param string $parent_name 親フォトアルバムの名称
+     * @param array $hidden_folder_ids 非表示フォルダID
+     * @param \Illuminate\Support\Collection|null $contents_by_id コンテンツIDマップ
      */
-    private function addContentsToZip(&$zip, $contents, $parent_name = '')
+    private function addContentsToZip(&$zip, $contents, $parent_name = '', array $hidden_folder_ids = [], ?Collection $contents_by_id = null)
     {
         // 保存先のパス
         $save_path = $parent_name === '' ? $parent_name : $parent_name .'/';
 
         foreach ($contents as $content) {
+            if (!empty($hidden_folder_ids) && $this->isHiddenPhotoalbumContent($content, $hidden_folder_ids, $contents_by_id)) {
+                continue;
+            }
+
             // ファイルが格納されていない空のフォルダだったら、空フォルダを追加
             if ($content->is_folder === PhotoalbumContent::is_folder_on && $content->isLeaf()) {
                 $zip->addEmptyDir($save_path . $content->name);
@@ -1209,8 +1237,42 @@ class PhotoalbumsPlugin extends UserPluginBase
                 // ダウンロード回数をカウントアップ
                 Uploads::find($content->upload->id)->increment('download_count');
             }
-            $this->addContentsToZip($zip, $content->children, $save_path . $content->name);
+            $this->addContentsToZip($zip, $content->children, $save_path . $content->name, $hidden_folder_ids, $contents_by_id);
         }
+    }
+
+    /**
+     * 非表示対象を除外したダウンロード対象IDを取得する
+     */
+    private function filterVisibleDownloadContentIds(Photoalbum $photoalbum, $content_ids, array $hidden_folder_ids): array
+    {
+        $content_ids = is_array($content_ids) ? $content_ids : [$content_ids];
+        $content_ids = array_values(array_filter(array_map('intval', $content_ids), static function ($id) {
+            return $id > 0;
+        }));
+
+        if (empty($content_ids) || empty($photoalbum->id)) {
+            return [];
+        }
+
+        $contents = PhotoalbumContent::where('photoalbum_id', $photoalbum->id)
+            ->whereIn('id', $content_ids)
+            ->get();
+
+        if (empty($hidden_folder_ids)) {
+            return $contents->pluck('id')->all();
+        }
+
+        $visible_ids = [];
+        foreach ($contents as $content) {
+            $ancestors = PhotoalbumContent::ancestorsAndSelf($content->id);
+            if ($this->isHiddenPhotoalbumContent($content, $hidden_folder_ids, $ancestors->keyBy('id'))) {
+                continue;
+            }
+            $visible_ids[] = $content->id;
+        }
+
+        return $visible_ids;
     }
 
     /**
