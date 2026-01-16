@@ -1930,11 +1930,16 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     private function respondViewSequenceJson(PhotoalbumContent $content)
     {
+        $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
+        $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
+
         $siblings = PhotoalbumContent::where('parent_id', $content->parent_id)
-            ->orderBy('is_folder', 'desc')
-            ->orderBy('display_sequence')
-            ->orderBy('id')
-            ->get(['id', 'is_folder']);
+            ->with('upload')
+            ->get(['id', 'is_folder', 'display_sequence', 'created_at', 'name', 'upload_id'])
+            ->sort(function ($first, $second) use ($sort_folder, $sort_file) {
+                return $this->comparePhotoalbumContents($first, $second, $sort_folder, $sort_file);
+            })
+            ->values();
 
         return response()->json([
             'message' => '並び順を更新しました。',
