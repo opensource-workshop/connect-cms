@@ -24,6 +24,9 @@
         var pendingVisibilitySave = false;
         var $frameForm = $('#photoalbum-frame-settings-{{ $frame_id }}');
         var $submitButton = $frameForm.find('button[type="submit"]');
+        var isSequenceSaving = false;
+        var pendingSequenceRequest = null;
+        var sequenceEndpoint = '{{ url('/') }}/json/photoalbums/updateViewSequence/{{$page->id}}/{{$frame_id}}';
 
         function setVisibilitySaving(isSaving) {
             $('.photoalbum-visibility-toggle__input').prop('disabled', isSaving);
@@ -134,18 +137,159 @@
                 });
         }
 
+        function setSequenceSaving(isSaving) {
+            $('.photoalbum-sequence-button').prop('disabled', isSaving);
+            if (!isSaving) {
+                refreshSequenceControls();
+            }
+        }
+
+        function buildSequenceRequest($form) {
+            var contentId = $form.find('input[name="photoalbum_content_id"]').val();
+            var operation = $form.find('input[name="display_sequence_operation"]').val();
+            if (!contentId || !operation) {
+                return null;
+            }
+            return {
+                contentId: contentId,
+                operation: operation
+            };
+        }
+
+        function highlightSequenceItem(contentId) {
+            var $item = $('#photoalbum-sort-item-' + contentId);
+            if (!$item.length) {
+                return;
+            }
+            $('.photoalbum-manual-sort__item').removeClass('photoalbum-manual-sort__item--active');
+            $item.removeClass('photoalbum-manual-sort__item--active');
+            void $item[0].offsetWidth;
+            $item.addClass('photoalbum-manual-sort__item--active');
+        }
+
+        function updateSequenceControls($list) {
+            var folders = [];
+            var files = [];
+
+            $list.children('.photoalbum-manual-sort__item').each(function () {
+                var $item = $(this);
+                var isFolder = $item.data('photoalbum-is-folder') == 1;
+                if (isFolder) {
+                    folders.push($item);
+                } else {
+                    files.push($item);
+                }
+            });
+
+            function updateGroup(items) {
+                items.forEach(function ($item, index) {
+                    var $controls = $item.find('.photoalbum-manual-sort__controls').first();
+                    if (!$controls.length) {
+                        return;
+                    }
+                    $controls.find('button[data-sequence-operation="up"]').prop('disabled', index === 0);
+                    $controls.find('button[data-sequence-operation="down"]').prop('disabled', index === items.length - 1);
+                });
+            }
+
+            updateGroup(folders);
+            updateGroup(files);
+        }
+
+        function refreshSequenceControls() {
+            $('.photoalbum-manual-sort__list').each(function () {
+                updateSequenceControls($(this));
+            });
+        }
+
+        function applySequenceUpdate(payload) {
+            if (!payload || !payload.siblings || !payload.parent_id) {
+                return;
+            }
+
+            var $list = $('.photoalbum-manual-sort__list[data-photoalbum-parent-id="' + payload.parent_id + '"]');
+            if (!$list.length) {
+                return;
+            }
+
+            payload.siblings.forEach(function (sibling) {
+                var $item = $('#photoalbum-sort-item-' + sibling.id);
+                if ($item.length) {
+                    $list.append($item);
+                }
+            });
+
+            updateSequenceControls($list);
+            if (payload.moved_id) {
+                highlightSequenceItem(payload.moved_id);
+            }
+            refreshHiddenPreview();
+        }
+
+        function requestSequenceUpdate(request) {
+            if (isSequenceSaving) {
+                pendingSequenceRequest = request;
+                return;
+            }
+
+            isSequenceSaving = true;
+            pendingSequenceRequest = null;
+            setSequenceSaving(true);
+
+            var formData = new FormData();
+            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('photoalbum_content_id', request.contentId);
+            formData.append('display_sequence_operation', request.operation);
+
+            axios.post(sequenceEndpoint, formData)
+                .then(function (response) {
+                    if (response.data) {
+                        applySequenceUpdate(response.data);
+                    }
+                })
+                .catch(function (error) {
+                    var message = '並び順の更新に失敗しました。';
+                    if (error.response && error.response.data && error.response.data.message) {
+                        message = error.response.data.message;
+                    }
+                    alert(message);
+                })
+                .finally(function () {
+                    isSequenceSaving = false;
+                    setSequenceSaving(false);
+                    if (pendingSequenceRequest) {
+                        var nextRequest = pendingSequenceRequest;
+                        pendingSequenceRequest = null;
+                        requestSequenceUpdate(nextRequest);
+                    }
+                });
+        }
+
         $('input[name="play_view"]').on('change', function () {
             togglePlayViewOptions($(this).val());
         });
 
         refreshHiddenPreview();
+        refreshSequenceControls();
         $('.photoalbum-visibility-toggle__input').on('change', function () {
             refreshHiddenPreview();
             saveHiddenFolders();
         });
+        $('.photoalbum-sequence-form').on('submit', function (event) {
+            event.preventDefault();
+            if (isVisibilitySaving || pendingVisibilitySave) {
+                alert('表示設定の保存中です。完了してから並び替えてください。');
+                return;
+            }
+            var request = buildSequenceRequest($(this));
+            if (!request) {
+                return;
+            }
+            requestSequenceUpdate(request);
+        });
 
         $frameForm.on('submit', function (event) {
-            if (isVisibilitySaving || pendingVisibilitySave) {
+            if (isVisibilitySaving || pendingVisibilitySave || isSequenceSaving) {
                 event.preventDefault();
                 alert('表示設定の保存中です。完了してから変更確定してください。');
             }

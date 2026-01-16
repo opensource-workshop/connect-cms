@@ -15,7 +15,7 @@
 @endphp
 
 @if ($children->isNotEmpty())
-    <ul class="list-group list-group-flush {{ ($level ?? 0) > 0 ? 'mt-2' : '' }}">
+    <ul class="list-group list-group-flush photoalbum-manual-sort__list {{ ($level ?? 0) > 0 ? 'mt-2' : '' }}" data-photoalbum-parent-id="{{ $node->id }}">
         @foreach ($children as $child)
             @php
                 $is_folder = $child->is_folder == \App\Models\User\Photoalbums\PhotoalbumContent::is_folder_on;
@@ -46,7 +46,7 @@
                 $is_hidden_by_parent = $hidden_parent || $is_hidden;
             @endphp
             {{-- 各行にアンカーIDを付与し並び替え後に同じ位置へ戻れるようにする --}}
-            <li class="list-group-item photoalbum-manual-sort__item {{ session('photoalbum_sort_focus') == $child->id ? 'photoalbum-manual-sort__item--active' : '' }} {{ $is_hidden_by_parent ? 'photoalbum-manual-sort__item--hidden' : '' }}" id="photoalbum-sort-item-{{ $child->id }}">
+            <li class="list-group-item photoalbum-manual-sort__item {{ session('photoalbum_sort_focus') == $child->id ? 'photoalbum-manual-sort__item--active' : '' }} {{ $is_hidden_by_parent ? 'photoalbum-manual-sort__item--hidden' : '' }}" id="photoalbum-sort-item-{{ $child->id }}" data-photoalbum-content-id="{{ $child->id }}" data-photoalbum-is-folder="{{ $is_folder ? 1 : 0 }}">
                 <div class="d-flex justify-content-between align-items-center" style="padding-left: {{ ($level ?? 0) * 1.5 }}rem;">
                     <div class="d-flex align-items-center">
                         @if ($is_folder)
@@ -100,28 +100,28 @@
                         @endif
                     </div>
                     @if ($show_controls && $manual_enabled)
-                        <div class="text-nowrap d-flex align-items-center">
-                            <form action="{{ url('/') }}/redirect/plugin/photoalbums/updateViewSequence/{{ $page->id }}/{{ $frame_id }}#frame-{{ $frame_id }}" method="POST" class="d-inline">
+                        <div class="text-nowrap d-flex align-items-center photoalbum-manual-sort__controls">
+                            <form action="{{ url('/') }}/redirect/plugin/photoalbums/updateViewSequence/{{ $page->id }}/{{ $frame_id }}#frame-{{ $frame_id }}" method="POST" class="d-inline photoalbum-sequence-form">
                                 {{ csrf_field() }}
                                 <input type="hidden" name="redirect_path" value="{{ $redirect_path }}">
                                 <input type="hidden" name="photoalbum_content_id" value="{{ $child->id }}">
                                 <input type="hidden" name="display_sequence_operation" value="up">
                                 {{-- リダイレクト後に押下行へスクロールさせるためのアンカー --}}
                                 <input type="hidden" name="anchor_target" value="photoalbum-sort-item-{{ $child->id }}">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary mr-1"
+                                <button type="submit" class="btn btn-sm btn-outline-secondary mr-1 photoalbum-sequence-button" data-sequence-operation="up"
                                     @if (!$can_move_up) disabled @endif
                                 >
                                     <i class="fas fa-arrow-up"></i>
                                 </button>
                             </form>
-                            <form action="{{ url('/') }}/redirect/plugin/photoalbums/updateViewSequence/{{ $page->id }}/{{ $frame_id }}#frame-{{ $frame_id }}" method="POST" class="d-inline">
+                            <form action="{{ url('/') }}/redirect/plugin/photoalbums/updateViewSequence/{{ $page->id }}/{{ $frame_id }}#frame-{{ $frame_id }}" method="POST" class="d-inline photoalbum-sequence-form">
                                 {{ csrf_field() }}
                                 <input type="hidden" name="redirect_path" value="{{ $redirect_path }}">
                                 <input type="hidden" name="photoalbum_content_id" value="{{ $child->id }}">
                                 <input type="hidden" name="display_sequence_operation" value="down">
                                 {{-- リダイレクト後に押下行へスクロールさせるためのアンカー --}}
                                 <input type="hidden" name="anchor_target" value="photoalbum-sort-item-{{ $child->id }}">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                <button type="submit" class="btn btn-sm btn-outline-secondary photoalbum-sequence-button" data-sequence-operation="down"
                                     @if (!$can_move_down) disabled @endif
                                 >
                                     <i class="fas fa-arrow-down"></i>
