@@ -145,6 +145,12 @@ class MicrosoftGraphTransport extends Transport
             $graph_message['replyTo'] = $this->convertAddresses($reply_to_addresses);
         }
 
+        // Attachments
+        $attachments = $this->convertAttachments($message);
+        if (!empty($attachments)) {
+            $graph_message['attachments'] = $attachments;
+        }
+
         return $graph_message;
     }
 
@@ -211,5 +217,29 @@ class MicrosoftGraphTransport extends Transport
         }
 
         return $body;
+    }
+
+    /**
+     * 添付ファイルをGraph API形式に変換
+     *
+     * @param Swift_Mime_SimpleMessage $message
+     * @return array
+     */
+    protected function convertAttachments(Swift_Mime_SimpleMessage $message): array
+    {
+        $attachments = [];
+
+        foreach ($message->getChildren() as $child) {
+            if ($child instanceof \Swift_Attachment) {
+                $attachments[] = [
+                    '@odata.type' => '#microsoft.graph.fileAttachment',
+                    'name' => $child->getFilename(),
+                    'contentType' => $child->getContentType(),
+                    'contentBytes' => base64_encode($child->getBody()),
+                ];
+            }
+        }
+
+        return $attachments;
     }
 }

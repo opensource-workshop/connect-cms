@@ -252,6 +252,15 @@
                         </div>
                     </div>
                 @endcan
+                @can('posts.delete',[[$post, $frame->plugin_name, $buckets]])
+                    <form action="{{url('/')}}/redirect/plugin/blogs/delete/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="POST" class="d-inline">
+                        {{csrf_field()}}
+                        <input type="hidden" name="redirect_path" value="{{URL::to($page->permanent_link)}}">
+                        <button type="submit" class="btn btn-danger btn-sm ml-1" onclick="javascript:return confirm('【重要】この記事のみを削除します。\n削除を実行すると、データの復旧は一切できません。\nこの記事が失われます。よろしいですか？')">
+                            <i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">削除</span>
+                        </button>
+                    </form>
+                @endcan
                 </div>
             </footer>
         </article>

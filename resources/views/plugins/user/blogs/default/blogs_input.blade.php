@@ -177,7 +177,7 @@ use App\Models\User\Blogs\BlogsPosts;
                 <form action="{{url('/')}}/redirect/plugin/blogs/delete/{{$page->id}}/{{$frame_id}}/{{$blogs_posts->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <input type="hidden" name="redirect_path" value="{{URL::to($page->permanent_link)}}">
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('【重要】この記事のみを削除します。\n削除を実行すると、データの復旧は一切できません。\nこの記事が失われます。よろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
 

@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category スライドショー・プラグイン
 --}}
-<tr>
+<tr id="slideshow-item-{{ $item->id }}">
     {{-- 表示順 --}}
     <td class="d-none d-lg-display d-lg-table-cell text-nowrap" style="text-align:center; vertical-align:middle;">
         {{-- 上移動 --}}
