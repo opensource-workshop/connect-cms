@@ -20,6 +20,7 @@ final class PhotoalbumFrameConfig extends EnumsBase
     //const shooting_at = 'shooting_at';
     const sort_folder = 'sort_folder';
     const sort_file = 'sort_file';
+    const hidden_folder_ids = 'hidden_folder_ids';
     const download = 'download';
     const embed_code = 'embed_code';
     const play_view = 'play_view';
@@ -32,6 +33,7 @@ final class PhotoalbumFrameConfig extends EnumsBase
         //self::shooting_at => '撮影日',
         self::sort_folder => 'アルバム並び順',
         self::sort_file => '写真並び順',
+        self::hidden_folder_ids => '非表示にするアルバム',
         self::download => 'ダウンロード',
         self::embed_code => '動画埋め込みコード',
         self::play_view => '動画の再生形式',
