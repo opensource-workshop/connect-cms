@@ -47,11 +47,32 @@
                                 スライドショーに表示させる画像やリンクを設定します。
                                 <a href="https://manual.connect-cms.jp/user/slideshows/index.html" target="_brank"><i class="fas fa-question-circle" data-toggle="tooltip" title="オンラインマニュアルはこちら"></i></a>
                             </li>
-                            <li>PDFを選択して追加することで、PDFの内容を画像に変換して登録できます。</li>
+                            {{-- PDFサムネイル機能が使えるときだけPDF登録の導線を表示する --}}
+                            @if (!empty(config('connect.PDF_THUMBNAIL_API_URL')))
+                                <li>PDFを選択して追加することで、PDFの内容を画像に変換して登録できます。</li>
+                            @endif
                         </ul>
                     @endif
                 </div>
 
+                <div class="d-flex flex-wrap align-items-center mb-2">
+                    <button
+                        type="button"
+                        class="btn btn-outline-success btn-sm mr-2 mb-2"
+                        onclick="scroll_to_slideshow_add_row();"
+                    >
+                        <i class="fas fa-plus"></i> 項目の追加行へ
+                    </button>
+                    @if (!empty(config('connect.PDF_THUMBNAIL_API_URL')))
+                        <button
+                            type="button"
+                            class="btn btn-outline-success btn-sm mr-2 mb-2"
+                            onclick="scroll_to_slideshow_add_pdf_row();"
+                        >
+                            <i class="fas fa-plus"></i> PDF追加行へ
+                        </button>
+                    @endif
+                </div>
                 {{-- 項目一覧 --}}
                 <div class="table-responsive">
                     <table class="table table-hover table-sm">
@@ -67,11 +88,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{-- 新規登録用の行 --}}
-                            <tr>
-                                <th colspan="7">【項目の追加行】</th>
-                            </tr>
-                            @include('plugins.user.slideshows.default.slideshows_edit_row_add')
                             <tr>
                                 <th colspan="7">【既存の設定行】</th>
                             </tr>
@@ -80,6 +96,13 @@
                                 @include('plugins.user.slideshows.default.slideshows_edit_row')
                             @endforeach
                         </tbody>
+                        <tfoot>
+                            {{-- 新規登録用の行 --}}
+                            <tr class="table-active">
+                                <th colspan="7">【項目の追加行】</th>
+                            </tr>
+                            @include('plugins.user.slideshows.default.slideshows_edit_row_add')
+                        </tfoot>
                     </table>
                 </div>
                 {{-- ボタンエリア --}}
@@ -158,11 +181,64 @@
         }
 
         /**
+         * 追加行へスクロール
+         */
+        function scroll_to_slideshow_add_row() {
+            const add_row = document.getElementById('slideshow-add-row');
+            if (!add_row) {
+                return;
+            }
+            add_row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            add_row.classList.add('table-warning');
+            setTimeout(() => add_row.classList.remove('table-warning'), 2000);
+            const focus_target = document.getElementById('slideshow-add-link-url');
+            if (focus_target) {
+                setTimeout(() => focus_target.focus(), 300);
+            }
+        }
+
+        /**
+         * PDF追加行へスクロール
+         */
+        function scroll_to_slideshow_add_pdf_row() {
+            const add_row = document.getElementById('slideshow-add-pdf-row');
+            if (!add_row) {
+                return;
+            }
+            add_row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            add_row.classList.add('table-warning');
+            setTimeout(() => add_row.classList.remove('table-warning'), 2000);
+        }
+
+        /**
          * ツールチップ
          */
         $(function () {
             // 有効化
             $('[data-toggle="tooltip"]').tooltip()
+
+            const highlight_item_ids = @json(session('slideshow_highlight_item_ids'));
+            const highlight_item_id = @json(session('slideshow_highlight_item_id'));
+            let highlight_ids = [];
+            if (Array.isArray(highlight_item_ids)) {
+                highlight_ids = highlight_item_ids;
+            } else if (highlight_item_id) {
+                highlight_ids = [highlight_item_id];
+            }
+            if (highlight_ids.length > 0) {
+                const first_row = document.getElementById('slideshow-item-' + highlight_ids[0]);
+                if (first_row) {
+                    first_row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                highlight_ids.forEach((item_id) => {
+                    const highlight_row = document.getElementById('slideshow-item-' + item_id);
+                    if (!highlight_row) {
+                        return;
+                    }
+                    highlight_row.classList.add('table-warning');
+                    setTimeout(() => highlight_row.classList.remove('table-warning'), 2000);
+                });
+            }
         })
 
         /**
