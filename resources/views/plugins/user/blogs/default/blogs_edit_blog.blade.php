@@ -224,13 +224,13 @@
 <div id="collapse{{$blog_frame->id}}" class="collapse">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">ブログを削除します。<br>このブログに記載した記事も削除され、元に戻すことはできないため、よく確認して実行してください。</span>
+            <span class="text-danger">【重要】削除を実行すると、データの復旧は一切できません。<br>すべての記事が失われます。よろしいですか？</span>
 
             <div class="text-center">
                 {{-- 削除ボタン --}}
                 <form action="{{url('/')}}/redirect/plugin/blogs/destroyBuckets/{{$page->id}}/{{$frame_id}}/{{$blog->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('【重要】このブログ全体を削除します。\n削除を実行すると、データの復旧は一切できません。\nすべての記事が失われます。よろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>
 
