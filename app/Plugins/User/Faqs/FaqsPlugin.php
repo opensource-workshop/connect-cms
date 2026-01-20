@@ -44,6 +44,11 @@ class FaqsPlugin extends UserPluginBase
      */
     public $post = null;
 
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
     /* コアから呼び出す関数 */
 
     /**
@@ -357,6 +362,7 @@ class FaqsPlugin extends UserPluginBase
                           'frames.id                   as frame_id',
                           'faqs_posts.id              as post_id',
                           'faqs_posts.post_title      as post_title',
+                          'faqs_posts.post_text       as post_detail',
                           'faqs_posts.important       as important',
                           'faqs_posts.posted_at       as posted_at',
                           'faqs_posts.created_name    as posted_name',
