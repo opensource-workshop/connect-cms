@@ -86,10 +86,17 @@
     <div class="card-header bg-primary cc-primary-font-color">Connect-CMS 更新情報等</div>
     <div class="list-group">
         <div class="list-group-item list-group-item-action">
-            <div class="d-flex w-100 justify-content-between">
-                @foreach($errors as $error)
-                {{$error}}
-                @endforeach
+            <div class="w-100">
+                Connect-CMS 更新情報は<a href="https://connect-cms.jp/news" target="_blank" rel="noopener">公式サイトの最新情報</a>をご覧ください。
+                @if (config('app.debug') && !empty($errors))
+                    <div class="mt-2 text-muted">
+                        <small>
+                            @foreach($errors as $error)
+                                {{$error}}<br>
+                            @endforeach
+                        </small>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
