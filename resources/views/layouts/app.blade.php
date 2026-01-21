@@ -72,6 +72,22 @@ if (! isset($cc_configs)) {
 @endif
     <meta property="og:url" content="{{ url()->current() }}">
 
+{{-- サイト名（HTML HEADのTITLEタグ、Connect-CMSのタイトルバーに使用する） --}}
+@php
+    // ページがある場合、override_site_nameを取得する。
+    $override_site_name = null;
+    if (isset($page) && isset($page_tree)) {
+        $override_site_name = $page->getOverrideSiteName($page_tree);
+    }
+    // ページにoverride_site_nameが設定されていない場合はサイト管理のサイト名を使用する。
+    $base_site_name = Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS'));
+    if (empty($override_site_name)) {
+        $site_name = $base_site_name;
+    } else {
+        $site_name = $override_site_name;
+    }
+@endphp
+
     {{-- Page --}}
 @if (isset($page))
     <meta name="_page_id" content="{{$page->id}}">
@@ -81,7 +97,7 @@ if (! isset($cc_configs)) {
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
     {{-- cc_configsのセット場所は、app\Http\Middleware\ConnectInit::handle(). 管理画面・一般画面全てのviewで参照できる --}}
-    <title>@if(isset($page)){{$page->page_name}} | @endif{{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}</title>
+    <title>@if(isset($page)){{$page->page_name}} | @endif{{$site_name}}</title>
 
     {{-- alternate --}}
 @if (app('request')->attributes->get('alternates'))
@@ -174,17 +190,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 <nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand cc-custom-brand" href="{{ url('/') }}">
-        @php
-            $override_site_name = null;
-            if (isset($page) && isset($page_tree)) {
-                $override_site_name = $page->getOverrideSiteName($page_tree);
-            }
-        @endphp
-        @if(empty($override_site_name))
-            {{ Configs::getConfigsValue($cc_configs, 'base_site_name', config('app.name', 'Connect-CMS')) }}
-        @else
-            {{$override_site_name}}
-        @endif
+        {{$site_name}}
     </a>
 
     <!-- SmartPhone Button -->
