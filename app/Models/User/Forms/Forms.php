@@ -45,7 +45,9 @@ class Forms extends Model
         'data_save_flag',
         'after_message',
         'numbering_use_flag',
-        'numbering_prefix'
+        'numbering_prefix',
+        'use_spam_filter_flag',
+        'spam_filter_message',
     ];
 
     /**
