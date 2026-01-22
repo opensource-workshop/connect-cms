@@ -71,6 +71,10 @@ use App\Enums\SpamBlockType;
             <span class="font-weight-bold">スパムリスト一覧</span>
             <form action="{{url('/')}}/manage/spam/downloadCsv" method="POST" class="d-inline">
                 {{ csrf_field() }}
+                <input type="hidden" name="search_block_type" value="{{ $search_block_type }}">
+                <input type="hidden" name="search_block_value" value="{{ $search_block_value }}">
+                <input type="hidden" name="search_scope_type" value="{{ $search_scope_type }}">
+                <input type="hidden" name="search_memo" value="{{ $search_memo }}">
                 <button type="submit" class="btn btn-success btn-sm">
                     <i class="fas fa-file-download"></i> CSVダウンロード
                 </button>

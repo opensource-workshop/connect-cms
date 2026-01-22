@@ -61,28 +61,7 @@ class SpamManage extends ManagePluginBase
 
         // スパムリストを取得（検索条件適用）
         $query = SpamList::query();
-
-        // 種別
-        if (!empty($search_block_type)) {
-            $query->where('block_type', $search_block_type);
-        }
-
-        // 値（部分一致）
-        if (!empty($search_block_value)) {
-            $query->where('block_value', 'like', '%' . $search_block_value . '%');
-        }
-
-        // 適用範囲
-        if ($search_scope_type === 'global') {
-            $query->whereNull('target_id');
-        } elseif ($search_scope_type === 'form') {
-            $query->whereNotNull('target_id');
-        }
-
-        // メモ（部分一致）
-        if (!empty($search_memo)) {
-            $query->where('memo', 'like', '%' . $search_memo . '%');
-        }
+        $query = $this->applySearchConditions($query, $request);
 
         $spam_lists = $query->orderBy('block_type')
             ->orderBy('created_at', 'desc')
@@ -250,8 +229,11 @@ class SpamManage extends ManagePluginBase
      */
     public function downloadCsv($request)
     {
-        // スパムリストを取得
-        $spam_lists = SpamList::orderBy('block_type')
+        // スパムリストを取得（検索条件適用）
+        $query = SpamList::query();
+        $query = $this->applySearchConditions($query, $request);
+
+        $spam_lists = $query->orderBy('block_type')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -284,5 +266,43 @@ class SpamManage extends ManagePluginBase
         return response($csv_data)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    /**
+     * 検索条件をクエリに適用
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query クエリビルダー
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applySearchConditions($query, $request)
+    {
+        // 種別
+        $search_block_type = $request->input('search_block_type', '');
+        if (!empty($search_block_type)) {
+            $query->where('block_type', $search_block_type);
+        }
+
+        // 値（部分一致）
+        $search_block_value = $request->input('search_block_value', '');
+        if (!empty($search_block_value)) {
+            $query->where('block_value', 'like', '%' . $search_block_value . '%');
+        }
+
+        // 適用範囲
+        $search_scope_type = $request->input('search_scope_type', '');
+        if ($search_scope_type === 'global') {
+            $query->whereNull('target_id');
+        } elseif ($search_scope_type === 'form') {
+            $query->whereNotNull('target_id');
+        }
+
+        // メモ（部分一致）
+        $search_memo = $request->input('search_memo', '');
+        if (!empty($search_memo)) {
+            $query->where('memo', 'like', '%' . $search_memo . '%');
+        }
+
+        return $query;
     }
 }
