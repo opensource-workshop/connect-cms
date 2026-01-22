@@ -77,4 +77,36 @@ class SpamList extends Model
     {
         return is_null($this->target_id);
     }
+
+    /**
+     * 重複チェック付きでスパムリストに追加
+     *
+     * @param string $target_plugin_name 対象プラグイン名
+     * @param int|null $target_id 対象ID（nullの場合は全体適用）
+     * @param string $block_type ブロック種別
+     * @param string $block_value ブロック対象の値
+     * @param string|null $memo メモ
+     * @return bool 追加成功時true、重複時false
+     */
+    public static function addIfNotExists($target_plugin_name, $target_id, $block_type, $block_value, $memo = null)
+    {
+        $exists = self::where('target_plugin_name', $target_plugin_name)
+            ->where('target_id', $target_id)
+            ->where('block_type', $block_type)
+            ->where('block_value', $block_value)
+            ->exists();
+
+        if ($exists) {
+            return false;
+        }
+
+        self::create([
+            'target_plugin_name' => $target_plugin_name,
+            'target_id'          => $target_id,
+            'block_type'         => $block_type,
+            'block_value'        => $block_value,
+            'memo'               => $memo,
+        ]);
+        return true;
+    }
 }

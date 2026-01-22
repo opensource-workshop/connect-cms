@@ -3356,24 +3356,8 @@ ORDER BY forms_inputs_id, forms_columns_id
      */
     private function addToSpamListWithDuplicateCheck($target_id, $block_type, $block_value, $memo)
     {
-        $exists = SpamList::where('target_plugin_name', 'forms')
-            ->where('target_id', $target_id)
-            ->where('block_type', $block_type)
-            ->where('block_value', $block_value)
-            ->exists();
-
-        if ($exists) {
-            return 'duplicate';
-        }
-
-        SpamList::create([
-            'target_plugin_name' => 'forms',
-            'target_id'          => $target_id,
-            'block_type'         => $block_type,
-            'block_value'        => $block_value,
-            'memo'               => $memo,
-        ]);
-        return 'added';
+        $added = SpamList::addIfNotExists('forms', $target_id, $block_type, $block_value, $memo);
+        return $added ? 'added' : 'duplicate';
     }
 
     /**
