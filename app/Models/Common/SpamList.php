@@ -56,19 +56,6 @@ class SpamList extends Model
     }
 
     /**
-     * 適用範囲の表示名を取得
-     *
-     * @return string
-     */
-    public function getScopeDisplayName()
-    {
-        if (is_null($this->target_id)) {
-            return '全体';
-        }
-        return 'このフォーム';
-    }
-
-    /**
      * 全体適用かどうか
      *
      * @return bool
