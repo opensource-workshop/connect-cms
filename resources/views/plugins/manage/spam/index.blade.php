@@ -111,7 +111,7 @@ use App\Enums\SpamBlockType;
                                 <span class="badge badge-primary">全体</span>
                             @else
                                 @php
-                                    $form_name = $forms->where('id', $spam->target_id)->first()->forms_name ?? '不明';
+                                    $form_name = $forms[$spam->target_id]->forms_name ?? '不明';
                                 @endphp
                                 <span class="badge badge-secondary">{{ $form_name }}</span>
                             @endif

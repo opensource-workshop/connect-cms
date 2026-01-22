@@ -68,8 +68,8 @@ class SpamManage extends ManagePluginBase
             ->paginate(20, ['*'], 'page', $page)
             ->appends($request->except('page'));
 
-        // フォーム一覧を取得（適用範囲選択用）
-        $forms = Forms::orderBy('forms_name')->get();
+        // フォーム一覧を取得（ID連想配列）
+        $forms = Forms::orderBy('forms_name')->get()->keyBy('id');
 
         // 画面の呼び出し
         return view('plugins.manage.spam.index', [
@@ -147,8 +147,8 @@ class SpamManage extends ManagePluginBase
         // スパムリストデータの呼び出し
         $spam = SpamList::findOrFail($id);
 
-        // フォーム一覧を取得（適用範囲選択用）
-        $forms = Forms::orderBy('forms_name')->get();
+        // フォーム一覧を取得（ID連想配列）
+        $forms = Forms::orderBy('forms_name')->get()->keyBy('id');
 
         // 画面の呼び出し
         return view('plugins.manage.spam.edit', [
