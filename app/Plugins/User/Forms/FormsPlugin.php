@@ -3328,6 +3328,55 @@ ORDER BY forms_inputs_id, forms_columns_id
     }
 
     /**
+     * メールアドレス型カラムの入力値を取得
+     *
+     * @param int $forms_id フォームID
+     * @param int $inputs_id 投稿ID
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    private function getEmailInputCols($forms_id, $inputs_id)
+    {
+        $email_columns = FormsColumns::where('forms_id', $forms_id)
+            ->where('column_type', FormColumnType::mail)
+            ->pluck('id');
+
+        return FormsInputCols::where('forms_inputs_id', $inputs_id)
+            ->whereIn('forms_columns_id', $email_columns)
+            ->get();
+    }
+
+    /**
+     * スパムリストへの追加（重複チェック付き）
+     *
+     * @param int|null $target_id 対象ID（nullの場合は全体適用）
+     * @param string $block_type ブロック種別
+     * @param string $block_value ブロック対象の値
+     * @param string|null $memo メモ
+     * @return string 'added'（追加成功）または'duplicate'（重複のためスキップ）
+     */
+    private function addToSpamListWithDuplicateCheck($target_id, $block_type, $block_value, $memo)
+    {
+        $exists = SpamList::where('target_plugin_name', 'forms')
+            ->where('target_id', $target_id)
+            ->where('block_type', $block_type)
+            ->where('block_value', $block_value)
+            ->exists();
+
+        if ($exists) {
+            return 'duplicate';
+        }
+
+        SpamList::create([
+            'target_plugin_name' => 'forms',
+            'target_id'          => $target_id,
+            'block_type'         => $block_type,
+            'block_value'        => $block_value,
+            'memo'               => $memo,
+        ]);
+        return 'added';
+    }
+
+    /**
      * 投稿一覧からスパムリストへ追加
      */
     public function addToSpamListFromInput($request, $page_id, $frame_id, $inputs_id)
@@ -3353,31 +3402,19 @@ ORDER BY forms_inputs_id, forms_columns_id
                 ->with('flash_message', '追加する項目（IPアドレス、メールアドレス、ドメイン）を1つ以上選択してください。');
         }
 
+        // 適用範囲の決定
+        $scope_type = $request->input('scope_type', 'form');
+        $target_id = ($scope_type === 'global') ? null : $forms_id;
+
         // IPアドレスをスパムリストに追加
         if ($request->filled('add_ip_address')) {
             if (empty($input->ip_address)) {
                 $skipped_no_data_count++;
             } else {
-                $scope_type = $request->input('scope_type', 'form');
-                $target_id = ($scope_type === 'global') ? null : $forms_id;
-
-                // 重複チェック
-                $exists = SpamList::where('target_plugin_name', 'forms')
-                    ->where('target_id', $target_id)
-                    ->where('block_type', SpamBlockType::ip_address)
-                    ->where('block_value', $input->ip_address)
-                    ->exists();
-
-                if ($exists) {
+                $result = $this->addToSpamListWithDuplicateCheck($target_id, SpamBlockType::ip_address, $input->ip_address, $memo);
+                if ($result === 'duplicate') {
                     $skipped_duplicate_count++;
                 } else {
-                    SpamList::create([
-                        'target_plugin_name' => 'forms',
-                        'target_id'          => $target_id,
-                        'block_type'         => SpamBlockType::ip_address,
-                        'block_value'        => $input->ip_address,
-                        'memo'               => $memo,
-                    ]);
                     $added_count++;
                 }
             }
@@ -3385,13 +3422,7 @@ ORDER BY forms_inputs_id, forms_columns_id
 
         // メールアドレスをスパムリストに追加
         if ($request->filled('add_email')) {
-            $email_columns = FormsColumns::where('forms_id', $forms_id)
-                ->where('column_type', FormColumnType::mail)
-                ->pluck('id');
-
-            $input_cols = FormsInputCols::where('forms_inputs_id', $inputs_id)
-                ->whereIn('forms_columns_id', $email_columns)
-                ->get();
+            $input_cols = $this->getEmailInputCols($forms_id, $inputs_id);
 
             $has_email_value = false;
             foreach ($input_cols as $col) {
@@ -3400,26 +3431,10 @@ ORDER BY forms_inputs_id, forms_columns_id
                 }
                 $has_email_value = true;
 
-                $scope_type = $request->input('scope_type', 'form');
-                $target_id = ($scope_type === 'global') ? null : $forms_id;
-
-                // 重複チェック
-                $exists = SpamList::where('target_plugin_name', 'forms')
-                    ->where('target_id', $target_id)
-                    ->where('block_type', SpamBlockType::email)
-                    ->where('block_value', $col->value)
-                    ->exists();
-
-                if ($exists) {
+                $result = $this->addToSpamListWithDuplicateCheck($target_id, SpamBlockType::email, $col->value, $memo);
+                if ($result === 'duplicate') {
                     $skipped_duplicate_count++;
                 } else {
-                    SpamList::create([
-                        'target_plugin_name' => 'forms',
-                        'target_id'          => $target_id,
-                        'block_type'         => SpamBlockType::email,
-                        'block_value'        => $col->value,
-                        'memo'               => $memo,
-                    ]);
                     $added_count++;
                 }
             }
@@ -3430,13 +3445,7 @@ ORDER BY forms_inputs_id, forms_columns_id
 
         // ドメインをスパムリストに追加
         if ($request->filled('add_domain')) {
-            $email_columns = FormsColumns::where('forms_id', $forms_id)
-                ->where('column_type', FormColumnType::mail)
-                ->pluck('id');
-
-            $input_cols = FormsInputCols::where('forms_inputs_id', $inputs_id)
-                ->whereIn('forms_columns_id', $email_columns)
-                ->get();
+            $input_cols = $this->getEmailInputCols($forms_id, $inputs_id);
 
             $has_domain_value = false;
             foreach ($input_cols as $col) {
@@ -3450,26 +3459,10 @@ ORDER BY forms_inputs_id, forms_columns_id
                 }
                 $has_domain_value = true;
 
-                $scope_type = $request->input('scope_type', 'form');
-                $target_id = ($scope_type === 'global') ? null : $forms_id;
-
-                // 重複チェック
-                $exists = SpamList::where('target_plugin_name', 'forms')
-                    ->where('target_id', $target_id)
-                    ->where('block_type', SpamBlockType::domain)
-                    ->where('block_value', $domain)
-                    ->exists();
-
-                if ($exists) {
+                $result = $this->addToSpamListWithDuplicateCheck($target_id, SpamBlockType::domain, $domain, $memo);
+                if ($result === 'duplicate') {
                     $skipped_duplicate_count++;
                 } else {
-                    SpamList::create([
-                        'target_plugin_name' => 'forms',
-                        'target_id'          => $target_id,
-                        'block_type'         => SpamBlockType::domain,
-                        'block_value'        => $domain,
-                        'memo'               => $memo,
-                    ]);
                     $added_count++;
                 }
             }
