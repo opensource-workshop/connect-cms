@@ -347,6 +347,15 @@ class FormsPlugin extends UserPluginBase
                 return false;
             }
 
+            // スパムブロックエラーメッセージの確認
+            $spam_blocked_error = session("spam_blocked_error_{$frame_id}");
+            if ($spam_blocked_error) {
+                // エラー画面へ
+                return $this->commonView('error_messages', [
+                    'error_messages' => [$spam_blocked_error],
+                ]);
+            }
+
             // 登録期間外か
             if ($this->isOutOfTermRegist($form)) {
                 // エラー画面へ
@@ -1014,6 +1023,25 @@ class FormsPlugin extends UserPluginBase
 
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
+        }
+
+        // スパムフィルタリングチェック（二重防御）
+        $spam_check = $this->checkSpamFilter($request, $form);
+        if ($spam_check['blocked']) {
+            // スパムブロックのログ記録
+            Log::info('Spam blocked', [
+                'form_id' => $form->id,
+                'ip' => $spam_check['client_ip'],
+                'block_type' => $spam_check['matched_spam_list']->block_type ?? null,
+                'matched_rule' => $spam_check['matched_spam_list']->id ?? null,
+            ]);
+
+            // エラーメッセージをセッションに保存
+            $spam_message = $form->spam_filter_message ?: '入力されたメールアドレス、または、IPアドレスからの送信は現在制限されています。';
+            session()->flash("spam_blocked_error_{$frame_id}", $spam_message);
+
             // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
             return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
