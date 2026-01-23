@@ -813,7 +813,16 @@ class FormsPlugin extends UserPluginBase
         }
 
         // スパムフィルタリングチェック
-        if ($this->isBlockedBySpamFilter($request, $form)) {
+        $spam_check = $this->checkSpamFilter($request, $form);
+        if ($spam_check['blocked']) {
+            // スパムブロックのログ記録
+            Log::info('Spam blocked', [
+                'form_id' => $form->id,
+                'ip' => $spam_check['client_ip'],
+                'block_type' => $spam_check['matched_spam_list']->block_type ?? null,
+                'matched_rule' => $spam_check['matched_spam_list']->id ?? null,
+            ]);
+
             $spam_message = $form->spam_filter_message ?: '入力されたメールアドレス、または、IPアドレスからの送信は現在制限されています。';
             return $this->commonView('error_messages', [
                 'error_messages' => [$spam_message],
@@ -3154,33 +3163,49 @@ ORDER BY forms_inputs_id, forms_columns_id
     }
 
     /**
-     * スパムフィルタリングによるブロック判定
+     * スパムフィルタリングチェック
      *
      * @param \Illuminate\Http\Request $request リクエスト
      * @param Forms $form フォームデータ
-     * @return bool ブロックする場合はtrue
+     * @return array ブロック情報の配列
      */
-    private function isBlockedBySpamFilter($request, $form)
+    private function checkSpamFilter($request, $form): array
     {
+        $client_ip = $request->ip();
+
         // スパムフィルタリングが無効なら早期リターン
         if (!$form->use_spam_filter_flag) {
-            return false;
+            return [
+                'blocked' => false,
+                'matched_spam_list' => null,
+                'client_ip' => $client_ip,
+                'email' => null,
+            ];
         }
 
         // 取得対象のスパムリスト（このフォーム用 + サイト全体用）
         $spam_lists = SpamList::getFormsSpamLists($form->id);
 
         if ($spam_lists->isEmpty()) {
-            return false;
+            return [
+                'blocked' => false,
+                'matched_spam_list' => null,
+                'client_ip' => $client_ip,
+                'email' => null,
+            ];
         }
 
         // IPアドレスチェック
-        $client_ip = $request->ip();
-        $ip_blocked = $spam_lists->where('block_type', SpamBlockType::ip_address)
-                                  ->where('block_value', $client_ip)
-                                  ->isNotEmpty();
-        if ($ip_blocked) {
-            return true;
+        $matched_spam_list = $spam_lists->where('block_type', SpamBlockType::ip_address)
+                                        ->where('block_value', $client_ip)
+                                        ->first();
+        if ($matched_spam_list) {
+            return [
+                'blocked' => true,
+                'matched_spam_list' => $matched_spam_list,
+                'client_ip' => $client_ip,
+                'email' => null,
+            ];
         }
 
         // メールアドレス・ドメインチェック（メール型カラムの値を取得）
@@ -3195,26 +3220,41 @@ ORDER BY forms_inputs_id, forms_columns_id
             }
 
             // メールアドレス完全一致チェック
-            $email_blocked = $spam_lists->where('block_type', SpamBlockType::email)
-                                         ->where('block_value', $email)
-                                         ->isNotEmpty();
-            if ($email_blocked) {
-                return true;
+            $matched_spam_list = $spam_lists->where('block_type', SpamBlockType::email)
+                                            ->where('block_value', $email)
+                                            ->first();
+            if ($matched_spam_list) {
+                return [
+                    'blocked' => true,
+                    'matched_spam_list' => $matched_spam_list,
+                    'client_ip' => $client_ip,
+                    'email' => $email,
+                ];
             }
 
             // ドメインチェック
             $domain = substr(strrchr($email, "@"), 1);
             if ($domain) {
-                $domain_blocked = $spam_lists->where('block_type', SpamBlockType::domain)
-                                              ->where('block_value', $domain)
-                                              ->isNotEmpty();
-                if ($domain_blocked) {
-                    return true;
+                $matched_spam_list = $spam_lists->where('block_type', SpamBlockType::domain)
+                                                ->where('block_value', $domain)
+                                                ->first();
+                if ($matched_spam_list) {
+                    return [
+                        'blocked' => true,
+                        'matched_spam_list' => $matched_spam_list,
+                        'client_ip' => $client_ip,
+                        'email' => $email,
+                    ];
                 }
             }
         }
 
-        return false;
+        return [
+            'blocked' => false,
+            'matched_spam_list' => null,
+            'client_ip' => $client_ip,
+            'email' => null,
+        ];
     }
 
     /**
