@@ -100,6 +100,8 @@
             @endif
             <th nowrap>登録ユーザ</th>
             <th nowrap>登録日時</th>
+            <th nowrap>IPアドレス</th>
+            <th nowrap>操作</th>
         </tr>
     </thead>
 
@@ -151,6 +153,58 @@
                 {{$input->created_at}}
             </td>
 
+            <td nowrap>
+                {{$input->ip_address}}
+            </td>
+
+            <td nowrap>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-warning btn-sm dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ban"></i> スパム登録
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" onclick="event.stopPropagation();">
+                        <form action="{{url('/')}}/redirect/plugin/forms/addToSpamListFromInput/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}" method="POST" id="spam_form_{{$input->id}}">
+                            {{ csrf_field() }}
+                            <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/forms/listInputs/{{$page->id}}/{{$frame_id}}/{{$form->id}}#frame-{{$frame_id}}">
+                            <div class="px-3 py-2">
+                                <div class="font-weight-bold mb-2">スパムリストに追加</div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="add_ip_address" value="1" class="custom-control-input" id="add_ip_{{$input->id}}" @if($input->ip_address) checked @else disabled @endif>
+                                    <label class="custom-control-label @if(!$input->ip_address) text-muted @endif" for="add_ip_{{$input->id}}">IPアドレス @if(!$input->ip_address)<small>（データなし）</small>@endif</label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="add_email" value="1" class="custom-control-input" id="add_email_{{$input->id}}" @if(!($has_email_map[$input->id] ?? false)) disabled @endif>
+                                    <label class="custom-control-label @if(!($has_email_map[$input->id] ?? false)) text-muted @endif" for="add_email_{{$input->id}}">メールアドレス @if(!($has_email_map[$input->id] ?? false))<small>（データなし）</small>@endif</label>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="add_domain" value="1" class="custom-control-input" id="add_domain_{{$input->id}}" @if(!($has_email_map[$input->id] ?? false)) disabled @endif>
+                                    <label class="custom-control-label @if(!($has_email_map[$input->id] ?? false)) text-muted @endif" for="add_domain_{{$input->id}}">ドメイン @if(!($has_email_map[$input->id] ?? false))<small>（データなし）</small>@endif</label>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    ※ IPアドレスはスパムフィルタリング有効時の投稿のみ記録されます。<br>
+                                    ※ メールアドレス・ドメインはフォームの「メールアドレス」型項目の入力値を参照します。<br>
+                                    ※ 該当データが存在しない場合、登録はスキップされます。
+                                </small>
+                                <hr class="my-2">
+                                <div class="font-weight-bold mb-2">適用範囲</div>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" name="scope_type" value="form" class="custom-control-input" id="scope_form_{{$input->id}}" checked>
+                                    <label class="custom-control-label" for="scope_form_{{$input->id}}">このフォームのみ</label>
+                                </div>
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" name="scope_type" value="global" class="custom-control-input" id="scope_global_{{$input->id}}">
+                                    <label class="custom-control-label" for="scope_global_{{$input->id}}">全フォーム</label>
+                                </div>
+                                <hr class="my-2">
+                                <div class="font-weight-bold mb-2">メモ</div>
+                                <input type="text" name="memo" class="form-control form-control-sm mb-2" placeholder="例: スパム投稿のため登録">
+                                <button type="submit" class="btn btn-warning btn-sm btn-block">追加</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </td>
+
         </tr>
     @endforeach
     </tbody>
@@ -179,5 +233,19 @@
         </div>
     </div>
 </div>
+
+<style>
+.tooltip {
+    z-index: 9999 !important;
+}
+</style>
+<script>
+$(function() {
+    // ツールチップの初期化（container: 'body'でドロップダウン外に表示）
+    $('[data-toggle="tooltip"]').tooltip({
+        container: 'body'
+    });
+});
+</script>
 
 @endsection

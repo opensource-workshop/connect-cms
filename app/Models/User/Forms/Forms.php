@@ -2,13 +2,14 @@
 
 namespace App\Models\User\Forms;
 
-use Illuminate\Database\Eloquent\Model;
-
 use App\UserableNohistory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Forms extends Model
 {
     // 保存時のユーザー関連データの保持（履歴なしUserable）
+    use HasFactory;
     use UserableNohistory;
 
     /**
@@ -45,7 +46,9 @@ class Forms extends Model
         'data_save_flag',
         'after_message',
         'numbering_use_flag',
-        'numbering_prefix'
+        'numbering_prefix',
+        'use_spam_filter_flag',
+        'spam_filter_message',
     ];
 
     /**
