@@ -519,4 +519,180 @@ class MicrosoftGraphTransportTest extends TestCase
         // Reply-Toが設定されていないことを確認
         $this->assertArrayNotHasKey('replyTo', $graph_message);
     }
+
+
+    /**
+     * 添付ファイル変換テスト：単一ファイル
+     */
+    public function testConvertAttachmentsWithSingleFile(): void
+    {
+        // 添付ファイルのモック
+        $attachment = $this->createMock(\Swift_Attachment::class);
+        $attachment->method('getFilename')->willReturn('test.pdf');
+        $attachment->method('getContentType')->willReturn('application/pdf');
+        $attachment->method('getBody')->willReturn('PDF content here');
+
+        // メッセージのモック
+        $message = $this->createBasicMessageMock([
+            'children' => [$attachment]
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertAttachments');
+        $method->setAccessible(true);
+
+        $attachments = $method->invoke($this->transport, $message);
+
+        // 1件の添付ファイル
+        $this->assertCount(1, $attachments);
+        $this->assertEquals('#microsoft.graph.fileAttachment', $attachments[0]['@odata.type']);
+        $this->assertEquals('test.pdf', $attachments[0]['name']);
+        $this->assertEquals('application/pdf', $attachments[0]['contentType']);
+        $this->assertEquals(base64_encode('PDF content here'), $attachments[0]['contentBytes']);
+    }
+
+    /**
+     * 添付ファイル変換テスト：複数ファイル
+     */
+    public function testConvertAttachmentsWithMultipleFiles(): void
+    {
+        // 添付ファイル1
+        $attachment1 = $this->createMock(\Swift_Attachment::class);
+        $attachment1->method('getFilename')->willReturn('document.pdf');
+        $attachment1->method('getContentType')->willReturn('application/pdf');
+        $attachment1->method('getBody')->willReturn('PDF content');
+
+        // 添付ファイル2
+        $attachment2 = $this->createMock(\Swift_Attachment::class);
+        $attachment2->method('getFilename')->willReturn('image.png');
+        $attachment2->method('getContentType')->willReturn('image/png');
+        $attachment2->method('getBody')->willReturn('PNG content');
+
+        // メッセージのモック
+        $message = $this->createBasicMessageMock([
+            'children' => [$attachment1, $attachment2]
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertAttachments');
+        $method->setAccessible(true);
+
+        $attachments = $method->invoke($this->transport, $message);
+
+        // 2件の添付ファイル
+        $this->assertCount(2, $attachments);
+
+        // 1つ目の添付ファイル
+        $this->assertEquals('document.pdf', $attachments[0]['name']);
+        $this->assertEquals('application/pdf', $attachments[0]['contentType']);
+
+        // 2つ目の添付ファイル
+        $this->assertEquals('image.png', $attachments[1]['name']);
+        $this->assertEquals('image/png', $attachments[1]['contentType']);
+    }
+
+    /**
+     * 添付ファイル変換テスト：添付なし
+     */
+    public function testConvertAttachmentsWithNoAttachment(): void
+    {
+        // 添付ファイルなしのメッセージ
+        $message = $this->createBasicMessageMock([
+            'children' => []
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertAttachments');
+        $method->setAccessible(true);
+
+        $attachments = $method->invoke($this->transport, $message);
+
+        // 空配列
+        $this->assertCount(0, $attachments);
+    }
+
+    /**
+     * 添付ファイル変換テスト：添付ファイルとMimePartが混在
+     */
+    public function testConvertAttachmentsWithMixedChildren(): void
+    {
+        // HTMLパート（添付ファイルではない）
+        $html_part = $this->createMock(\Swift_Mime_MimePart::class);
+        $html_part->method('getContentType')->willReturn('text/html');
+        $html_part->method('getBody')->willReturn('<p>HTML本文</p>');
+
+        // 添付ファイル
+        $attachment = $this->createMock(\Swift_Attachment::class);
+        $attachment->method('getFilename')->willReturn('file.txt');
+        $attachment->method('getContentType')->willReturn('text/plain');
+        $attachment->method('getBody')->willReturn('File content');
+
+        // メッセージのモック
+        $message = $this->createBasicMessageMock([
+            'children' => [$html_part, $attachment]
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertAttachments');
+        $method->setAccessible(true);
+
+        $attachments = $method->invoke($this->transport, $message);
+
+        // 添付ファイルのみ（Swift_Attachmentのみ）が返される
+        $this->assertCount(1, $attachments);
+        $this->assertEquals('file.txt', $attachments[0]['name']);
+    }
+
+    /**
+     * メッセージ変換テスト：添付ファイル付き統合テスト
+     */
+    public function testConvertToGraphMessageWithAttachment(): void
+    {
+        // 添付ファイルのモック
+        $attachment = $this->createMock(\Swift_Attachment::class);
+        $attachment->method('getFilename')->willReturn('report.xlsx');
+        $attachment->method('getContentType')->willReturn('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $attachment->method('getBody')->willReturn('Excel content');
+
+        // メッセージのモック
+        $message = $this->createBasicMessageMock([
+            'subject' => '添付ファイル付きメール',
+            'body' => '添付ファイルをご確認ください。',
+            'children' => [$attachment]
+        ]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // 基本的なメッセージ内容
+        $this->assertEquals('添付ファイル付きメール', $graph_message['subject']);
+        $this->assertEquals('添付ファイルをご確認ください。', $graph_message['body']['content']);
+
+        // 添付ファイルが含まれることを確認
+        $this->assertArrayHasKey('attachments', $graph_message);
+        $this->assertCount(1, $graph_message['attachments']);
+        $this->assertEquals('report.xlsx', $graph_message['attachments'][0]['name']);
+        $this->assertEquals('#microsoft.graph.fileAttachment', $graph_message['attachments'][0]['@odata.type']);
+    }
+
+    /**
+     * メッセージ変換テスト：添付ファイルなし（attachmentsキーが含まれない）
+     */
+    public function testConvertToGraphMessageWithoutAttachment(): void
+    {
+        // 添付ファイルなしのメッセージ
+        $message = $this->createBasicMessageMock();
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('convertToGraphMessage');
+        $method->setAccessible(true);
+
+        $graph_message = $method->invoke($this->transport, $message);
+
+        // 添付ファイルがない場合はattachmentsキーが存在しない
+        $this->assertArrayNotHasKey('attachments', $graph_message);
+    }
 }

@@ -26,9 +26,55 @@
     }
 }
 
+.photoalbum-manual-sort__toggle {
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+}
+
+.photoalbum-manual-sort__toggle:hover,
+.photoalbum-manual-sort__toggle:focus {
+    text-decoration: none;
+}
+
+.photoalbum-manual-sort__toggle-icon {
+    transition: transform 0.2s ease;
+}
+
+.photoalbum-manual-sort__toggle[aria-expanded="true"] .photoalbum-manual-sort__toggle-icon {
+    transform: rotate(90deg);
+}
+
 // Leave some space when scrolling to anchors after sort operations
 .photoalbum-manual-sort__item {
     scroll-margin-top: 120px;
+}
+
+.photoalbum-manual-sort__item--hidden {
+    background-color: $gray-100;
+}
+
+.photoalbum-manual-sort__item--pending-hidden {
+    background-color: $gray-200;
+    background-image: repeating-linear-gradient(
+        135deg,
+        $gray-200,
+        $gray-200 6px,
+        $gray-300 6px,
+        $gray-300 12px
+    );
+}
+
+.photoalbum-manual-sort__item--pending-show {
+    background-color: mix($warning, $white, 50%);
+    background-image: repeating-linear-gradient(
+        135deg,
+        mix($warning, $white, 50%),
+        mix($warning, $white, 50%) 6px,
+        mix($warning, $white, 40%) 6px,
+        mix($warning, $white, 40%) 12px
+    );
 }
 
 // Flash highlight for the item that just moved
@@ -46,7 +92,7 @@
 }
 
 // Card styling aligns with Bootstrap theme colours
-.photoalbum-manual-sort__card {
+.photoalbum-preview__card {
     border-color: $info;
 
     .card-header {
@@ -61,4 +107,75 @@
     font-size: 0.75rem;
     padding: 0.2rem 0.45rem;
     border-radius: 0.25rem;
+}
+
+.photoalbum-visibility-toggle {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+}
+
+.photoalbum-visibility-toggle__input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.photoalbum-visibility-toggle__label {
+    margin-bottom: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 1.75rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+    border: 1px solid transparent;
+    color: $gray-600;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.photoalbum-visibility-toggle__icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.photoalbum-visibility-toggle__icon--off {
+    display: none;
+}
+
+.photoalbum-visibility-toggle__label:hover {
+    background-color: $gray-100;
+    border-color: $gray-300;
+    box-shadow: 0 1px 2px rgba($black, 0.08);
+    color: $gray-800;
+}
+
+.photoalbum-visibility-toggle__input:focus-visible + .photoalbum-visibility-toggle__label {
+    background-color: $gray-100;
+    border-color: $gray-400;
+    box-shadow: 0 0 0 0.15rem rgba($info, 0.25);
+    color: $gray-800;
+}
+
+.photoalbum-visibility-toggle__input:disabled + .photoalbum-visibility-toggle__label {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.photoalbum-visibility-toggle__input:checked + .photoalbum-visibility-toggle__label {
+    background-color: $gray-200;
+    border-color: $gray-400;
+    color: $gray-700;
+}
+
+.photoalbum-visibility-toggle__input:checked + .photoalbum-visibility-toggle__label .photoalbum-visibility-toggle__icon--on {
+    display: none;
+}
+
+.photoalbum-visibility-toggle__input:checked + .photoalbum-visibility-toggle__label .photoalbum-visibility-toggle__icon--off {
+    display: inline-flex;
 }

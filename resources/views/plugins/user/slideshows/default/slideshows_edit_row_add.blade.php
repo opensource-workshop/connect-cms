@@ -5,7 +5,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category スライドショー・プラグイン
 --}}
-<tr>
+<tr id="slideshow-add-row">
     <td class="d-none d-lg-display d-lg-table-cell"></td>
     <td class="d-none d-lg-display d-lg-table-cell"></td>
     {{-- 画像ファイル --}}
@@ -60,6 +60,7 @@
         <input
             type="text"
             name="link_url"
+            id="slideshow-add-link-url"
             class="form-control @if ($errors && $errors->has('link_url')) border-danger @endif"
             value="{{ old('link_url') }}"
             placeholder="例：https://connect-cms.jp/"
@@ -103,7 +104,7 @@
 {{-- PDF選択 --}}
 
 @if (!empty(config('connect.PDF_THUMBNAIL_API_URL')))
-<tr>
+<tr id="slideshow-add-pdf-row">
     <td class="d-none d-lg-display d-lg-table-cell"></td>
     <td class="d-none d-lg-display d-lg-table-cell"></td>
     <td class="d-table-cell align-middle">
