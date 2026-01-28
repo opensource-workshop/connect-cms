@@ -20,6 +20,7 @@ use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Forms\FormsInputCols;
+use App\Models\Common\SpamBlockHistory;
 use App\Models\Common\SpamList;
 
 use App\Rules\CustomValiAlphaNumForMultiByte;
@@ -832,6 +833,16 @@ class FormsPlugin extends UserPluginBase
                 'matched_rule' => $spam_check['matched_spam_list']->id ?? null,
             ]);
 
+            // スパムブロック履歴をDBに記録
+            SpamBlockHistory::create([
+                'spam_list_id'    => $spam_check['matched_spam_list']->id,
+                'forms_id'        => $form->id,
+                'block_type'      => $spam_check['matched_spam_list']->block_type,
+                'block_value'     => $spam_check['matched_spam_list']->block_value,
+                'client_ip'       => $spam_check['client_ip'],
+                'submitted_email' => $spam_check['email'],
+            ]);
+
             $spam_message = $form->spam_filter_message ?: '入力されたメールアドレス、または、IPアドレスからの送信は現在制限されています。';
             return $this->commonView('error_messages', [
                 'error_messages' => [$spam_message],
@@ -1036,6 +1047,16 @@ class FormsPlugin extends UserPluginBase
                 'ip' => $spam_check['client_ip'],
                 'block_type' => $spam_check['matched_spam_list']->block_type ?? null,
                 'matched_rule' => $spam_check['matched_spam_list']->id ?? null,
+            ]);
+
+            // スパムブロック履歴をDBに記録
+            SpamBlockHistory::create([
+                'spam_list_id'    => $spam_check['matched_spam_list']->id,
+                'forms_id'        => $form->id,
+                'block_type'      => $spam_check['matched_spam_list']->block_type,
+                'block_value'     => $spam_check['matched_spam_list']->block_value,
+                'client_ip'       => $spam_check['client_ip'],
+                'submitted_email' => $spam_check['email'],
             ]);
 
             // エラーメッセージをセッションに保存
