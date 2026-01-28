@@ -3195,14 +3195,19 @@ ORDER BY forms_inputs_id, forms_columns_id
             'matched_rule' => $spam_check['matched_spam_list']->id ?? null,
         ]);
 
-        SpamBlockHistory::create([
-            'spam_list_id'    => $spam_check['matched_spam_list']->id,
-            'forms_id'        => $forms_id,
-            'block_type'      => $spam_check['matched_spam_list']->block_type,
-            'block_value'     => $spam_check['matched_spam_list']->block_value,
-            'client_ip'       => $spam_check['client_ip'],
-            'submitted_email' => $spam_check['email'],
-        ]);
+        // 履歴記録は補助的な機能のため、DB記録が失敗しても本来のスパムブロック処理（エラーメッセージ表示）を続行する
+        try {
+            SpamBlockHistory::create([
+                'spam_list_id'    => $spam_check['matched_spam_list']->id,
+                'forms_id'        => $forms_id,
+                'block_type'      => $spam_check['matched_spam_list']->block_type,
+                'block_value'     => $spam_check['matched_spam_list']->block_value,
+                'client_ip'       => $spam_check['client_ip'],
+                'submitted_email' => $spam_check['email'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record spam block history', ['error' => $e->getMessage()]);
+        }
     }
 
     /**
