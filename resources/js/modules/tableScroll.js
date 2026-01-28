@@ -24,6 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
         let headerInner = null;
         let headerTable = null;
 
+        const initializeHeaderTooltips = () => {
+            if (!headerTable) {
+                return;
+            }
+            const jquery = window.jQuery;
+            if (!jquery || typeof jquery.fn.tooltip !== 'function') {
+                return;
+            }
+            const targets = jquery(headerTable).find('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]');
+            if (!targets.length) {
+                return;
+            }
+            targets.tooltip();
+        };
+
         // ヘッダーを複製して固定表示用のヘッダー領域を作る。
         const ensureHeaderClone = () => {
             if (!header || !table || !thead) {
@@ -51,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headerTable.appendChild(thead.cloneNode(true));
             header.setAttribute('aria-hidden', 'true');
             container.classList.add('is-cc-header-cloned');
+            initializeHeaderTooltips();
         };
 
         // 列幅計測に使うセル配列を取得する（tbody先頭行→thead最終行の順）。
