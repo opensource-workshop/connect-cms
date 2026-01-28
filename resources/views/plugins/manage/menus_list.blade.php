@@ -45,13 +45,6 @@
             <a href="{{url('/')}}/manage/security" class="list-group-item">セキュリティ管理</a>
         @endif
     @endif
-    @if (Auth::user()->can('admin_site'))
-        @if (isset($plugin_name) && $plugin_name == 'spam')
-            <a href="{{url('/')}}/manage/spam" class="list-group-item active">スパム管理</a>
-        @else
-            <a href="{{url('/')}}/manage/spam" class="list-group-item">スパム管理</a>
-        @endif
-    @endif
     @if (Auth::user()->can('admin_system'))
         @if (isset($plugin_name) && $plugin_name == 'plugin')
             <a href="{{url('/')}}/manage/plugin" class="list-group-item active">プラグイン管理</a>
@@ -146,6 +139,13 @@
                 <a href="{{url('/')}}/manage/holiday" class="list-group-item active">祝日管理</a>
             @else
                 <a href="{{url('/')}}/manage/holiday" class="list-group-item">祝日管理</a>
+            @endif
+        @endif
+        @if (Auth::user()->can('admin_site'))
+            @if (isset($plugin_name) && $plugin_name == 'spam')
+                <a href="{{url('/')}}/manage/spam" class="list-group-item active">スパム管理</a>
+            @else
+                <a href="{{url('/')}}/manage/spam" class="list-group-item">スパム管理</a>
             @endif
         @endif
         @if (Auth::user()->can('admin_system'))
