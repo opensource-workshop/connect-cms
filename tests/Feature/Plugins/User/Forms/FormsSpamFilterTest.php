@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Plugins\User\Forms;
 
-use App\Enums\FormColumnType;
 use App\Enums\SpamBlockType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
