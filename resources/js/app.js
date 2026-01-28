@@ -6,6 +6,7 @@
  */
 
 require('./bootstrap');
+require('./modules/tableScroll');
 
 window.Vue = require('vue').default;
 

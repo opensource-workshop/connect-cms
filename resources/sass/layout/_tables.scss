@@ -1,0 +1,140 @@
+// 一覧テーブル向けのスクロール補助・固定ヘッダー/固定列スタイル定義。
+// 対象: `.cc-table-scroll` ラッパー配下のテーブル。
+// 一覧テーブルの上部スクロールバー・固定ヘッダーを提供するラッパー。
+.cc-table-scroll {
+  --cc-table-sticky-offset: 0px;
+  --cc-table-header-height: 0px;
+  --cc-table-sticky-viewport-offset: 0px;
+}
+
+// 上部スクロールバーと固定ヘッダーの貼り付き領域。
+.cc-table-scroll__sticky {
+  position: sticky;
+  top: var(--cc-table-sticky-viewport-offset, 0px);
+  z-index: 5;
+  background-color: #fff;
+}
+
+// 上部スクロールバー（横スクロール用）。
+.cc-table-scroll__top {
+  display: none;
+  height: 16px;
+  margin-bottom: 0.25rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.cc-table-scroll.is-cc-scrollable .cc-table-scroll__top {
+  display: block;
+}
+
+.cc-table-scroll__top-inner {
+  height: 1px;
+}
+
+// 複製ヘッダーの表示領域。
+.cc-table-scroll__header {
+  overflow: hidden;
+}
+
+// 複製ヘッダーの横スクロール同期用の内側要素。
+.cc-table-scroll__header-inner {
+  overflow: hidden;
+}
+
+// 複製したヘッダーテーブル本体。
+.cc-table-scroll__header-table {
+  margin: 0;
+}
+
+.cc-table-scroll__header-table thead th {
+  position: static;
+  z-index: auto;
+}
+
+// 本体テーブルのヘッダーは複製と重複するため不可視化する。
+.cc-table-scroll.is-cc-header-cloned .cc-table-scroll__body thead {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cc-table-scroll.is-cc-header-cloned .cc-table-scroll__body table {
+  margin-top: calc(var(--cc-table-header-height, 0px) * -1);
+}
+
+// 本体テーブルのスクロール領域。
+.cc-table-scroll__body {
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+// 1段ヘッダーのsticky対応。
+.cc-table-sticky-header thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background-color: #fff;
+}
+
+.cc-table-sticky-header thead.thead-light th {
+  background-color: #f8f9fa;
+}
+
+// 2段ヘッダーの1行目を固定。
+.cc-table-sticky-header-2 thead tr:first-child th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background-color: #fff;
+}
+
+// 2段ヘッダーの2行目を固定（1行目の高さ分だけ下げる）。
+.cc-table-sticky-header-2 thead tr:nth-child(2) th {
+  position: sticky;
+  top: var(--cc-table-sticky-offset, 0px);
+  z-index: 3;
+  background-color: #fff;
+}
+
+.cc-table-sticky-first-col tbody tr {
+  --cc-table-sticky-bg: #fff;
+}
+
+.cc-table-sticky-first-col.table-striped tbody tr:nth-of-type(odd) {
+  --cc-table-sticky-bg: #f2f2f2;
+}
+
+// 1列目固定（本文セル）。
+.cc-table-sticky-first-col .cc-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: var(--cc-table-sticky-bg);
+  background-clip: padding-box;
+  box-shadow: 2px 0 0 #dee2e6;
+}
+
+// ヘッダーの重なり順を制御。
+.cc-table-sticky-first-col thead th {
+  position: relative;
+  z-index: 1;
+}
+
+// 1列目ヘッダーを最前面にする。
+.cc-table-sticky-first-col thead .cc-sticky-col {
+  z-index: 10;
+  background-color: #fff;
+  background-clip: padding-box;
+  box-shadow: 2px 0 0 #dee2e6;
+}
+
+.cc-table-sticky-first-col thead.thead-light .cc-sticky-col {
+  background-color: #f8f9fa;
+}
+
+// 複製ヘッダー内の1列目も最前面にする。
+.cc-table-scroll__header-table .cc-sticky-col {
+  position: sticky !important;
+  left: 0;
+  z-index: 20 !important;
+}

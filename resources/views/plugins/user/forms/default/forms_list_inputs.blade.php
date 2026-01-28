@@ -83,8 +83,16 @@
 </div>
 
 {{-- データのループ --}}
-<table class="table table-bordered table-responsive table-sm mt-2">
-    <thead class="thead-light">
+<div class="cc-table-scroll js-cc-table-scroll">
+    <div class="cc-table-scroll__sticky">
+        <div class="cc-table-scroll__top" aria-hidden="true">
+            <div class="cc-table-scroll__top-inner"></div>
+        </div>
+        <div class="cc-table-scroll__header" aria-hidden="true"></div>
+    </div>
+    <div class="table-responsive cc-table-scroll__body">
+        <table class="table table-bordered table-sm cc-table-sticky-header">
+        <thead class="thead-light">
         <tr>
             @if ($form->other_plugins_register_use_flag)
                 <th nowrap>連携</th>
@@ -207,8 +215,10 @@
 
         </tr>
     @endforeach
-    </tbody>
-</table>
+        </tbody>
+        </table>
+    </div>
+</div>
 
 <table class="table-bordered table-sm">
     <tbody>
