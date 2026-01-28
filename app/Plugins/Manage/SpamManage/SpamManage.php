@@ -5,6 +5,7 @@ namespace App\Plugins\Manage\SpamManage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use App\Models\Common\Frame;
 use App\Models\Common\SpamBlockHistory;
 use App\Models\Common\SpamList;
 use App\Models\User\Forms\Forms;
@@ -74,12 +75,16 @@ class SpamManage extends ManagePluginBase
         // フォーム一覧を取得（ID連想配列）
         $forms = Forms::orderBy('forms_name')->get()->keyBy('id');
 
+        // フォームが配置されているページのURLマップを作成
+        $form_page_urls = $this->getFormPageUrls($forms);
+
         // 画面の呼び出し
         return view('plugins.manage.spam.index', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "spam",
             "spam_lists"         => $spam_lists,
             "forms"              => $forms,
+            "form_page_urls"     => $form_page_urls,
             "search_block_type"  => $search_block_type,
             "search_block_value" => $search_block_value,
             "search_scope_type"  => $search_scope_type,
@@ -303,12 +308,16 @@ class SpamManage extends ManagePluginBase
         // フォーム一覧を取得（ID連想配列）
         $forms = Forms::orderBy('forms_name')->get()->keyBy('id');
 
+        // フォームが配置されているページのURLマップを作成
+        $form_page_urls = $this->getFormPageUrls($forms);
+
         // 画面の呼び出し
         return view('plugins.manage.spam.block_history', [
             "function"           => __FUNCTION__,
             "plugin_name"        => "spam",
             "block_histories"    => $block_histories,
             "forms"              => $forms,
+            "form_page_urls"     => $form_page_urls,
             "search_block_type"  => $search_block_type,
             "search_block_value" => $search_block_value,
             "search_client_ip"   => $search_client_ip,
@@ -446,5 +455,31 @@ class SpamManage extends ManagePluginBase
         }
 
         return $query;
+    }
+
+    /**
+     * フォームが配置されているページのURLマップを作成
+     *
+     * @param \Illuminate\Support\Collection $forms フォーム一覧（ID連想配列）
+     * @return array forms_id => ページURL の連想配列
+     */
+    private function getFormPageUrls($forms)
+    {
+        $form_page_urls = [];
+
+        // フォームのbucket_idからFrameを取得し、ページURLを特定
+        $frames = Frame::whereIn('bucket_id', $forms->pluck('bucket_id'))
+            ->where('plugin_name', 'forms')
+            ->with('page')
+            ->get();
+
+        foreach ($frames as $frame) {
+            $form = $forms->firstWhere('bucket_id', $frame->bucket_id);
+            if ($form && $frame->page && !isset($form_page_urls[$form->id])) {
+                $form_page_urls[$form->id] = url($frame->page->permanent_link);
+            }
+        }
+
+        return $form_page_urls;
     }
 }

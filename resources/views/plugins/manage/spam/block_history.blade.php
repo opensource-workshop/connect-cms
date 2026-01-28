@@ -110,7 +110,11 @@ use App\Enums\SpamBlockType;
                         <td>{{ $history->block_value }}</td>
                         <td nowrap>
                             @if ($history->forms_id)
-                                {{ $forms[$history->forms_id]->forms_name ?? '不明' }}
+                                @if (isset($form_page_urls[$history->forms_id]))
+                                    <a href="{{ $form_page_urls[$history->forms_id] }}" target="_blank">{{ $forms[$history->forms_id]->forms_name ?? '不明' }} <i class="fas fa-external-link-alt small"></i></a>
+                                @else
+                                    {{ $forms[$history->forms_id]->forms_name ?? '不明' }}
+                                @endif
                             @endif
                         </td>
                         <td>{{ $history->client_ip }}</td>
