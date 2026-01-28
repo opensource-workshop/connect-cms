@@ -6,6 +6,7 @@ use App\Enums\SpamBlockType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\SpamBlockHistory;
 use App\Models\Common\SpamList;
 use App\Models\Core\UsersRoles;
 use App\Models\User\Forms\Forms;
@@ -362,5 +363,125 @@ class FormsSpamFilterTest extends TestCase
         // フラッシュメッセージに登録済みの旨が含まれる
         $flash_message = session('flash_message');
         $this->assertStringContainsString('登録済み', $flash_message);
+    }
+
+    /**
+     * 確認画面でスパムブロック時に spam_block_histories にレコードが作成される
+     */
+    public function testSpamBlockCreatesHistoryRecordOnConfirm(): void
+    {
+        // Arrange
+        [$page, $frame, $bucket, $form] = $this->createFormSetup(true);
+
+        // メールカラムを作成
+        $email_column = FormsColumns::factory()->emailType()->create(['forms_id' => $form->id]);
+
+        // IPアドレスでブロックするスパムリスト
+        $spam_list = SpamList::factory()->forForm($form->id)->create([
+            'target_plugin_name' => 'forms',
+            'block_type' => SpamBlockType::ip_address,
+            'block_value' => '127.0.0.1',
+        ]);
+
+        // Act: 確認画面にPOST
+        $response = $this->post(
+            "/redirect/plugin/forms/publicConfirm/{$page->id}/{$frame->id}",
+            [
+                'forms_columns_value' => [
+                    $email_column->id => 'test@example.com',
+                ],
+                'redirect_path' => $page->permanent_link,
+            ],
+            ['REMOTE_ADDR' => '127.0.0.1']
+        );
+
+        // Assert: spam_block_histories にレコードが作成されている
+        $this->assertDatabaseHas('spam_block_histories', [
+            'spam_list_id' => $spam_list->id,
+            'forms_id' => $form->id,
+            'block_type' => SpamBlockType::ip_address,
+            'block_value' => '127.0.0.1',
+        ]);
+    }
+
+    /**
+     * publicStore（直接登録）でスパムブロック時にレコードが作成される
+     */
+    public function testSpamBlockCreatesHistoryRecordOnPublicStore(): void
+    {
+        // Arrange
+        [$page, $frame, $bucket, $form] = $this->createFormSetup(true);
+
+        // メールカラムを作成
+        $email_column = FormsColumns::factory()->emailType()->create(['forms_id' => $form->id]);
+
+        // メールアドレスでブロックするスパムリスト
+        $spam_list = SpamList::factory()->global()->create([
+            'target_plugin_name' => 'forms',
+            'block_type' => SpamBlockType::email,
+            'block_value' => 'spam@example.com',
+        ]);
+
+        // Act: 直接登録にPOST
+        $response = $this->post(
+            "/redirect/plugin/forms/publicStore/{$page->id}/{$frame->id}",
+            [
+                'forms_columns_value' => [
+                    $email_column->id => 'spam@example.com',
+                ],
+                'redirect_path' => $page->permanent_link,
+            ]
+        );
+
+        // Assert: spam_block_histories にレコードが作成されている
+        $this->assertDatabaseHas('spam_block_histories', [
+            'spam_list_id' => $spam_list->id,
+            'forms_id' => $form->id,
+            'block_type' => SpamBlockType::email,
+            'block_value' => 'spam@example.com',
+            'submitted_email' => 'spam@example.com',
+        ]);
+    }
+
+    /**
+     * 記録されるデータが正しい
+     */
+    public function testSpamBlockHistoryRecordsCorrectData(): void
+    {
+        // Arrange
+        [$page, $frame, $bucket, $form] = $this->createFormSetup(true);
+
+        // メールカラムを作成
+        $email_column = FormsColumns::factory()->emailType()->create(['forms_id' => $form->id]);
+
+        // ドメインでブロックするスパムリスト
+        $spam_list = SpamList::factory()->forForm($form->id)->create([
+            'target_plugin_name' => 'forms',
+            'block_type' => SpamBlockType::domain,
+            'block_value' => 'spam-domain.com',
+        ]);
+
+        // Act: 確認画面にPOST（ドメインがマッチするメールアドレスを送信）
+        $response = $this->post(
+            "/redirect/plugin/forms/publicConfirm/{$page->id}/{$frame->id}",
+            [
+                'forms_columns_value' => [
+                    $email_column->id => 'user@spam-domain.com',
+                ],
+                'redirect_path' => $page->permanent_link,
+            ],
+            ['REMOTE_ADDR' => '10.0.0.1']
+        );
+
+        // Assert: 記録されたデータの各フィールドが正しい
+        $history = SpamBlockHistory::latest('id')->first();
+        $this->assertNotNull($history);
+        $this->assertEquals($spam_list->id, $history->spam_list_id);
+        $this->assertEquals($form->id, $history->forms_id);
+        $this->assertEquals(SpamBlockType::domain, $history->block_type);
+        $this->assertEquals('spam-domain.com', $history->block_value);
+        $this->assertEquals('user@spam-domain.com', $history->submitted_email);
+        $this->assertNotNull($history->client_ip);
+        $this->assertNotNull($history->created_at);
     }
 }

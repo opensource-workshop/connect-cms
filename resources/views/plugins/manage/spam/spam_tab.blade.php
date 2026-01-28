@@ -20,6 +20,13 @@
                     <a href="{{url('/')}}/manage/spam" class="nav-link">スパムリスト一覧</a>
                 @endif
                 </li>
+                <li role="presentation" class="nav-item">
+                @if ($function == "blockHistory")
+                    <span class="nav-link"><span class="active">ブロック履歴</span></span>
+                @else
+                    <a href="{{url('/')}}/manage/spam/blockHistory" class="nav-link">ブロック履歴</a>
+                @endif
+                </li>
                 @if ($function == "edit")
                 <li role="presentation" class="nav-item">
                     <span class="nav-link"><span class="active">スパムリスト編集</span></span>

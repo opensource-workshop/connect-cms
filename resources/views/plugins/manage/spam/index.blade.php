@@ -113,7 +113,11 @@ use App\Enums\SpamBlockType;
                                 @php
                                     $form_name = $forms[$spam->target_id]->forms_name ?? '不明';
                                 @endphp
-                                <span class="badge badge-secondary">{{ $form_name }}</span>
+                                @if (isset($form_page_urls[$spam->target_id]))
+                                    <a href="{{ $form_page_urls[$spam->target_id] }}" target="_blank"><span class="badge badge-secondary">{{ $form_name }}</span> <i class="fas fa-external-link-alt small"></i></a>
+                                @else
+                                    <span class="badge badge-secondary">{{ $form_name }}</span>
+                                @endif
                             @endif
                         </td>
                         <td>{{ Str::limit($spam->memo, 30) }}</td>
