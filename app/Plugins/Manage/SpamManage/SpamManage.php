@@ -5,6 +5,7 @@ namespace App\Plugins\Manage\SpamManage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use App\Models\Common\SpamBlockHistory;
 use App\Models\Common\SpamList;
 use App\Models\User\Forms\Forms;
 
@@ -36,7 +37,9 @@ class SpamManage extends ManagePluginBase
         $role_check_table["edit"]        = array('admin_site');
         $role_check_table["update"]      = array('admin_site');
         $role_check_table["destroy"]     = array('admin_site');
-        $role_check_table["downloadCsv"] = array('admin_site');
+        $role_check_table["downloadCsv"]             = array('admin_site');
+        $role_check_table["blockHistory"]             = array('admin_site');
+        $role_check_table["downloadBlockHistoryCsv"] = array('admin_site');
         return $role_check_table;
     }
 
@@ -266,6 +269,145 @@ class SpamManage extends ManagePluginBase
         return response($csv_data)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    /**
+     *  ブロック履歴一覧表示
+     *
+     * @return view
+     * @method_title ブロック履歴
+     * @method_desc スパムブロックの履歴を確認できます。
+     * @method_detail スパムフィルタリングでブロックされた履歴を一覧で確認できます。
+     */
+    public function blockHistory($request)
+    {
+        // ページネートの表示ページを取得
+        $page = $this->getPaginatePageFromRequestOrSession($request, 'spam_block_history_page', 'page');
+
+        // 検索条件を取得
+        $search_block_type  = $request->input('search_block_type', '');
+        $search_block_value = $request->input('search_block_value', '');
+        $search_client_ip   = $request->input('search_client_ip', '');
+        $search_forms_name  = $request->input('search_forms_name', '');
+        $search_date_from   = $request->input('search_date_from', '');
+        $search_date_to     = $request->input('search_date_to', '');
+
+        // ブロック履歴を取得（検索条件適用）
+        $query = SpamBlockHistory::query();
+        $query = $this->applyBlockHistorySearchConditions($query, $request);
+
+        $block_histories = $query->orderBy('created_at', 'desc')
+            ->paginate(20, ['*'], 'page', $page)
+            ->appends($request->except('page'));
+
+        // フォーム一覧を取得（ID連想配列）
+        $forms = Forms::orderBy('forms_name')->get()->keyBy('id');
+
+        // 画面の呼び出し
+        return view('plugins.manage.spam.block_history', [
+            "function"           => __FUNCTION__,
+            "plugin_name"        => "spam",
+            "block_histories"    => $block_histories,
+            "forms"              => $forms,
+            "search_block_type"  => $search_block_type,
+            "search_block_value" => $search_block_value,
+            "search_client_ip"   => $search_client_ip,
+            "search_forms_name"  => $search_forms_name,
+            "search_date_from"   => $search_date_from,
+            "search_date_to"     => $search_date_to,
+        ]);
+    }
+
+    /**
+     *  ブロック履歴CSVダウンロード
+     */
+    public function downloadBlockHistoryCsv($request)
+    {
+        // ブロック履歴を取得（検索条件適用）
+        $query = SpamBlockHistory::query();
+        $query = $this->applyBlockHistorySearchConditions($query, $request);
+
+        $block_histories = $query->orderBy('created_at', 'desc')->get();
+
+        // フォーム一覧を取得
+        $forms = Forms::pluck('forms_name', 'id');
+
+        // CSVデータの作成
+        $csv_data = '';
+
+        // ヘッダー行
+        $csv_data .= '"ブロック日時","種別","マッチした値","フォーム名","IPアドレス","送信メールアドレス"' . "\n";
+
+        // データ行
+        foreach ($block_histories as $history) {
+            $form_name = $history->forms_id ? ($forms[$history->forms_id] ?? '不明') : '';
+            $csv_data .= '"' . $history->created_at . '",';
+            $csv_data .= '"' . SpamBlockType::getDescription($history->block_type) . '",';
+            $csv_data .= '"' . str_replace('"', '""', $history->block_value) . '",';
+            $csv_data .= '"' . str_replace('"', '""', $form_name) . '",';
+            $csv_data .= '"' . ($history->client_ip ?? '') . '",';
+            $csv_data .= '"' . str_replace('"', '""', $history->submitted_email ?? '') . '"' . "\n";
+        }
+
+        // 文字コード変換（UTF-8 BOM付き）
+        $csv_data = "\xEF\xBB\xBF" . $csv_data;
+
+        // ファイル名
+        $filename = 'spam_block_history_' . date('Ymd_His') . '.csv';
+
+        // レスポンス
+        return response($csv_data)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    /**
+     * ブロック履歴の検索条件をクエリに適用
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query クエリビルダー
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function applyBlockHistorySearchConditions($query, $request)
+    {
+        // 種別
+        $search_block_type = $request->input('search_block_type', '');
+        if (!empty($search_block_type)) {
+            $query->where('block_type', $search_block_type);
+        }
+
+        // 値（部分一致）
+        $search_block_value = $request->input('search_block_value', '');
+        if (!empty($search_block_value)) {
+            $query->where('block_value', 'like', '%' . $search_block_value . '%');
+        }
+
+        // IPアドレス（部分一致）
+        $search_client_ip = $request->input('search_client_ip', '');
+        if (!empty($search_client_ip)) {
+            $query->where('client_ip', 'like', '%' . $search_client_ip . '%');
+        }
+
+        // フォーム名（フォームIDで検索）
+        $search_forms_name = $request->input('search_forms_name', '');
+        if (!empty($search_forms_name)) {
+            $form_ids = Forms::where('forms_name', 'like', '%' . $search_forms_name . '%')->pluck('id');
+            $query->whereIn('forms_id', $form_ids);
+        }
+
+        // 日付範囲（開始）
+        $search_date_from = $request->input('search_date_from', '');
+        if (!empty($search_date_from)) {
+            $query->where('created_at', '>=', $search_date_from . ' 00:00:00');
+        }
+
+        // 日付範囲（終了）
+        $search_date_to = $request->input('search_date_to', '');
+        if (!empty($search_date_to)) {
+            $query->where('created_at', '<=', $search_date_to . ' 23:59:59');
+        }
+
+        return $query;
     }
 
     /**
