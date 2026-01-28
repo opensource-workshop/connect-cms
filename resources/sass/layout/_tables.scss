@@ -54,7 +54,8 @@
 
 // 本体テーブルのヘッダーは複製と重複するため不可視化する。
 .cc-table-scroll.is-cc-header-cloned .cc-table-scroll__body thead {
-  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .cc-table-scroll.is-cc-header-cloned .cc-table-scroll__body table {
