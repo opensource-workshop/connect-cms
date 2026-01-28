@@ -20,11 +20,18 @@
 
     <!-- Pages list -->
     @if (count($pages) > 0)
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered cc-font-90">
+        <div class="cc-table-scroll js-cc-table-scroll">
+            <div class="cc-table-scroll__sticky">
+                <div class="cc-table-scroll__top" aria-hidden="true">
+                    <div class="cc-table-scroll__top-inner"></div>
+                </div>
+                <div class="cc-table-scroll__header" aria-hidden="true"></div>
+            </div>
+            <div class="table-responsive cc-table-scroll__body">
+                <table class="table table-striped table-bordered cc-font-90 cc-table-sticky-header-2 cc-table-sticky-first-col">
                 <thead>
                     <tr>
-                        <th nowrap rowspan="2">ページ名</th>
+                        <th nowrap rowspan="2" class="cc-sticky-col">ページ名</th>
                         <th nowrap rowspan="2" class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
                         <th nowrap rowspan="2" class="pl-1"><i class="fas fa-lock" title="メンバーシップページ・ログインユーザ全員参加"></i></th>
                         <th nowrap rowspan="2" class="text-center"><i class="fas fa-users" title="ページ権限設定"></i></th>
@@ -44,7 +51,7 @@
                             $page_tree = $page_item->getPageTreeByGoingBackParent(null);
                             @endphp
 
-                            <td class="table-text p-1 manage-page-pagename">
+                            <td class="table-text p-1 manage-page-pagename cc-sticky-col">
                                 <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" target="_blank"><i class="far fa-edit"></i></a>
                                 {{-- 各ページの深さをもとにインデントの表現 --}}
                                 @for ($i = 0; $i < $page_item->depth; $i++)
@@ -164,21 +171,22 @@
                     @endforeach
 
                     <tr>
-                        <th colspan="4">グループ名</th>
+                        <th colspan="4" class="cc-sticky-col">グループ名</th>
                         @foreach($groups as $group)
                             <th class="py-1">{{$group->name}} <span class="badge badge-pill badge-primary">{{$group->group_user_count}}人</span> <a href="{{url('/manage/group/edit')}}/{{$group->id}}" target="_blank"> <i class="fas fa-external-link-alt"></i></a></th>
                         @endforeach
                     </tr>
                     <tr>
-                        <th colspan="4">参加ユーザ</th>
+                        <th colspan="4" class="cc-sticky-col">参加ユーザ</th>
                         @foreach($groups as $group)
                             <td nowrap class="table-text py-1"><small class="txt-limit">{!!$group->group_user_names!!}</small></td>
                         @endforeach
                     </tr>
 
                 </tbody>
-            </table>
-            <small class="text-muted">※ 横スクロールできます。</small>
+                </table>
+                <small class="text-muted">※ 横スクロールできます。</small>
+            </div>
         </div>
     @endif
 </div>

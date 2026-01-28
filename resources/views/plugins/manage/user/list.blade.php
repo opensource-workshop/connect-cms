@@ -347,8 +347,15 @@ use App\Models\Core\UsersColumns;
             @endif
         </div>
 
-        <div class="form-group table-responsive">
-            <table class="table table-hover cc-font-90 mb-0">
+        <div class="form-group cc-table-scroll js-cc-table-scroll">
+            <div class="cc-table-scroll__sticky">
+                <div class="cc-table-scroll__top" aria-hidden="true">
+                    <div class="cc-table-scroll__top-inner"></div>
+                </div>
+                <div class="cc-table-scroll__header" aria-hidden="true"></div>
+            </div>
+            <div class="table-responsive cc-table-scroll__body">
+                <table class="table table-hover cc-font-90 mb-0 cc-table-sticky-header">
             <thead>
                 <tr>
                     <th nowrap>{{ UsersColumns::getLabelLoginId($users_columns) }}</th>
@@ -449,8 +456,9 @@ use App\Models\Core\UsersColumns;
                 </tr>
             @endforeach
             </tbody>
-            </table>
-            <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
+                </table>
+                <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
+            </div>
         </div>
 
         {{-- ページング処理 --}}
