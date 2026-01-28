@@ -843,6 +843,7 @@ class PTASeeder extends Seeder
         $header_color = (isset($row['header_color'])) ? $row['header_color'] : NULL;
         $theme = (isset($row['theme'])) ? $row['theme'] : NULL;
         $layout = (isset($row['layout'])) ? $row['layout'] : NULL;
+        $layout_inherit_flag = (isset($row['layout_inherit_flag'])) ? $row['layout_inherit_flag'] : NULL;
         $base_display_flag = (isset($row['base_display_flag'])) ? $row['base_display_flag'] : 1;// 1:表示する
         $membership_flag = (isset($row['membership_flag'])) ? $row['membership_flag'] : 0;
         $ip_address = (isset($row['ip_address'])) ? $row['ip_address'] : NULL;
@@ -854,6 +855,9 @@ class PTASeeder extends Seeder
         $_lft = (isset($row['_lft'])) ? $row['_lft'] : NULL;
         $_rgt = (isset($row['_rgt'])) ? $row['_rgt'] : NULL;
         $parent_id = (isset($row['parent_id'])) ? $row['parent_id'] : NULL;
+        if (is_null($layout_inherit_flag)) {
+            $layout_inherit_flag = ($permanent_link === '/') ? 0 : 1;
+        }
         return DB::table('pages')->insertGetId([
             'page_name' => $page_name,
             'permanent_link' => $permanent_link,
@@ -861,6 +865,7 @@ class PTASeeder extends Seeder
             'header_color' => $header_color,
             'theme' => $theme,
             'layout' => $layout,
+            'layout_inherit_flag' => $layout_inherit_flag,
             'base_display_flag' => $base_display_flag,
             'membership_flag' => $membership_flag,
             'ip_address' => $ip_address,

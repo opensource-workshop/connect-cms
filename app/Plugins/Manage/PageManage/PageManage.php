@@ -185,6 +185,7 @@ class PageManage extends ManagePluginBase
             'ip_address'       => ['nullable', new CustomValiTextMax()],
             'othersite_url'    => ['nullable', new CustomValiUrlMax()],
             'class'            => ['nullable', 'max:255'],
+            'layout_inherit_flag' => ['nullable', Rule::in(['0', '1'])],
             'meta_robots'      => ['nullable', 'array', new CustomValiMetaRobots()],
         ]);
         $validator->setAttributeNames([
@@ -196,6 +197,7 @@ class PageManage extends ManagePluginBase
             'ip_address'       => 'IPアドレス制限',
             'othersite_url'    => '外部サイトURL',
             'class'            => 'メニュークラス名',
+            'layout_inherit_flag' => 'レイアウトの適用範囲',
             'meta_robots'      => '検索避け設定',
         ]);
         return $validator;
@@ -248,6 +250,7 @@ class PageManage extends ManagePluginBase
             PageCvsIndex::header_color      => ['required', 'max:255'],
             PageCvsIndex::theme             => ['required'],
             PageCvsIndex::layout            => ['required'],
+            PageCvsIndex::layout_inherit_flag => ['required', Rule::in(['0', '1'])],
             PageCvsIndex::base_display_flag => ['required', Rule::in(['0', '1'])],
         ];
 
@@ -285,6 +288,7 @@ class PageManage extends ManagePluginBase
         $page->header_color         = $request->header_color;
         $page->theme                = $request->theme;
         $page->layout               = $request->layout;
+        $page->layout_inherit_flag  = $request->layout_inherit_flag ?? 1;
         $page->base_display_flag    = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
         $page->membership_flag      = (isset($request->membership_flag) ? $request->membership_flag : 0);
         $page->container_flag       = (isset($request->container_flag) ? $request->container_flag : 0);
@@ -334,6 +338,7 @@ class PageManage extends ManagePluginBase
                 'header_color'         => $request->header_color,
                 'theme'                => $request->theme,
                 'layout'               => $request->layout,
+                'layout_inherit_flag'  => $request->layout_inherit_flag ?? 1,
                 'base_display_flag'    => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
                 'membership_flag'      => (isset($request->membership_flag) ? $request->membership_flag : 0),
                 'container_flag'       => (isset($request->container_flag) ? $request->container_flag : 0),
@@ -509,6 +514,7 @@ class PageManage extends ManagePluginBase
             PageCvsIndex::header_color => 'NULL',
             PageCvsIndex::theme => 'NULL',
             PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::layout_inherit_flag => '1',
             PageCvsIndex::base_display_flag => '1',
         ];
         $csv_array[2] = [
@@ -518,6 +524,7 @@ class PageManage extends ManagePluginBase
             PageCvsIndex::header_color => 'NULL',
             PageCvsIndex::theme => 'NULL',
             PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::layout_inherit_flag => '1',
             PageCvsIndex::base_display_flag => '1',
         ];
 
@@ -736,6 +743,7 @@ class PageManage extends ManagePluginBase
                     'header_color'      => $csv_columns[PageCvsIndex::header_color],
                     'theme'             => $csv_columns[PageCvsIndex::theme],
                     'layout'            => $csv_columns[PageCvsIndex::layout],
+                    'layout_inherit_flag' => $csv_columns[PageCvsIndex::layout_inherit_flag],
                     'base_display_flag' => $csv_columns[PageCvsIndex::base_display_flag]
                 ]);
 

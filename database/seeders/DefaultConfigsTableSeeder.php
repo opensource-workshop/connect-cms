@@ -32,6 +32,7 @@ class DefaultConfigsTableSeeder extends Seeder
                 'base_touch_callout' => ['value' => '0'],
                 'base_header_login_link' => ['value' => '1'],
                 'base_theme' => ['value' => null],
+                'base_layout' => ['value' => config('connect.BASE_LAYOUT_DEFAULT')],
                 'smartphone_menu_template' => ['value' => SmartphoneMenuTemplateType::opencurrenttree],
                 'base_login_password_reset' => ['value' => 1],
                 'use_mypage' => ['value' => 1],

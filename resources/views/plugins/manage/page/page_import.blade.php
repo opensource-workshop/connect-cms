@@ -63,7 +63,6 @@
                 </div>
             </div>
         </div>
-
         {{-- インポート画面(入力フォーム) --}}
         <form action="{{url('/manage/page/upload')}}" method="post" class="form-horizontal" enctype="multipart/form-data">
             {{csrf_field()}}

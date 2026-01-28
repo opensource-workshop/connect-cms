@@ -13,6 +13,14 @@
 
 <br />
 <h4>サイト基本設定</h4>
+@php
+    $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+    $base_layout_value = Configs::getConfigsValue($configs, 'base_layout', $layout_default);
+    $base_layout_value = $base_layout_value ?: $layout_default;
+    $base_layout_page = new \App\Models\Common\Page();
+    $base_layout_page->layout = $base_layout_value;
+    $base_layout_title = $base_layout_page->getLayoutTitle() ?? $base_layout_value;
+@endphp
 <table border="0" class="table_css">
     <tr nobr="true">
         <th class="doc_th">設定項目</th>
@@ -33,6 +41,10 @@
     <tr nobr="true">
         <td>追加テーマ</td>
         <td>{{Configs::getConfigsValue($configs, 'additional_theme', null)}}</td>
+    </tr>
+    <tr nobr="true">
+        <td>基本レイアウト</td>
+        <td>{{$base_layout_title}}</td>
     </tr>
     <tr nobr="true">
         <td>背景色</td>
