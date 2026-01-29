@@ -28,7 +28,7 @@ use App\Enums\SpamBlockType;
         @include('plugins.common.errors_form_line')
 
         <div class="alert alert-info">
-            <i class="fas fa-exclamation-circle"></i> サイト全体で適用されるスパムリストを管理します。
+            <i class="fas fa-exclamation-circle"></i> サイト全体で適用されるブロックリストを管理します。
         </div>
 
         {{-- 検索フォーム --}}
@@ -66,9 +66,9 @@ use App\Enums\SpamBlockType;
             </div>
         </form>
 
-        {{-- スパムリスト一覧 --}}
+        {{-- ブロックリスト一覧 --}}
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="font-weight-bold">スパムリスト一覧</span>
+            <span class="font-weight-bold">ブロックリスト一覧</span>
             <form action="{{url('/')}}/manage/spam/downloadCsv" method="POST" class="d-inline">
                 {{ csrf_field() }}
                 <input type="hidden" name="search_block_type" value="{{ $search_block_type }}">
@@ -97,13 +97,7 @@ use App\Enums\SpamBlockType;
                 @forelse($spam_lists as $spam)
                     <tr>
                         <td nowrap>
-                            @if ($spam->block_type == SpamBlockType::email)
-                                <span class="badge badge-info">メールアドレス</span>
-                            @elseif ($spam->block_type == SpamBlockType::domain)
-                                <span class="badge badge-warning">ドメイン</span>
-                            @else
-                                <span class="badge badge-secondary">IPアドレス</span>
-                            @endif
+                            @include('plugins.common.spam_block_type_badge', ['block_type' => $spam->block_type])
                         </td>
                         <td>{{ $spam->block_value }}</td>
                         <td nowrap>
@@ -136,7 +130,7 @@ use App\Enums\SpamBlockType;
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted">スパムリストは登録されていません。</td>
+                        <td colspan="6" class="text-center text-muted">ブロックリストは登録されていません。</td>
                     </tr>
                 @endforelse
                 </tbody>
@@ -148,8 +142,8 @@ use App\Enums\SpamBlockType;
 
         <hr>
 
-        {{-- スパムリスト追加フォーム --}}
-        <div class="font-weight-bold mb-2">スパムリストへ追加</div>
+        {{-- ブロックリスト追加フォーム --}}
+        <div class="font-weight-bold mb-2">ブロックリストへ追加</div>
 
         <form action="{{url('/')}}/manage/spam/store" method="POST">
             {{ csrf_field() }}
@@ -168,15 +162,16 @@ use App\Enums\SpamBlockType;
                         ※ メールアドレス：完全一致でブロックします。<br>
                         ※ ドメイン：メールアドレスの@以降と一致する場合にブロックします。<br>
                         ※ メールアドレス・ドメインはフォームに「メールアドレス」型項目がある場合に有効です。<br>
-                        ※ IPアドレス：送信元IPアドレスと一致する場合にブロックします。
+                        ※ IPアドレス：送信元IPアドレスと一致する場合にブロックします。<br>
+                        ※ ハニーポット：ボット対策用の隠しフィールドを設置します。値の入力は不要です。
                     </small>
                 </div>
             </div>
 
-            <div class="form-group row">
-                <label class="col-md-2 col-form-label text-md-right">値 <span class="badge badge-danger">必須</span></label>
+            <div class="form-group row" id="block_value_group">
+                <label class="col-md-2 col-form-label text-md-right">値 <span class="badge badge-danger" id="block_value_required_badge">必須</span></label>
                 <div class="col-md-10">
-                    <input type="text" name="block_value" value="{{ old('block_value') }}" class="form-control" placeholder="例: spam@example.com, spam-domain.com, 192.168.1.100">
+                    <input type="text" name="block_value" id="block_value_input" value="{{ old('block_value') }}" class="form-control" placeholder="例: spam@example.com, spam-domain.com, 192.168.1.100">
                     @include('plugins.common.errors_inline', ['name' => 'block_value'])
                 </div>
             </div>
@@ -221,5 +216,24 @@ use App\Enums\SpamBlockType;
 
     </div>
 </div>
+
+<script>
+$(function() {
+    // 種別選択時の値フィールド表示/非表示
+    $('input[name="block_type"]').on('change', function() {
+        if ($(this).val() === '{{ SpamBlockType::honeypot }}') {
+            $('#block_value_group').slideUp();
+            $('#block_value_input').val('');
+        } else {
+            $('#block_value_group').slideDown();
+        }
+    });
+
+    // 初期表示時のチェック
+    if ($('input[name="block_type"]:checked').val() === '{{ SpamBlockType::honeypot }}') {
+        $('#block_value_group').hide();
+    }
+});
+</script>
 
 @endsection

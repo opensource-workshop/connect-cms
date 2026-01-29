@@ -99,13 +99,7 @@ use App\Enums\SpamBlockType;
                     <tr>
                         <td nowrap>{{ $history->created_at ? $history->created_at->format('Y/m/d H:i') : '' }}</td>
                         <td nowrap>
-                            @if ($history->block_type == SpamBlockType::email)
-                                <span class="badge badge-info">メールアドレス</span>
-                            @elseif ($history->block_type == SpamBlockType::domain)
-                                <span class="badge badge-warning">ドメイン</span>
-                            @else
-                                <span class="badge badge-secondary">IPアドレス</span>
-                            @endif
+                            @include('plugins.common.spam_block_type_badge', ['block_type' => $history->block_type])
                         </td>
                         <td>{{ $history->block_value }}</td>
                         <td nowrap>

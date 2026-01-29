@@ -339,6 +339,7 @@ $app_array = [
         'MenuFrameConfig' => \App\Enums\MenuFrameConfig::class,
         'MailAuthMethod' => \App\Enums\MailAuthMethod::class,
         'PhotoalbumPlayviewType' => \App\Enums\PhotoalbumPlayviewType::class,
+        'SpamBlockType' => \App\Enums\SpamBlockType::class,
 
         // utils
         'DateUtils' => \App\Utilities\Date\DateUtils::class,
