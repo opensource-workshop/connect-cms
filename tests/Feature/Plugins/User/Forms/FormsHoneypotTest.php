@@ -195,7 +195,7 @@ class FormsHoneypotTest extends TestCase
         ]);
 
         // レスポンスにエラーメッセージが含まれている
-        $response->assertSee('不正な投稿が検出されました。');
+        $response->assertSee(__('messages.honeypot_blocked'));
     }
 
     /**

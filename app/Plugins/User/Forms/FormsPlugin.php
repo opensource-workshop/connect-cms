@@ -833,7 +833,7 @@ class FormsPlugin extends UserPluginBase
             $this->recordHoneypotBlock($honeypot_check, $form->id);
 
             return $this->commonView('error_messages', [
-                'error_messages' => ['不正な投稿が検出されました。'],
+                'error_messages' => [__('messages.honeypot_blocked')],
             ]);
         }
 
@@ -1048,7 +1048,7 @@ class FormsPlugin extends UserPluginBase
             $this->recordHoneypotBlock($honeypot_check, $form->id);
 
             // エラーメッセージをセッションに保存
-            session()->flash("spam_blocked_error_{$frame_id}", '不正な投稿が検出されました。');
+            session()->flash("spam_blocked_error_{$frame_id}", __('messages.honeypot_blocked'));
 
             // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
             return collect(['redirect_path' => url($this->page->permanent_link)]);
