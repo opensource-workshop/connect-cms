@@ -15,9 +15,9 @@
             <ul class="navbar-nav">
                 <li role="presentation" class="nav-item">
                 @if ($function == "index")
-                    <span class="nav-link"><span class="active">スパムリスト一覧</span></span>
+                    <span class="nav-link"><span class="active">ブロックリスト一覧</span></span>
                 @else
-                    <a href="{{url('/')}}/manage/spam" class="nav-link">スパムリスト一覧</a>
+                    <a href="{{url('/')}}/manage/spam" class="nav-link">ブロックリスト一覧</a>
                 @endif
                 </li>
                 <li role="presentation" class="nav-item">
@@ -29,7 +29,7 @@
                 </li>
                 @if ($function == "edit")
                 <li role="presentation" class="nav-item">
-                    <span class="nav-link"><span class="active">スパムリスト編集</span></span>
+                    <span class="nav-link"><span class="active">ブロックリスト編集</span></span>
                 </li>
                 @endif
             </ul>

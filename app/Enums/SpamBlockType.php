@@ -16,11 +16,13 @@ class SpamBlockType extends EnumsBase
     const email = 'email';
     const domain = 'domain';
     const ip_address = 'ip_address';
+    const honeypot = 'honeypot';
 
     // key/valueの連想配列
     const enum = [
         self::email => 'メールアドレス',
         self::domain => 'ドメイン',
         self::ip_address => 'IPアドレス',
+        self::honeypot => 'ハニーポット',
     ];
 }

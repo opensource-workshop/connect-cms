@@ -81,6 +81,7 @@ $messages = [
     'cannot_be_delete_refers_to_the_information' => '削除しようとしている情報を参照している箇所がある為、削除できません。',
     'there_is_an_error' => 'エラーがあります。',
     'there_is_an_error_refer_to_the_message_of_each_item' => 'エラーの詳細は各項目のメッセージを参照してください。',
+    'honeypot_blocked' => '不正な投稿が検出されました。',
     'both_required' => '両方の項目を入力してください。',
     'search_results' => '検索結果',
     'cases' => '件',

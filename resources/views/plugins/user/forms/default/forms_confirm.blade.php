@@ -36,6 +36,10 @@
 <form action="" name="forms_store{{$frame_id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="">
+    {{-- ハニーポット値引き継ぎ（二重防御用） --}}
+    @if ($has_honeypot)
+    <input type="hidden" name="website_url" value="{{ old('website_url', request('website_url')) }}">
+    @endif
 
     @foreach($forms_columns as $form_column)
     <div class="form-group container-fluid row">

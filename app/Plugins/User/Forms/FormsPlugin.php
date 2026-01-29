@@ -458,6 +458,9 @@ class FormsPlugin extends UserPluginBase
                 }
             }
 
+            // ハニーポット設定確認
+            $has_honeypot = $this->hasHoneypot($form);
+
             if ($form->form_mode == FormMode::form) {
                 // フォーム
                 return $this->view('forms', [
@@ -466,6 +469,7 @@ class FormsPlugin extends UserPluginBase
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
                     'errors' => $errors,
+                    'has_honeypot' => $has_honeypot,
                 ]);
             } else {
                 // アンケート
@@ -475,6 +479,7 @@ class FormsPlugin extends UserPluginBase
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
                     'errors' => $errors,
+                    'has_honeypot' => $has_honeypot,
                 ]);
             }
         } else {
@@ -822,6 +827,16 @@ class FormsPlugin extends UserPluginBase
             ]);
         }
 
+        // ハニーポットチェック
+        $honeypot_check = $this->checkHoneypot($request, $form);
+        if ($honeypot_check['blocked']) {
+            $this->recordHoneypotBlock($honeypot_check, $form->id);
+
+            return $this->commonView('error_messages', [
+                'error_messages' => [__('messages.honeypot_blocked')],
+            ]);
+        }
+
         // スパムフィルタリングチェック
         $spam_check = $this->checkSpamFilter($request, $form);
         if ($spam_check['blocked']) {
@@ -949,6 +964,9 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
+        // ハニーポット設定確認
+        $has_honeypot = $this->hasHoneypot($form);
+
         // 表示テンプレートを呼び出す
         if ($form->form_mode == FormMode::form) {
             // フォーム
@@ -958,6 +976,7 @@ class FormsPlugin extends UserPluginBase
                 'form' => $form,
                 'forms_columns' => $forms_columns,
                 'uploads' => $uploads,
+                'has_honeypot' => $has_honeypot,
             ]);
         } else {
             // アンケート
@@ -967,6 +986,7 @@ class FormsPlugin extends UserPluginBase
                 'form' => $form,
                 'forms_columns' => $forms_columns,
                 'uploads' => $uploads,
+                'has_honeypot' => $has_honeypot,
             ]);
         }
     }
@@ -1018,6 +1038,18 @@ class FormsPlugin extends UserPluginBase
 
         // 登録制限数オーバーか
         if ($this->isOverEntryLimit($form->id, $form->entry_limit)) {
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
+        }
+
+        // ハニーポットチェック（二重防御）
+        $honeypot_check = $this->checkHoneypot($request, $form);
+        if ($honeypot_check['blocked']) {
+            $this->recordHoneypotBlock($honeypot_check, $form->id);
+
+            // エラーメッセージをセッションに保存
+            session()->flash("spam_blocked_error_{$frame_id}", __('messages.honeypot_blocked'));
+
             // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
             return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
@@ -3211,6 +3243,101 @@ ORDER BY forms_inputs_id, forms_columns_id
     }
 
     /**
+     * ハニーポットチェック
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param Forms $form フォームデータ
+     * @return array ブロック情報の配列
+     */
+    private function checkHoneypot($request, $form): array
+    {
+        $client_ip = $request->ip();
+
+        // このフォーム用のハニーポット設定を取得
+        $honeypot_spam_list = SpamList::where('target_plugin_name', 'forms')
+            ->where('block_type', SpamBlockType::honeypot)
+            ->where(function ($q) use ($form) {
+                $q->where('target_id', $form->id)
+                  ->orWhereNull('target_id');
+            })
+            ->first();
+
+        // ハニーポットが設定されていなければ早期リターン
+        if (!$honeypot_spam_list) {
+            return [
+                'blocked' => false,
+                'client_ip' => $client_ip,
+                'matched_spam_list' => null,
+            ];
+        }
+
+        // ハニーポットフィールドに値があればボットと判定
+        $honeypot_value = $request->input('website_url', '');
+        if (!empty($honeypot_value)) {
+            return [
+                'blocked' => true,
+                'client_ip' => $client_ip,
+                'honeypot_value' => $honeypot_value,
+                'matched_spam_list' => $honeypot_spam_list,
+            ];
+        }
+
+        return [
+            'blocked' => false,
+            'client_ip' => $client_ip,
+            'matched_spam_list' => $honeypot_spam_list,
+        ];
+    }
+
+    /**
+     * ハニーポットブロックのログ記録とDB履歴記録
+     *
+     * @param array $honeypot_check checkHoneypot() の戻り値
+     * @param int $forms_id フォームID
+     * @return void
+     */
+    private function recordHoneypotBlock(array $honeypot_check, int $forms_id): void
+    {
+        Log::info('Honeypot blocked', [
+            'form_id' => $forms_id,
+            'ip' => $honeypot_check['client_ip'],
+            'honeypot_value' => $honeypot_check['honeypot_value'] ?? null,
+            'spam_list_id' => $honeypot_check['matched_spam_list']->id ?? null,
+        ]);
+
+        // 履歴記録は補助的な機能のため、DB記録が失敗しても本来のブロック処理（エラーメッセージ表示）を続行する
+        try {
+            SpamBlockHistory::create([
+                'spam_list_id'    => $honeypot_check['matched_spam_list']->id ?? null,
+                'forms_id'        => $forms_id,
+                'block_type'      => SpamBlockType::honeypot,
+                'block_value'     => $honeypot_check['honeypot_value'] ?? null,
+                'client_ip'       => $honeypot_check['client_ip'],
+                'submitted_email' => null,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record honeypot block history', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * ハニーポットが設定されているか確認
+     *
+     * @param Forms $form フォームデータ
+     * @return bool ハニーポットが設定されている場合true
+     */
+    private function hasHoneypot($form): bool
+    {
+        return SpamList::where('target_plugin_name', 'forms')
+            ->where('block_type', SpamBlockType::honeypot)
+            ->where(function ($q) use ($form) {
+                $q->where('target_id', $form->id)
+                  ->orWhereNull('target_id');
+            })
+            ->exists();
+    }
+
+    /**
      * スパムフィルタリングチェック
      *
      * @param \Illuminate\Http\Request $request リクエスト
@@ -3366,10 +3493,15 @@ ORDER BY forms_inputs_id, forms_columns_id
      */
     public function addSpamList($request, $page_id, $frame_id, $forms_id)
     {
+        // ハニーポットの場合は値不要、それ以外は必須
+        $block_value_rules = $request->block_type === SpamBlockType::honeypot
+            ? ['nullable', 'max:255']
+            : ['required', 'max:255'];
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'block_type'  => ['required', 'in:' . implode(',', SpamBlockType::getMemberKeys())],
-            'block_value' => ['required', 'max:255'],
+            'block_value' => $block_value_rules,
         ]);
         $validator->setAttributeNames([
             'block_type'  => '種別',
@@ -3383,12 +3515,17 @@ ORDER BY forms_inputs_id, forms_columns_id
                 ->withInput();
         }
 
+        // ハニーポットの場合は値をnullにする
+        $block_value = $request->block_type === SpamBlockType::honeypot
+            ? null
+            : $request->block_value;
+
         // スパムリストの追加
         SpamList::create([
             'target_plugin_name' => 'forms',
             'target_id'          => $forms_id,
             'block_type'         => $request->block_type,
-            'block_value'        => $request->block_value,
+            'block_value'        => $block_value,
             'memo'               => $request->memo,
         ]);
 

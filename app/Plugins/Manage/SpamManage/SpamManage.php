@@ -102,10 +102,15 @@ class SpamManage extends ManagePluginBase
             abort(403, '権限がありません。');
         }
 
+        // ハニーポットの場合は値不要、それ以外は必須
+        $block_value_rules = $request->block_type === SpamBlockType::honeypot
+            ? ['nullable', 'max:255']
+            : ['required', 'max:255'];
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'block_type'      => ['required', 'in:' . implode(',', SpamBlockType::getMemberKeys())],
-            'block_value'     => ['required', 'max:255'],
+            'block_value'     => $block_value_rules,
             'target_forms_id' => ['required_if:scope_type,form'],
         ], [
             'target_forms_id.required_if' => '適用範囲で特定フォームを選択した場合、フォームを選択してください。',
@@ -129,12 +134,17 @@ class SpamManage extends ManagePluginBase
             $target_id = $request->target_forms_id;
         }
 
+        // ハニーポットの場合は値をnullにする
+        $block_value = $request->block_type === SpamBlockType::honeypot
+            ? null
+            : $request->block_value;
+
         // スパムリストの追加
         SpamList::create([
             'target_plugin_name' => 'forms',
             'target_id'          => $target_id,
             'block_type'         => $request->block_type,
-            'block_value'        => $request->block_value,
+            'block_value'        => $block_value,
             'memo'               => $request->memo,
         ]);
 
@@ -177,9 +187,17 @@ class SpamManage extends ManagePluginBase
             abort(403, '権限がありません。');
         }
 
+        // スパムリストデータの呼び出し（バリデーション前に取得してblock_typeを参照）
+        $spam = SpamList::findOrFail($id);
+
+        // ハニーポットの場合は値不要、それ以外は必須
+        $block_value_rules = $spam->block_type === SpamBlockType::honeypot
+            ? ['nullable', 'max:255']
+            : ['required', 'max:255'];
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'block_value'     => ['required', 'max:255'],
+            'block_value'     => $block_value_rules,
             'target_forms_id' => ['required_if:scope_type,form'],
         ], [
             'target_forms_id.required_if' => '適用範囲で特定フォームを選択した場合、フォームを選択してください。',
@@ -196,18 +214,20 @@ class SpamManage extends ManagePluginBase
                        ->withInput();
         }
 
-        // スパムリストデータの呼び出し
-        $spam = SpamList::findOrFail($id);
-
         // 適用範囲の処理
         $target_id = null;
         if ($request->scope_type === 'form' && $request->filled('target_forms_id')) {
             $target_id = $request->target_forms_id;
         }
 
+        // ハニーポットの場合は値をnullにする
+        $block_value = $spam->block_type === SpamBlockType::honeypot
+            ? null
+            : $request->block_value;
+
         // 更新
         $spam->target_id   = $target_id;
-        $spam->block_value = $request->block_value;
+        $spam->block_value = $block_value;
         $spam->memo        = $request->memo;
         $spam->save();
 

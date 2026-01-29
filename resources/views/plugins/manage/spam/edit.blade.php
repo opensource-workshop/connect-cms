@@ -37,10 +37,10 @@ use App\Enums\SpamBlockType;
                 </div>
             </div>
 
-            <div class="form-group row">
-                <label class="col-md-2 col-form-label text-md-right">値 <span class="badge badge-danger">必須</span></label>
+            <div class="form-group row" id="block_value_group">
+                <label class="col-md-2 col-form-label text-md-right">値 <span class="badge badge-danger" id="block_value_required_badge">必須</span></label>
                 <div class="col-md-10">
-                    <input type="text" name="block_value" value="{{ old('block_value', $spam->block_value) }}" class="form-control">
+                    <input type="text" name="block_value" id="block_value_input" value="{{ old('block_value', $spam->block_value) }}" class="form-control">
                     @include('plugins.common.errors_inline', ['name' => 'block_value'])
                 </div>
             </div>
@@ -96,5 +96,15 @@ use App\Enums\SpamBlockType;
 
     </div>
 </div>
+
+<script>
+$(function() {
+    // ハニーポットの場合は値フィールドを非表示
+    var blockType = '{{ $spam->block_type }}';
+    if (blockType === '{{ SpamBlockType::honeypot }}') {
+        $('#block_value_group').hide();
+    }
+});
+</script>
 
 @endsection
