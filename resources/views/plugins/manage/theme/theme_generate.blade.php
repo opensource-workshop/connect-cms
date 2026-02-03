@@ -76,7 +76,7 @@
 
             {{-- ディレクトリ名 --}}
             <div class="form-group row">
-                <label for="dir_name" class="col-md-2 col-form-label text-md-right">ディレクトリ名</label>
+                <label for="dir_name" class="col-md-2 col-form-label text-md-right">ディレクトリ名 <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-10">
                     @if ($errors || $theme_css)
                     <input type="text" name="dir_name" id="dir_name" value="{{old('dir_name', '')}}" class="form-control">
@@ -84,11 +84,15 @@
                     <input type="text" name="dir_name" id="dir_name" value="" class="form-control">
                     @endif
                     @if ($errors && $errors->has('dir_name')) <div class="text-danger">{{$errors->first('dir_name')}}</div> @endif
+                    <small class="text-muted">
+                        <div>※ テーマファイルを保存するフォルダ名です。</div>
+                        <div>※ 英数字と記号の「-」「_」のみ使用できます。</div>
+                    </small>
                 </div>
             </div>
             {{-- テーマ名 --}}
             <div class="form-group row">
-                <label for="theme_name" class="col-md-2 col-form-label text-md-right">テーマ名</label>
+                <label for="theme_name" class="col-md-2 col-form-label text-md-right">テーマ名 <span class="badge badge-danger">必須</span></label>
                 <div class="col-md-10">
                     @if ($errors || $theme_css)
                     <input type="text" name="theme_name" id="theme_name" value="{{old('theme_name', '')}}" class="form-control">
@@ -96,6 +100,9 @@
                     <input type="text" name="theme_name" id="theme_name" value="" class="form-control">
                     @endif
                     @if ($errors && $errors->has('theme_name')) <div class="text-danger">{{$errors->first('theme_name')}}</div> @endif
+                    <small class="text-muted">
+                        <div>※ サイト管理で表示・選択されるテーマ名です。</div>
+                    </small>
                 </div>
             </div>
             {{-- テーマセット --}}
