@@ -7,7 +7,8 @@
 --}}
 <tr id="slideshow-item-{{ $item->id }}">
     {{-- 表示順 --}}
-    <td class="d-none d-lg-display d-lg-table-cell text-nowrap" style="text-align:center; vertical-align:middle;">
+    <td class="d-block d-lg-table-cell text-nowrap" style="text-align:center; vertical-align:middle;">
+        <div class="d-lg-none font-weight-bold mb-1">表示順</div>
         {{-- 上移動 --}}
         <button type="button" class="btn btn-default btn-xs p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_display_sequence({{ $item->id }}, {{ $item->display_sequence }}, 'up')">
             <i class="fas fa-arrow-up"></i>
@@ -19,7 +20,8 @@
         </button>
     </td>
     {{-- 表示フラグ--}}
-    <td class="d-none d-lg-display d-lg-table-cell" style="text-align:center; vertical-align:middle;">
+    <td class="d-block d-lg-table-cell" style="text-align:center; vertical-align:middle;">
+        <div class="d-lg-none font-weight-bold mb-1">表示/非表示</div>
         <div class="custom-control custom-checkbox">
             <input
                 type="checkbox"
