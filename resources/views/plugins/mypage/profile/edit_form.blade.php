@@ -45,10 +45,12 @@ use App\Models\Core\UsersColumns;
         @elseif ($column->column_type == UserColumnType::user_email)
             {{-- メールアドレス --}}
             <div class="form-group row">
-                <label for="email" class="col-md-4 col-form-label text-md-right">{{$column->column_name}}</label>
+                <label for="email" class="col-md-4 col-form-label text-md-right">
+                    {{$column->column_name}} @if ($column->required)<span class="badge badge-danger">必須</span>@endif
+                </label>
 
                 <div class="col-md-8">
-                    <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ $column->place_holder ?? __('messages.input_email') }}">
+                    <input id="email" type="text" class="form-control @if ($errors->has('email')) border-danger @endif" name="email" value="{{ old('email', $user->email) }}" placeholder="{{ $column->place_holder ?? __('messages.input_email') }}" @if ($column->required) required @endif>
                     @include('plugins.common.errors_inline', ['name' => 'email'])
                     <div class="small {{ $column->caption_color }}">{!! nl2br((string)$column->caption) !!}</div>
                 </div>
@@ -117,4 +119,3 @@ use App\Models\Core\UsersColumns;
         </div>
     </div>
 </form>
-
