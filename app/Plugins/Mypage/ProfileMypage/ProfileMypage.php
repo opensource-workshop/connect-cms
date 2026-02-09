@@ -104,7 +104,12 @@ class ProfileMypage extends MypagePluginBase
                 $validator_array['column']['userid'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::user_email) {
                 // $validator_array['column']['email'] = ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)];
-                $base_rules = ['nullable', 'email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)];
+                $base_rules = ['email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)];
+                if ($users_column->required) {
+                    array_unshift($base_rules, 'required');
+                } else {
+                    array_unshift($base_rules, 'nullable');
+                }
                 $validator_array['column']['email'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::user_password) {
                 // 入力があったら、ここで現在のパスワードチェック
