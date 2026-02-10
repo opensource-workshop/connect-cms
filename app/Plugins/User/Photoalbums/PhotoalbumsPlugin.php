@@ -154,7 +154,10 @@ class PhotoalbumsPlugin extends UserPluginBase
         }
 
         // カバー写真に指定されている写真
-        $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))->where('is_cover', PhotoalbumContent::is_cover_on)->get();
+        $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))
+            ->where('is_cover', PhotoalbumContent::is_cover_on)
+            ->with(['upload', 'posterUpload'])
+            ->get();
 
         // 表示テンプレートを呼び出す。
         return $this->view('index', [
@@ -375,7 +378,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     private function getSortedChildren(PhotoalbumContent $parent, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
     {
         $children = is_null($preloaded_children)
-            ? $parent->children()->get()
+            ? $parent->children()->with(['upload', 'posterUpload'])->get()
             : $preloaded_children->get($parent->id, collect());
 
         // 設定画面などで事前に読み込んだ子要素一覧を再利用し、追加クエリを避ける
