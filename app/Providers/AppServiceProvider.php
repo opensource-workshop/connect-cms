@@ -543,6 +543,8 @@ class AppServiceProvider extends AuthServiceProvider
 
         $request = app(Request::class);
         $bucket_id = $buckets->id ?? null;
+        // GETは読み取り専用のため、同一リクエスト内キャッシュでSQLを減らしても整合性に影響しない。
+        // POST系は同一リクエスト内で権限やバケツ設定が更新される可能性があるためキャッシュしない。
         if ($bucket_id && $request->isMethod('get')) {
             static $cached_post_roles = [];
             if (array_key_exists($bucket_id, $cached_post_roles)) {
