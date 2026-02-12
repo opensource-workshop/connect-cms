@@ -61,7 +61,7 @@
 
         {{-- 一覧のチェックボックスによる削除、ダウンロードの制御(編集権限あり or フレームでダウンロードOK) --}}
         @if ($download_check)
-        $('#app_{{$frame_id}} input[type="checkbox"][name="photoalbum_content_id[]"]').on('change', function(){
+        $('#app_{{$frame_id}}').on('change', 'input[type="checkbox"][name="photoalbum_content_id[]"]', function(){
 
             $('#selected-contents{{$frame_id}}').html('');
 
@@ -88,11 +88,18 @@
         });
         @endif
 
-        // 埋め込みコードの表示
-        $('#app_{{$frame_id}} .embed_code_check').on('click', function(){
-            $("#" + $(this).data('name')).slideToggle();
-            $("#" + $(this).data('name')).focus();
-            $("#" + $(this).data('name')).select();
+        // 埋め込みコードの表示（もっと見るで追加された要素にも対応するため委譲）
+        $('#app_{{$frame_id}}').on('click', '.embed_code_check', function (event) {
+            event.preventDefault();
+
+            var targetId = $(this).data('name');
+            if (!targetId) {
+                return;
+            }
+
+            $("#" + targetId).slideToggle();
+            $("#" + targetId).focus();
+            $("#" + targetId).select();
         });
     });
 

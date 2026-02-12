@@ -7,55 +7,39 @@
  * @category フォトアルバム・プラグイン
 --}}
 {{-- データ一覧にアルバムが含まれる場合 --}}
-@if ($photoalbum_contents->where('is_folder', 1)->isNotEmpty())
 @php
-if ($frame->isExpandNarrow()) {
-    // 右・左エリア = スマホ表示と同等にする
-    $col_class = 'col-12';
-} else {
-    // メインエリア・フッターエリア
-    $col_class = 'col-md-4';
-}
+    $photoalbum_folder_items = $photoalbum_folder_items ?? $photoalbum_contents->where('is_folder', 1)->values();
+    $photoalbum_folder_total = $photoalbum_folder_total ?? $photoalbum_folder_items->count();
+    $photoalbum_folder_offset = $photoalbum_folder_offset ?? $photoalbum_folder_items->count();
+    $photoalbum_folder_limit = $photoalbum_folder_limit ?? $photoalbum_folder_total;
+    $photoalbum_load_more_use = $photoalbum_load_more_use ?? \App\Enums\UseType::not_use;
+    $folder_list_id = 'photoalbum-folder-list-' . $frame_id;
+    $folder_row_id = 'photoalbum-folder-row-' . $frame_id;
 @endphp
-<div class="row">
-    @foreach($photoalbum_contents->where('is_folder', 1) as $photoalbum_content)
-    <div class="{{$col_class}}">
-        <div class="card ml-3 mb-3 mt-3 p-0 mx-auto">
-            <a href="{{url('/')}}/plugin/photoalbums/changeDirectory/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}/#frame-{{$frame->id}}" class="text-center">
-                {{-- カバー画像が指定されていれば使用し、指定されていなければ、グレーのカバーを使用 --}}
-                @if ($covers->where('parent_id', $photoalbum_content->id)->first())
-                    <img src="{{url('/')}}/file/{{$covers->where('parent_id', $photoalbum_content->id)->first()->getCoverFileId()}}?size=small"
-                         id="cover_{{$loop->iteration}}"
-                         style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                         class="img-fluid"
-                         loading="lazy"
-                         decoding="async"
-                    >
-                @else
-                    <svg class="bd-placeholder-img card-img-top" width="100%" height="150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Image cap">
-                        <title>{{$photoalbum_content->name}}</title>
-                        <rect fill="#868e96" width="100%" height="100%"></rect>
-                        <text fill="#dee2e6"x="50%" y="50%" text-anchor="middle" dominant-baseline="central">{{$photoalbum_content->name}}</text>
-                    </svg>
-                @endif
-            </a>
-	        <div class="card-body">
-	            @if ($download_check)
-	            <div class="custom-control custom-checkbox">
-	                <input type="checkbox" class="custom-control-input" id="customCheck_{{$photoalbum_content->id}}" name="photoalbum_content_id[]" value="{{$photoalbum_content->id}}" data-name="{{$photoalbum_content->displayName}}">
-	                <label class="custom-control-label" for="customCheck_{{$photoalbum_content->id}}"></label>
-	            </div>
-	            @endif
-	            <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-	            <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
-	            @can('posts.update', [[$photoalbum_content, $frame->plugin_name, $buckets]])
-	            <a href="{{url('/')}}/plugin/photoalbums/edit/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}" class="btn btn-sm btn-success">
-	                <i class="far fa-edit"></i> 編集
-	            </a>
-	            @endcan
-	        </div>
+@if ($photoalbum_folder_total > 0)
+<div id="{{$folder_list_id}}"
+     data-more-url="{{url('/')}}/json/photoalbums/moreContents/{{$page->id}}/{{$frame_id}}/{{$parent_id ?? 0}}"
+     data-offset="{{$photoalbum_folder_offset}}"
+     data-limit="{{$photoalbum_folder_limit}}"
+     data-total="{{$photoalbum_folder_total}}">
+    <div class="row" id="{{$folder_row_id}}">
+        @include('plugins.user.photoalbums.card.index_folder_items', ['photoalbum_folder_items' => $photoalbum_folder_items])
+    </div>
+</div>
+@if ($photoalbum_load_more_use == \App\Enums\UseType::use && $photoalbum_folder_total > $photoalbum_folder_offset)
+    <div class="text-center mt-3 photoalbum-load-more-wrap">
+        <button type="button"
+                class="btn btn-outline-secondary photoalbum-load-more"
+                data-target="folder"
+                data-container="#{{$folder_list_id}}"
+                data-row="#{{$folder_row_id}}"
+                data-status="#photoalbum-folder-status-{{$frame_id}}"
+                data-label="フォルダをもっと見る">
+            フォルダをもっと見る
+        </button>
+        <div id="photoalbum-folder-status-{{$frame_id}}" class="small text-muted mt-1">
+            表示中 {{$photoalbum_folder_offset}} / {{$photoalbum_folder_total}}
         </div>
     </div>
-    @endforeach
-</div>
+@endif
 @endif
