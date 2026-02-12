@@ -28,6 +28,8 @@ if ($frame->isExpandNarrow()) {
                          id="cover_{{$loop->iteration}}"
                          style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                          class="img-fluid"
+                         loading="lazy"
+                         decoding="async"
                     >
                 @else
                     <svg class="bd-placeholder-img card-img-top" width="100%" height="150" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: Image cap">

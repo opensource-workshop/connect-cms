@@ -20,9 +20,13 @@ if ($frame->isExpandNarrow()) {
 $play_view_default = \App\Enums\PhotoalbumPlayviewType::play_in_list;
 $play_view = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, $play_view_default);
 $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length);
+$image_modal_id = 'photoalbum-image-modal-' . $frame_id;
 @endphp
 <div class="row">
     @foreach($photoalbum_contents->where('is_folder', 0) as $photoalbum_content)
+    @php
+        $description_attr = str_replace(["\r\n", "\r", "\n"], '\\n', (string) $photoalbum_content->description);
+    @endphp
     <div class="{{$col_class}}">
         <div class="card mt-3 shadow-sm">
         @if ($photoalbum_content->upload->is_image)
@@ -30,39 +34,25 @@ $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, Pho
             <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
                  id="photo_{{$frame_id}}_{{$loop->iteration}}"
                  style="max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
-                 class="img-fluid" data-toggle="modal" data-target="#image_Modal_{{$frame_id}}_{{$loop->iteration}}"
+                 class="img-fluid photoalbum-thumbnail"
+                 data-toggle="modal"
+                 data-target="#{{$image_modal_id}}"
+                 data-thumb="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
+                 data-full="{{url('/')}}/file/{{$photoalbum_content->upload_id}}"
+                 data-title="{{e($photoalbum_content->name)}}"
+                 data-description="{{e($description_attr)}}"
+                 loading="lazy"
+                 decoding="async"
             >
-            <div class="modal fade" id="image_Modal_{{$frame_id}}_{{$loop->iteration}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel_{{$frame_id}}_{{$loop->iteration}}">
-                <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
-                    <div class="modal-content pb-3">
-                        <div class="modal-body mx-auto">
-                            {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
-                            <img src="{{url('/')}}/file/{{$photoalbum_content->upload_id}}?size=small"
-                                 style="object-fit: scale-down;"
-                                 id="popup_photo_{{$frame_id}}_{{$loop->iteration}}"
-                                 class="img-fluid"/>
-                        </div>
-                        <div class="modal-img_footer">
-                            <h5 class="card-title">{{$photoalbum_content->name}}</h5>
-                            <p class="card-text">{!!nl2br(e($photoalbum_content->description))!!}</p>
-                            <button type="button" class="btn btn-success" data-dismiss="modal">閉じる</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <script>
-            {{-- サムネイル枠のクリックで、実寸画像を読み込む。一覧表示時のネットワーク通信量の軽減対応 --}}
-            $("#photo_{{$frame_id}}_{{$loop->iteration}}").on("click", function() {
-               $("#popup_photo_{{$frame_id}}_{{$loop->iteration}}").attr('src', "{{url('/')}}/file/{{$photoalbum_content->upload_id}}");
-            });
-            </script>
         @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype) && $play_view == PhotoalbumPlayviewType::play_in_detail)
             {{-- 動画：一覧はサムネイル画像のみで詳細画面で再生する --}}
             <a href="{{url('/')}}/plugin/photoalbums/detail/{{$page->id}}/{{$frame_id}}/{{$photoalbum_content->id}}#frame-{{$frame->id}}">
                 <img src="{{url('/')}}/file/{{$photoalbum_content->poster_upload_id}}"
                      style="width: 100%; max-height: 200px; object-fit: scale-down; cursor:pointer; border-radius: 3px;"
                      id="popup_photo_{{$frame_id}}_{{$loop->iteration}}"
-                     class="img-fluid"/>
+                     class="img-fluid"
+                     loading="lazy"
+                     decoding="async"/>
             </a>
         @elseif ($photoalbum_content->isVideo($photoalbum_content->mimetype))
             {{-- 動画：一覧で再生する --}}
@@ -129,4 +119,66 @@ $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, Pho
     </div>
     @endforeach
 </div>
+
+<div class="modal fade" id="{{$image_modal_id}}" tabindex="-1" role="dialog" aria-labelledby="{{$image_modal_id}}-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-middle">{{-- モーダルウィンドウの縦表示位置を調整・画像を大きく見せる --}}
+        <div class="modal-content pb-3">
+            <div class="modal-body mx-auto">
+                {{-- 拡大表示ウィンドウにも、初期設定でサムネイルを設定しておき、クリック時に実寸画像を読み込みなおす --}}
+                <img src="" style="object-fit: scale-down;" class="img-fluid photoalbum-modal-image"/>
+            </div>
+            <div class="modal-img_footer">
+                <h5 class="card-title photoalbum-modal-title"></h5>
+                <p class="card-text photoalbum-modal-description"></p>
+                <button type="button" class="btn btn-success" data-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(function () {
+    var modalId = '#{{$image_modal_id}}';
+    var $modal = $(modalId);
+    var $htmlDecoder = $('<textarea />');
+    var decodeHtmlEntities = function (value) {
+        if (!value) {
+            return '';
+        }
+        return $htmlDecoder.html(value).text();
+    };
+    $modal.on('show.bs.modal', function (event) {
+        var $trigger = $(event.relatedTarget);
+        var thumb = $trigger.data('thumb') || '';
+        var full = $trigger.data('full') || '';
+        var title = $trigger.data('title') || '';
+        var description = $trigger.attr('data-description') || '';
+
+        $modal.find('.photoalbum-modal-image').attr('src', thumb);
+        $modal.find('.photoalbum-modal-title').text(title);
+
+        description = decodeHtmlEntities(description.replace(/\\n/g, '\n'));
+        var $description = $modal.find('.photoalbum-modal-description').empty();
+        if (description) {
+            var lines = description.split('\n');
+            $.each(lines, function (index, line) {
+                if (index) {
+                    $description.append('<br>');
+                }
+                $description.append(document.createTextNode(line));
+            });
+        }
+
+        if (full) {
+            requestAnimationFrame(function () {
+                $modal.find('.photoalbum-modal-image').attr('src', full);
+            });
+        }
+    });
+
+    $modal.on('hidden.bs.modal', function () {
+        $modal.find('.photoalbum-modal-image').attr('src', '');
+    });
+});
+</script>
 @endif
