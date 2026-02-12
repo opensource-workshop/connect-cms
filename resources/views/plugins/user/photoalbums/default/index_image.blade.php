@@ -140,22 +140,33 @@ $image_modal_id = 'photoalbum-image-modal-' . $frame_id;
 $(function () {
     var modalId = '#{{$image_modal_id}}';
     var $modal = $(modalId);
+    var $htmlDecoder = $('<textarea />');
+    var decodeHtmlEntities = function (value) {
+        if (!value) {
+            return '';
+        }
+        return $htmlDecoder.html(value).text();
+    };
     $modal.on('show.bs.modal', function (event) {
         var $trigger = $(event.relatedTarget);
         var thumb = $trigger.data('thumb') || '';
         var full = $trigger.data('full') || '';
         var title = $trigger.data('title') || '';
-        var description = $trigger.data('description') || '';
+        var description = $trigger.attr('data-description') || '';
 
         $modal.find('.photoalbum-modal-image').attr('src', thumb);
         $modal.find('.photoalbum-modal-title').text(title);
 
-        description = description.replace(/\\n/g, '\n');
+        description = decodeHtmlEntities(description.replace(/\\n/g, '\n'));
+        var $description = $modal.find('.photoalbum-modal-description').empty();
         if (description) {
-            var html = $('<div>').text(description).html().replace(/\n/g, '<br>');
-            $modal.find('.photoalbum-modal-description').html(html);
-        } else {
-            $modal.find('.photoalbum-modal-description').html('');
+            var lines = description.split('\n');
+            $.each(lines, function (index, line) {
+                if (index) {
+                    $description.append('<br>');
+                }
+                $description.append(document.createTextNode(line));
+            });
         }
 
         if (full) {
