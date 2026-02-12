@@ -49,3 +49,90 @@
 </div>
 @endcan
 </div>
+<script>
+$(function () {
+    $('.photoalbum-load-more').on('click', function () {
+        var $button = $(this);
+        if ($button.data('loading')) {
+            return;
+        }
+
+        var containerSelector = $button.data('container');
+        var rowSelector = $button.data('row');
+        var statusSelector = $button.data('status');
+        var target = $button.data('target');
+        var label = $button.data('label') || $button.text();
+        var $container = $(containerSelector);
+        var $row = $(rowSelector);
+        var $status = $(statusSelector);
+
+        if (!$container.length || !$row.length) {
+            return;
+        }
+
+        var offset = parseInt($container.data('offset'), 10) || 0;
+        var limit = parseInt($container.data('limit'), 10) || 0;
+        var total = parseInt($container.data('total'), 10) || 0;
+        var url = $container.data('more-url');
+
+        if (!url || offset >= total || limit <= 0) {
+            return;
+        }
+
+        $button.data('loading', true).prop('disabled', true).text('読み込み中...');
+
+        $.get(url, {
+            target: target,
+            offset: offset,
+            limit: limit
+        }).done(function (response) {
+            if (response && response.html) {
+                $row.append(response.html);
+            }
+
+            var responseTotal = total;
+            if (response && response.total !== undefined && response.total !== null) {
+                var parsedTotal = parseInt(response.total, 10);
+                if (!isNaN(parsedTotal) && parsedTotal >= 0) {
+                    responseTotal = parsedTotal;
+                    $container.data('total', responseTotal);
+                }
+            }
+
+            var nextOffset = offset;
+            if (response && response.next_offset !== undefined && response.next_offset !== null) {
+                var parsedOffset = parseInt(response.next_offset, 10);
+                if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+                    nextOffset = parsedOffset;
+                }
+            }
+            if (nextOffset > responseTotal) {
+                nextOffset = responseTotal;
+            }
+
+            $container.data('offset', nextOffset);
+
+            if ($status.length) {
+                if (nextOffset >= responseTotal) {
+                    $status.text('すべて表示しました');
+                } else {
+                    $status.text('表示中 ' + nextOffset + ' / ' + responseTotal);
+                }
+            }
+
+            if (nextOffset >= responseTotal || nextOffset <= offset) {
+                $button.hide();
+            }
+        }).fail(function () {
+            if ($status.length) {
+                $status.text('読み込みに失敗しました');
+            }
+        }).always(function () {
+            $button.data('loading', false);
+            if ($button.is(':visible')) {
+                $button.prop('disabled', false).text(label);
+            }
+        });
+    });
+});
+</script>

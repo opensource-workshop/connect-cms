@@ -25,6 +25,8 @@ final class PhotoalbumFrameConfig extends EnumsBase
     const embed_code = 'embed_code';
     const play_view = 'play_view';
     const description_list_length = 'description_list_length';
+    const load_more_use_flag = 'load_more_use_flag';
+    const load_more_count = 'load_more_count';
 
     // key/valueの連想配列
     const enum = [
@@ -38,5 +40,7 @@ final class PhotoalbumFrameConfig extends EnumsBase
         self::embed_code => '動画埋め込みコード',
         self::play_view => '動画の再生形式',
         self::description_list_length => '一覧の説明表示文字数',
+        self::load_more_use_flag => 'もっと見る機能',
+        self::load_more_count => 'もっと見る表示件数',
     ];
 }

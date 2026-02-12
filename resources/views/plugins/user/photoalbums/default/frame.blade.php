@@ -13,11 +13,19 @@
 <script type="text/javascript">
     $(function () {
         var detailValue = '{{ \App\Enums\PhotoalbumPlayviewType::play_in_detail }}';
+        var loadMoreUseValue = '{{ \App\Enums\UseType::use }}';
 
         function togglePlayViewOptions(value) {
             var isDetail = value == detailValue;
             $('#description_list_length').prop('disabled', !isDetail);
             $('.photoalbum-playview__detail-options').toggleClass('text-muted', !isDetail);
+        }
+
+        function toggleLoadMoreOptions() {
+            var useValue = $('input[name="load_more_use_flag"]:checked').val();
+            var isEnabled = useValue == loadMoreUseValue;
+            $('#load_more_count').prop('disabled', !isEnabled);
+            $('.photoalbum-load-more-options').toggleClass('text-muted', !isEnabled);
         }
 
         var isVisibilitySaving = false;
@@ -27,6 +35,9 @@
         var isSequenceSaving = false;
         var pendingSequenceRequest = null;
         var sequenceEndpoint = '{{ url('/') }}/json/photoalbums/updateViewSequence/{{$page->id}}/{{$frame_id}}';
+
+        $('input[name="load_more_use_flag"]').on('change', toggleLoadMoreOptions);
+        toggleLoadMoreOptions();
 
         function setVisibilitySaving(isSaving) {
             $('.photoalbum-visibility-toggle__input').prop('disabled', isSaving);
@@ -334,6 +345,16 @@
             $play_view_default = \App\Enums\PhotoalbumPlayviewType::play_in_list;
             $current_play_view = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::play_view, $play_view_default);
             $description_list_length = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::description_list_length);
+            $load_more_use_flag = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::load_more_use_flag, UseType::not_use);
+            $load_more_default = (int) config('photoalbums.load_more_image_limit', 10);
+            if ($load_more_default < 1) {
+                $load_more_default = 10;
+            }
+            $load_more_max_limit = (int) config('photoalbums.load_more_max_limit', 100);
+            if ($load_more_max_limit < 1) {
+                $load_more_max_limit = 100;
+            }
+            $load_more_count = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::load_more_count, $load_more_default);
             $hidden_folder_value = FrameConfig::getConfigValueAndOld($frame_configs, PhotoalbumFrameConfig::hidden_folder_ids, '');
             $hidden_folder_ids = is_array($hidden_folder_value)
                 ? $hidden_folder_value
@@ -388,6 +409,33 @@
                         </label>
                     </div>
                 @endforeach
+            </div>
+        </div>
+        {{-- もっと見る --}}
+        <div class="form-group row">
+            <label class="{{$frame->getSettingLabelClass(true)}}">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::load_more_use_flag]}}</label>
+            <div class="{{$frame->getSettingInputClass(true)}}">
+                @foreach (UseType::enum as $key => $value)
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input
+                            type="radio"
+                            value="{{ $key }}"
+                            id="{{ "load_more_use_flag_{$key}" }}"
+                            name="load_more_use_flag"
+                            class="custom-control-input"
+                            {{ $load_more_use_flag == $key ? 'checked' : '' }}
+                        >
+                        <label class="custom-control-label" for="{{ "load_more_use_flag_{$key}" }}">
+                            {{ $value }}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+            <label class="{{$frame->getSettingLabelClass(true)}} photoalbum-load-more-options">{{PhotoalbumFrameConfig::enum[PhotoalbumFrameConfig::load_more_count]}}</label>
+            <div class="{{$frame->getSettingInputClass()}} photoalbum-load-more-options">
+                <input type="number" name="load_more_count" id="load_more_count" min="1" max="{{ $load_more_max_limit }}"
+                       value="{{ old('load_more_count', $load_more_count) }}" class="form-control">
+                <small class="form-text text-muted mt-0">1回あたりの表示件数（最大{{ $load_more_max_limit }}件）</small>
             </div>
         </div>
         {{-- 撮影日 --}}
