@@ -34,6 +34,7 @@ class Page extends Model
         'header_color',
         'theme',
         'layout',
+        'layout_inherit_flag',
         'base_display_flag',
         'membership_flag',
         'container_flag',

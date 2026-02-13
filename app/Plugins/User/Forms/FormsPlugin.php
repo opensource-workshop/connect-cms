@@ -20,6 +20,8 @@ use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsColumnsSelects;
 use App\Models\User\Forms\FormsInputs;
 use App\Models\User\Forms\FormsInputCols;
+use App\Models\Common\SpamBlockHistory;
+use App\Models\Common\SpamList;
 
 use App\Rules\CustomValiAlphaNumForMultiByte;
 use App\Rules\CustomValiCheckWidthForString;
@@ -42,6 +44,7 @@ use App\Enums\FormMode;
 use App\Enums\FormsRegisterTargetPlugin;
 use App\Enums\FormStatusType;
 use App\Enums\PluginName;
+use App\Enums\SpamBlockType;
 use App\Enums\Required;
 use App\Enums\StatusType;
 use App\Models\User\Bbses\Bbs;
@@ -99,6 +102,7 @@ class FormsPlugin extends UserPluginBase
             'listInputs',
             'editInput',
             'thanks',
+            'editSpamFilter',
         ];
         $functions['post'] = [
             'index',
@@ -115,6 +119,10 @@ class FormsPlugin extends UserPluginBase
             'registerOtherPlugins',
             'updateSelectSequenceAll',
             'updateColumnSequenceAll',
+            'saveSpamFilter',
+            'addSpamList',
+            'deleteSpamList',
+            'addToSpamListFromInput',
         ];
         return $functions;
     }
@@ -140,6 +148,11 @@ class FormsPlugin extends UserPluginBase
         $role_check_table["registerOtherPlugins"] = ['role_article'];
         $role_check_table['updateSelectSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
         $role_check_table['updateColumnSequenceAll'] = ['buckets.upColumnSequence', 'buckets.downColumnSequence'];
+        $role_check_table['editSpamFilter']          = ['frames.edit'];
+        $role_check_table['saveSpamFilter']          = ['frames.create'];
+        $role_check_table['addSpamList']             = ['frames.create'];
+        $role_check_table['deleteSpamList']          = ['frames.delete'];
+        $role_check_table['addToSpamListFromInput']  = ['frames.create'];
         return $role_check_table;
     }
 
@@ -335,6 +348,15 @@ class FormsPlugin extends UserPluginBase
                 return false;
             }
 
+            // スパムブロックエラーメッセージの確認
+            $spam_blocked_error = session("spam_blocked_error_{$frame_id}");
+            if ($spam_blocked_error) {
+                // エラー画面へ
+                return $this->commonView('error_messages', [
+                    'error_messages' => [$spam_blocked_error],
+                ]);
+            }
+
             // 登録期間外か
             if ($this->isOutOfTermRegist($form)) {
                 // エラー画面へ
@@ -436,6 +458,9 @@ class FormsPlugin extends UserPluginBase
                 }
             }
 
+            // ハニーポット設定確認
+            $has_honeypot = $this->hasHoneypot($form);
+
             if ($form->form_mode == FormMode::form) {
                 // フォーム
                 return $this->view('forms', [
@@ -444,6 +469,7 @@ class FormsPlugin extends UserPluginBase
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
                     'errors' => $errors,
+                    'has_honeypot' => $has_honeypot,
                 ]);
             } else {
                 // アンケート
@@ -453,6 +479,7 @@ class FormsPlugin extends UserPluginBase
                     'forms_columns' => $forms_columns,
                     'forms_columns_id_select' => $forms_columns_id_select,
                     'errors' => $errors,
+                    'has_honeypot' => $has_honeypot,
                 ]);
             }
         } else {
@@ -800,6 +827,27 @@ class FormsPlugin extends UserPluginBase
             ]);
         }
 
+        // ハニーポットチェック
+        $honeypot_check = $this->checkHoneypot($request, $form);
+        if ($honeypot_check['blocked']) {
+            $this->recordHoneypotBlock($honeypot_check, $form->id);
+
+            return $this->commonView('error_messages', [
+                'error_messages' => [__('messages.honeypot_blocked')],
+            ]);
+        }
+
+        // スパムフィルタリングチェック
+        $spam_check = $this->checkSpamFilter($request, $form);
+        if ($spam_check['blocked']) {
+            $this->recordSpamBlock($spam_check, $form->id);
+
+            $spam_message = $form->spam_filter_message ?: '入力されたメールアドレス、または、IPアドレスからの送信は現在制限されています。';
+            return $this->commonView('error_messages', [
+                'error_messages' => [$spam_message],
+            ]);
+        }
+
         // フォームのカラムデータ
         $forms_columns = $this->getFormsColumns($form);
 
@@ -916,6 +964,9 @@ class FormsPlugin extends UserPluginBase
             }
         }
 
+        // ハニーポット設定確認
+        $has_honeypot = $this->hasHoneypot($form);
+
         // 表示テンプレートを呼び出す
         if ($form->form_mode == FormMode::form) {
             // フォーム
@@ -925,6 +976,7 @@ class FormsPlugin extends UserPluginBase
                 'form' => $form,
                 'forms_columns' => $forms_columns,
                 'uploads' => $uploads,
+                'has_honeypot' => $has_honeypot,
             ]);
         } else {
             // アンケート
@@ -934,6 +986,7 @@ class FormsPlugin extends UserPluginBase
                 'form' => $form,
                 'forms_columns' => $forms_columns,
                 'uploads' => $uploads,
+                'has_honeypot' => $has_honeypot,
             ]);
         }
     }
@@ -989,6 +1042,31 @@ class FormsPlugin extends UserPluginBase
             return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
+        // ハニーポットチェック（二重防御）
+        $honeypot_check = $this->checkHoneypot($request, $form);
+        if ($honeypot_check['blocked']) {
+            $this->recordHoneypotBlock($honeypot_check, $form->id);
+
+            // エラーメッセージをセッションに保存
+            session()->flash("spam_blocked_error_{$frame_id}", __('messages.honeypot_blocked'));
+
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
+        }
+
+        // スパムフィルタリングチェック（二重防御）
+        $spam_check = $this->checkSpamFilter($request, $form);
+        if ($spam_check['blocked']) {
+            $this->recordSpamBlock($spam_check, $form->id);
+
+            // エラーメッセージをセッションに保存
+            $spam_message = $form->spam_filter_message ?: '入力されたメールアドレス、または、IPアドレスからの送信は現在制限されています。';
+            session()->flash("spam_blocked_error_{$frame_id}", $spam_message);
+
+            // 初期表示にリダイレクトして、初期表示処理にまかせる（エラー表示）
+            return collect(['redirect_path' => url($this->page->permanent_link)]);
+        }
+
         // forms_inputs 登録
         $forms_inputs = new FormsInputs();
         $forms_inputs->forms_id = $form->id;
@@ -1013,6 +1091,11 @@ class FormsPlugin extends UserPluginBase
                 $number = $form->numbering_prefix . sprintf('%06d', $this->getNo('forms', $form->bucket_id, $form->numbering_prefix));
                 $forms_inputs->number_with_prefix = $number;
             }
+        }
+
+        // IPアドレスを記録（スパムフィルタリングが有効な場合のみ）
+        if ($form->use_spam_filter_flag) {
+            $forms_inputs->ip_address = $request->ip();
         }
 
         $forms_inputs->save();
@@ -2741,6 +2824,21 @@ ORDER BY forms_inputs_id, forms_columns_id
                                         ->orderBy('forms_inputs_id', 'asc')->orderBy('forms_columns_id', 'asc')
                                         ->get();
 
+        // メールアドレス型カラムのID取得
+        $email_column_ids = $columns->where('column_type', FormColumnType::mail)->pluck('id')->toArray();
+
+        // 各投稿のメールアドレス有無マップを作成
+        $has_email_map = [];
+        foreach ($inputs as $input) {
+            $has_email = $input_cols->where('forms_inputs_id', $input->id)
+                ->whereIn('forms_columns_id', $email_column_ids)
+                ->filter(function ($col) {
+                    return !empty($col->value);
+                })
+                ->isNotEmpty();
+            $has_email_map[$input->id] = $has_email;
+        }
+
         // bucktsで開いていたページの保持
         // $frame_page = "frame_{$frame_id}_buckets_page";
 
@@ -2750,6 +2848,7 @@ ORDER BY forms_inputs_id, forms_columns_id
             'columns' => $columns,
             'inputs' => $inputs,
             'input_cols' => $input_cols,
+            'has_email_map' => $has_email_map,
         ]);
     }
 
@@ -3110,5 +3209,494 @@ ORDER BY forms_inputs_id, forms_columns_id
         } else {
             return [false, '対象ファイルに対する権限なし'];
         }
+    }
+
+    /**
+     * スパムブロックのログ記録とDB履歴記録
+     *
+     * @param array $spam_check checkSpamFilter() の戻り値
+     * @param int $forms_id フォームID
+     * @return void
+     */
+    private function recordSpamBlock(array $spam_check, int $forms_id): void
+    {
+        Log::info('Spam blocked', [
+            'form_id' => $forms_id,
+            'ip' => $spam_check['client_ip'],
+            'block_type' => $spam_check['matched_spam_list']->block_type ?? null,
+            'matched_rule' => $spam_check['matched_spam_list']->id ?? null,
+        ]);
+
+        // 履歴記録は補助的な機能のため、DB記録が失敗しても本来のスパムブロック処理（エラーメッセージ表示）を続行する
+        try {
+            SpamBlockHistory::create([
+                'spam_list_id'    => $spam_check['matched_spam_list']->id,
+                'forms_id'        => $forms_id,
+                'block_type'      => $spam_check['matched_spam_list']->block_type,
+                'block_value'     => $spam_check['matched_spam_list']->block_value,
+                'client_ip'       => $spam_check['client_ip'],
+                'submitted_email' => $spam_check['email'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record spam block history', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * ハニーポットチェック
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param Forms $form フォームデータ
+     * @return array ブロック情報の配列
+     */
+    private function checkHoneypot($request, $form): array
+    {
+        $client_ip = $request->ip();
+
+        // このフォーム用のハニーポット設定を取得
+        $honeypot_spam_list = SpamList::where('target_plugin_name', 'forms')
+            ->where('block_type', SpamBlockType::honeypot)
+            ->where(function ($q) use ($form) {
+                $q->where('target_id', $form->id)
+                  ->orWhereNull('target_id');
+            })
+            ->first();
+
+        // ハニーポットが設定されていなければ早期リターン
+        if (!$honeypot_spam_list) {
+            return [
+                'blocked' => false,
+                'client_ip' => $client_ip,
+                'matched_spam_list' => null,
+            ];
+        }
+
+        // ハニーポットフィールドに値があればボットと判定
+        $honeypot_value = $request->input('website_url', '');
+        if (!empty($honeypot_value)) {
+            return [
+                'blocked' => true,
+                'client_ip' => $client_ip,
+                'honeypot_value' => $honeypot_value,
+                'matched_spam_list' => $honeypot_spam_list,
+            ];
+        }
+
+        return [
+            'blocked' => false,
+            'client_ip' => $client_ip,
+            'matched_spam_list' => $honeypot_spam_list,
+        ];
+    }
+
+    /**
+     * ハニーポットブロックのログ記録とDB履歴記録
+     *
+     * @param array $honeypot_check checkHoneypot() の戻り値
+     * @param int $forms_id フォームID
+     * @return void
+     */
+    private function recordHoneypotBlock(array $honeypot_check, int $forms_id): void
+    {
+        Log::info('Honeypot blocked', [
+            'form_id' => $forms_id,
+            'ip' => $honeypot_check['client_ip'],
+            'honeypot_value' => $honeypot_check['honeypot_value'] ?? null,
+            'spam_list_id' => $honeypot_check['matched_spam_list']->id ?? null,
+        ]);
+
+        // 履歴記録は補助的な機能のため、DB記録が失敗しても本来のブロック処理（エラーメッセージ表示）を続行する
+        try {
+            SpamBlockHistory::create([
+                'spam_list_id'    => $honeypot_check['matched_spam_list']->id ?? null,
+                'forms_id'        => $forms_id,
+                'block_type'      => SpamBlockType::honeypot,
+                'block_value'     => $honeypot_check['honeypot_value'] ?? null,
+                'client_ip'       => $honeypot_check['client_ip'],
+                'submitted_email' => null,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to record honeypot block history', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * ハニーポットが設定されているか確認
+     *
+     * @param Forms $form フォームデータ
+     * @return bool ハニーポットが設定されている場合true
+     */
+    private function hasHoneypot($form): bool
+    {
+        return SpamList::where('target_plugin_name', 'forms')
+            ->where('block_type', SpamBlockType::honeypot)
+            ->where(function ($q) use ($form) {
+                $q->where('target_id', $form->id)
+                  ->orWhereNull('target_id');
+            })
+            ->exists();
+    }
+
+    /**
+     * スパムフィルタリングチェック
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param Forms $form フォームデータ
+     * @return array ブロック情報の配列
+     */
+    private function checkSpamFilter($request, $form): array
+    {
+        $client_ip = $request->ip();
+
+        // スパムフィルタリングが無効なら早期リターン
+        if (!$form->use_spam_filter_flag) {
+            return [
+                'blocked' => false,
+                'matched_spam_list' => null,
+                'client_ip' => $client_ip,
+                'email' => null,
+            ];
+        }
+
+        // 取得対象のスパムリスト（このフォーム用 + サイト全体用）
+        $spam_lists = SpamList::getFormsSpamLists($form->id);
+
+        if ($spam_lists->isEmpty()) {
+            return [
+                'blocked' => false,
+                'matched_spam_list' => null,
+                'client_ip' => $client_ip,
+                'email' => null,
+            ];
+        }
+
+        // IPアドレスチェック
+        $matched_spam_list = $spam_lists->where('block_type', SpamBlockType::ip_address)
+                                        ->where('block_value', $client_ip)
+                                        ->first();
+        if ($matched_spam_list) {
+            return [
+                'blocked' => true,
+                'matched_spam_list' => $matched_spam_list,
+                'client_ip' => $client_ip,
+                'email' => null,
+            ];
+        }
+
+        // メールアドレス・ドメインチェック（メール型カラムの値を取得）
+        $email_columns = FormsColumns::where('forms_id', $form->id)
+            ->where('column_type', FormColumnType::mail)
+            ->pluck('id');
+
+        foreach ($email_columns as $column_id) {
+            $email = $request->forms_columns_value[$column_id] ?? null;
+            if (empty($email)) {
+                continue;
+            }
+
+            // メールアドレス完全一致チェック
+            $matched_spam_list = $spam_lists->where('block_type', SpamBlockType::email)
+                                            ->where('block_value', $email)
+                                            ->first();
+            if ($matched_spam_list) {
+                return [
+                    'blocked' => true,
+                    'matched_spam_list' => $matched_spam_list,
+                    'client_ip' => $client_ip,
+                    'email' => $email,
+                ];
+            }
+
+            // ドメインチェック
+            $domain = substr(strrchr($email, "@"), 1);
+            if ($domain) {
+                $matched_spam_list = $spam_lists->where('block_type', SpamBlockType::domain)
+                                                ->where('block_value', $domain)
+                                                ->first();
+                if ($matched_spam_list) {
+                    return [
+                        'blocked' => true,
+                        'matched_spam_list' => $matched_spam_list,
+                        'client_ip' => $client_ip,
+                        'email' => $email,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'blocked' => false,
+            'matched_spam_list' => null,
+            'client_ip' => $client_ip,
+            'email' => null,
+        ];
+    }
+
+    /**
+     * スパムフィルタリング設定画面
+     *
+     * @method_title スパムフィルタリング
+     * @method_desc スパムフィルタリングの設定ができます。
+     * @method_detail スパムリストの管理や、ブロック時のメッセージを設定できます。
+     */
+    public function editSpamFilter($request, $page_id, $frame_id)
+    {
+        // フォーム＆フレームデータ
+        $form_frame = $this->getFormFrame($frame_id);
+
+        // フォームデータ
+        $form = null;
+        if (!empty($form_frame->bucket_id)) {
+            $form = Forms::where('bucket_id', $form_frame->bucket_id)->first();
+        }
+
+        if (empty($form)) {
+            // ワーニング画面へ
+            return $this->view('forms_edit_warning_messages', [
+                'warning_messages' => ["フォーム選択から選択するか、フォーム作成で作成してください。"],
+            ]);
+        }
+
+        // このフォームに適用されるスパムリスト（フォーム固有 + サイト全体）
+        $spam_lists = SpamList::getFormsSpamLists($form->id);
+
+        // 表示テンプレートを呼び出す
+        return $this->view('forms_edit_spam_filter', [
+            'form'       => $form,
+            'spam_lists' => $spam_lists,
+        ]);
+    }
+
+    /**
+     * スパムフィルタリング設定の保存
+     */
+    public function saveSpamFilter($request, $page_id, $frame_id, $forms_id)
+    {
+        // フォームデータ取得
+        $form = Forms::find($forms_id);
+        if (empty($form)) {
+            abort(404, 'フォームが見つかりません。');
+        }
+
+        // 更新
+        $form->use_spam_filter_flag = $request->input('use_spam_filter_flag', 0);
+        $form->spam_filter_message  = $request->spam_filter_message;
+        $form->save();
+
+        // リダイレクト
+        return redirect("/plugin/forms/editSpamFilter/{$page_id}/{$frame_id}#frame-{$frame_id}")
+            ->with('flash_message', 'スパムフィルタリング設定を保存しました。');
+    }
+
+    /**
+     * スパムリストへの追加
+     */
+    public function addSpamList($request, $page_id, $frame_id, $forms_id)
+    {
+        // ハニーポットの場合は値不要、それ以外は必須
+        $block_value_rules = $request->block_type === SpamBlockType::honeypot
+            ? ['nullable', 'max:255']
+            : ['required', 'max:255'];
+
+        // 項目のエラーチェック
+        $validator = Validator::make($request->all(), [
+            'block_type'  => ['required', 'in:' . implode(',', SpamBlockType::getMemberKeys())],
+            'block_value' => $block_value_rules,
+        ]);
+        $validator->setAttributeNames([
+            'block_type'  => '種別',
+            'block_value' => '値',
+        ]);
+
+        // エラーがあった場合は入力画面に戻る
+        if ($validator->fails()) {
+            return redirect("/plugin/forms/editSpamFilter/{$page_id}/{$frame_id}#frame-{$frame_id}")
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        // ハニーポットの場合は値をnullにする
+        $block_value = $request->block_type === SpamBlockType::honeypot
+            ? null
+            : $request->block_value;
+
+        // スパムリストの追加
+        SpamList::create([
+            'target_plugin_name' => 'forms',
+            'target_id'          => $forms_id,
+            'block_type'         => $request->block_type,
+            'block_value'        => $block_value,
+            'memo'               => $request->memo,
+        ]);
+
+        // リダイレクト
+        return redirect("/plugin/forms/editSpamFilter/{$page_id}/{$frame_id}#frame-{$frame_id}")
+            ->with('flash_message', 'スパムリストに追加しました。');
+    }
+
+    /**
+     * スパムリストからの削除
+     */
+    public function deleteSpamList($request, $page_id, $frame_id, $spam_id)
+    {
+        // スパムリストデータの取得
+        $spam = SpamList::find($spam_id);
+
+        // このフォーム専用のスパムリストのみ削除可能
+        if ($spam && !$spam->isGlobalScope()) {
+            $spam->delete();
+        }
+
+        // リダイレクト
+        return redirect("/plugin/forms/editSpamFilter/{$page_id}/{$frame_id}#frame-{$frame_id}")
+            ->with('flash_message', 'スパムリストから削除しました。');
+    }
+
+    /**
+     * メールアドレス型カラムの入力値を取得
+     *
+     * @param int $forms_id フォームID
+     * @param int $inputs_id 投稿ID
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    private function getEmailInputCols($forms_id, $inputs_id)
+    {
+        $email_columns = FormsColumns::where('forms_id', $forms_id)
+            ->where('column_type', FormColumnType::mail)
+            ->pluck('id');
+
+        return FormsInputCols::where('forms_inputs_id', $inputs_id)
+            ->whereIn('forms_columns_id', $email_columns)
+            ->get();
+    }
+
+    /**
+     * スパムリストへの追加（重複チェック付き）
+     *
+     * @param int|null $target_id 対象ID（nullの場合は全体適用）
+     * @param string $block_type ブロック種別
+     * @param string $block_value ブロック対象の値
+     * @param string|null $memo メモ
+     * @return string 'added'（追加成功）または'duplicate'（重複のためスキップ）
+     */
+    private function addToSpamListWithDuplicateCheck($target_id, $block_type, $block_value, $memo)
+    {
+        $added = SpamList::addIfNotExists('forms', $target_id, $block_type, $block_value, $memo);
+        return $added ? 'added' : 'duplicate';
+    }
+
+    /**
+     * 投稿一覧からスパムリストへ追加
+     */
+    public function addToSpamListFromInput($request, $page_id, $frame_id, $inputs_id)
+    {
+        // 投稿データの取得
+        $input = FormsInputs::find($inputs_id);
+        if (empty($input)) {
+            abort(404, '投稿データが見つかりません。');
+        }
+
+        $forms_id = $input->forms_id;
+        $added_count = 0;
+        $skipped_duplicate_count = 0;
+        $skipped_no_data_count = 0;
+
+        // メモ
+        $memo = $request->input('memo');
+
+        // チェックボックスが1つも選択されていない場合
+        $has_selection = $request->filled('add_ip_address') || $request->filled('add_email') || $request->filled('add_domain');
+        if (!$has_selection) {
+            return redirect("/plugin/forms/listInputs/{$page_id}/{$frame_id}/{$forms_id}#frame-{$frame_id}")
+                ->with('flash_message', '追加する項目（IPアドレス、メールアドレス、ドメイン）を1つ以上選択してください。');
+        }
+
+        // 適用範囲の決定
+        $scope_type = $request->input('scope_type', 'form');
+        $target_id = ($scope_type === 'global') ? null : $forms_id;
+
+        // IPアドレスをスパムリストに追加
+        if ($request->filled('add_ip_address')) {
+            if (empty($input->ip_address)) {
+                $skipped_no_data_count++;
+            } else {
+                $result = $this->addToSpamListWithDuplicateCheck($target_id, SpamBlockType::ip_address, $input->ip_address, $memo);
+                if ($result === 'duplicate') {
+                    $skipped_duplicate_count++;
+                } else {
+                    $added_count++;
+                }
+            }
+        }
+
+        // メールアドレスをスパムリストに追加
+        if ($request->filled('add_email')) {
+            $input_cols = $this->getEmailInputCols($forms_id, $inputs_id);
+
+            $has_email_value = false;
+            foreach ($input_cols as $col) {
+                if (empty($col->value)) {
+                    continue;
+                }
+                $has_email_value = true;
+
+                $result = $this->addToSpamListWithDuplicateCheck($target_id, SpamBlockType::email, $col->value, $memo);
+                if ($result === 'duplicate') {
+                    $skipped_duplicate_count++;
+                } else {
+                    $added_count++;
+                }
+            }
+            if (!$has_email_value) {
+                $skipped_no_data_count++;
+            }
+        }
+
+        // ドメインをスパムリストに追加
+        if ($request->filled('add_domain')) {
+            $input_cols = $this->getEmailInputCols($forms_id, $inputs_id);
+
+            $has_domain_value = false;
+            foreach ($input_cols as $col) {
+                if (empty($col->value)) {
+                    continue;
+                }
+
+                $domain = substr(strrchr($col->value, "@"), 1);
+                if (empty($domain)) {
+                    continue;
+                }
+                $has_domain_value = true;
+
+                $result = $this->addToSpamListWithDuplicateCheck($target_id, SpamBlockType::domain, $domain, $memo);
+                if ($result === 'duplicate') {
+                    $skipped_duplicate_count++;
+                } else {
+                    $added_count++;
+                }
+            }
+            if (!$has_domain_value) {
+                $skipped_no_data_count++;
+            }
+        }
+
+        // メッセージの組み立て
+        $messages = [];
+        if ($added_count > 0) {
+            $messages[] = "{$added_count}件をスパムリストに追加しました。";
+        }
+        if ($skipped_duplicate_count > 0) {
+            $messages[] = "{$skipped_duplicate_count}件は既に登録済みのためスキップしました。";
+        }
+        if ($skipped_no_data_count > 0) {
+            $messages[] = "{$skipped_no_data_count}件は該当データがないためスキップしました。";
+        }
+        if (empty($messages)) {
+            $messages[] = 'スパムリストへの追加はありませんでした。';
+        }
+
+        // リダイレクト
+        return redirect("/plugin/forms/listInputs/{$page_id}/{$frame_id}/{$forms_id}#frame-{$frame_id}")
+            ->with('flash_message', implode(' ', $messages));
     }
 }

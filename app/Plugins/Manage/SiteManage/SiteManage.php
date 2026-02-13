@@ -317,6 +317,13 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->base_theme]
         );
 
+        // 基本レイアウト
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'base_layout'],
+            ['category' => 'general',
+             'value'    => $request->base_layout]
+        );
+
         // 追加テーマ
         $configs = Configs::updateOrCreate(
             ['name'     => 'additional_theme'],

@@ -185,6 +185,7 @@ class PageManage extends ManagePluginBase
             'ip_address'       => ['nullable', new CustomValiTextMax()],
             'othersite_url'    => ['nullable', new CustomValiUrlMax()],
             'class'            => ['nullable', 'max:255'],
+            'layout_inherit_flag' => ['nullable', Rule::in(['0', '1'])],
             'meta_robots'      => ['nullable', 'array', new CustomValiMetaRobots()],
         ]);
         $validator->setAttributeNames([
@@ -196,6 +197,7 @@ class PageManage extends ManagePluginBase
             'ip_address'       => 'IPアドレス制限',
             'othersite_url'    => '外部サイトURL',
             'class'            => 'メニュークラス名',
+            'layout_inherit_flag' => 'レイアウトの適用範囲',
             'meta_robots'      => '検索避け設定',
         ]);
         return $validator;
@@ -248,6 +250,7 @@ class PageManage extends ManagePluginBase
             PageCvsIndex::header_color      => ['required', 'max:255'],
             PageCvsIndex::theme             => ['required'],
             PageCvsIndex::layout            => ['required'],
+            PageCvsIndex::layout_inherit_flag => ['required', Rule::in(['0', '1'])],
             PageCvsIndex::base_display_flag => ['required', Rule::in(['0', '1'])],
         ];
 
@@ -285,6 +288,7 @@ class PageManage extends ManagePluginBase
         $page->header_color         = $request->header_color;
         $page->theme                = $request->theme;
         $page->layout               = $request->layout;
+        $page->layout_inherit_flag  = $request->layout_inherit_flag ?? 1;
         $page->base_display_flag    = (isset($request->base_display_flag) ? $request->base_display_flag : 0);
         $page->membership_flag      = (isset($request->membership_flag) ? $request->membership_flag : 0);
         $page->container_flag       = (isset($request->container_flag) ? $request->container_flag : 0);
@@ -334,6 +338,7 @@ class PageManage extends ManagePluginBase
                 'header_color'         => $request->header_color,
                 'theme'                => $request->theme,
                 'layout'               => $request->layout,
+                'layout_inherit_flag'  => $request->layout_inherit_flag ?? 1,
                 'base_display_flag'    => (isset($request->base_display_flag) ? $request->base_display_flag : 0),
                 'membership_flag'      => (isset($request->membership_flag) ? $request->membership_flag : 0),
                 'container_flag'       => (isset($request->container_flag) ? $request->container_flag : 0),
@@ -509,6 +514,7 @@ class PageManage extends ManagePluginBase
             PageCvsIndex::header_color => 'NULL',
             PageCvsIndex::theme => 'NULL',
             PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::layout_inherit_flag => '1',
             PageCvsIndex::base_display_flag => '1',
         ];
         $csv_array[2] = [
@@ -518,6 +524,7 @@ class PageManage extends ManagePluginBase
             PageCvsIndex::header_color => 'NULL',
             PageCvsIndex::theme => 'NULL',
             PageCvsIndex::layout => 'NULL',
+            PageCvsIndex::layout_inherit_flag => '1',
             PageCvsIndex::base_display_flag => '1',
         ];
 
@@ -543,16 +550,20 @@ class PageManage extends ManagePluginBase
             return array("CSVファイルが空です。");
         }
 
-        // ヘッダーカラム
-        $header_column_format = $this->getCsvHeader();
+        // 必須ヘッダーカラム
+        $required_header_columns = $this->getCsvRequiredHeader();
 
         // 項目の不足チェック
-        $shortness = array_diff($header_column_format, $header_columns);
+        $shortness = array_diff($required_header_columns, $header_columns);
         if (!empty($shortness)) {
             return array(implode(",", $shortness) . " が不足しています。");
         }
+
+        // 許可されるヘッダーカラム（必須 + 任意）
+        $allowed_header_columns = $this->getCsvHeader();
+
         // 項目の不要チェック
-        $excess = array_diff($header_columns, $header_column_format);
+        $excess = array_diff($header_columns, $allowed_header_columns);
         if (!empty($excess)) {
             return array(implode(",", $excess) . " は不要です。");
         }
@@ -575,9 +586,60 @@ class PageManage extends ManagePluginBase
     }
 
     /**
+     * CSV必須ヘッダー取得
+     */
+    private function getCsvRequiredHeader(): array
+    {
+        $required_header = $this->getCsvHeader();
+
+        foreach (array_keys($this->getOptionalCsvHeaderDefaults()) as $optional_header) {
+            $optional_header_index = array_search($optional_header, $required_header, true);
+            if ($optional_header_index !== false) {
+                unset($required_header[$optional_header_index]);
+            }
+        }
+
+        return $required_header;
+    }
+
+    /**
+     * CSV任意ヘッダーの既定値
+     */
+    private function getOptionalCsvHeaderDefaults(): array
+    {
+        return [
+            PageCvsIndex::getDescription(PageCvsIndex::layout_inherit_flag) => '1',
+        ];
+    }
+
+    /**
+     * CSV列をヘッダー名ベースで正規化（任意ヘッダー欠落時は既定値で補完）
+     */
+    private function normalizeCsvColumns(array $header_columns, array $csv_columns): array
+    {
+        $header_name_values = [];
+        foreach ($header_columns as $column_index => $header_name) {
+            $header_name_values[$header_name] = $csv_columns[$column_index] ?? null;
+        }
+
+        $normalized_columns = [];
+        $optional_defaults = $this->getOptionalCsvHeaderDefaults();
+        foreach ($this->getCsvHeader() as $column_index => $header_name) {
+            if (array_key_exists($header_name, $header_name_values)) {
+                $normalized_columns[$column_index] = $header_name_values[$header_name];
+                continue;
+            }
+
+            $normalized_columns[$column_index] = $optional_defaults[$header_name] ?? null;
+        }
+
+        return $normalized_columns;
+    }
+
+    /**
      * CSVデータ行チェック
      */
-    private function checkPageline($fp)
+    private function checkPageline($fp, array $header_columns)
     {
         // CSVインポート時のエラーチェックルール
         $rules = $this->pageUploadValidatorRules();
@@ -587,6 +649,8 @@ class PageManage extends ManagePluginBase
         $permanent_links = [];
 
         while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+            $csv_columns = $this->normalizeCsvColumns($header_columns, $csv_columns);
+
             // バリデーション
             $validator = Validator::make($csv_columns, $rules);
 
@@ -695,7 +759,7 @@ class PageManage extends ManagePluginBase
         }
 
         // データ項目のエラーチェック
-        $error_msgs = $this->checkPageline($fp);
+        $error_msgs = $this->checkPageline($fp, $header_columns);
         if (!empty($error_msgs)) {
             // 一時ファイルの削除
             fclose($fp);
@@ -714,6 +778,8 @@ class PageManage extends ManagePluginBase
         try {
             // データ
             while (($csv_columns = fgetcsv($fp, 0, ",")) !== false) {
+                $csv_columns = $this->normalizeCsvColumns($header_columns, $csv_columns);
+
                 // --- 入力値変換
                 // 入力値をトリム(preg_replace(/u)で置換. /u = UTF-8 として処理)
                 $csv_columns = StringUtils::trimInput($csv_columns);
@@ -736,6 +802,7 @@ class PageManage extends ManagePluginBase
                     'header_color'      => $csv_columns[PageCvsIndex::header_color],
                     'theme'             => $csv_columns[PageCvsIndex::theme],
                     'layout'            => $csv_columns[PageCvsIndex::layout],
+                    'layout_inherit_flag' => $csv_columns[PageCvsIndex::layout_inherit_flag],
                     'base_display_flag' => $csv_columns[PageCvsIndex::base_display_flag]
                 ]);
 

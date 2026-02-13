@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\View\FileViewFinder;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Numbers;
 use App\Traits\ConnectMailTrait;
@@ -38,8 +39,64 @@ class PluginBase
      */
     public function ccErrorHandler($errno, $errstr, $errfile, $errline)
     {
+        // deprecated は例外化せずログのみ出力する
+        if (in_array($errno, [E_DEPRECATED, E_USER_DEPRECATED], true)) {
+            $this->logDeprecated($errno, $errstr, $errfile, $errline);
+            return true;
+        }
+
         // 例外を投げる。
         throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
+    }
+
+    /**
+     * deprecated のログ出力
+     */
+    private function logDeprecated($errno, $errstr, $errfile, $errline)
+    {
+        // Log 出力中の再帰的なエラーハンドラ呼び出しを避けるためのガード
+        // static なので同一リクエスト内では状態が保持され、2回目以降は即 return する
+        static $logging = false;
+        if ($logging) {
+            return;
+        }
+
+        $logging = true;
+        try {
+            $context = [
+                'message' => $errstr,
+                'file' => $errfile,
+                'line' => $errline,
+                'errno' => $errno,
+                'environment' => app()->environment(),
+                'php' => PHP_VERSION,
+            ];
+
+            if (app()->bound('request')) {
+                $request = app('request');
+                $context += [
+                    'method' => $request->method(),
+                    'path' => $request->path(),
+                    'route' => optional($request->route())->getName(),
+                ];
+            }
+
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 8);
+            $context['trace'] = array_map(function ($frame) {
+                return sprintf(
+                    '%s:%s %s%s%s',
+                    $frame['file'] ?? '[internal]',
+                    $frame['line'] ?? '-',
+                    $frame['class'] ?? '',
+                    $frame['type'] ?? '',
+                    $frame['function'] ?? ''
+                );
+            }, array_slice($trace, 1));
+
+            Log::warning('PHP deprecated', $context);
+        } finally {
+            $logging = false;
+        }
     }
 
     // プラグインの対象者（User or Manager）：view ファイルの呼び出しでディレクトリ判定に使用するため。

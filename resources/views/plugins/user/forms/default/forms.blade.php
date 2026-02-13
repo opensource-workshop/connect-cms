@@ -149,6 +149,9 @@
             </div>
         @endforeach
 
+        {{-- ハニーポットフィールド --}}
+        @include('plugins.user.forms.default.include_honeypot_field')
+
         {{-- Captcha フィールド --}}
         @include('plugins.user.forms.default.forms_captcha_field')
 

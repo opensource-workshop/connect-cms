@@ -17,6 +17,10 @@
 
     @if ($default_hide_list)
     @else
+        {{-- データベースの表示件数変更セレクトボックス --}}
+        @include('plugins.user.databases.default.databases_include_view_count')
+        {{-- 現在表示している件数テキスト --}}
+        @include('plugins.user.databases.default.databases_include_page_total_views')
         @php
             $database_show_like_list = FrameConfig::getConfigValueAndOld($frame_configs, DatabaseFrameConfig::database_show_like_list, ShowType::show);
             $like_button_caption = $database_frame->like_button_name ?: Like::like_button_default;

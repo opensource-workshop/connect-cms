@@ -8,6 +8,13 @@
 @php
 use App\Enums\PageMetaRobots;
 use App\Models\Common\Page;
+use App\Models\Core\Configs;
+
+$layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+$base_layout = Configs::getSharedConfigsValue('base_layout', $layout_default);
+$base_layout = $base_layout ?: $layout_default;
+$base_layout_page = new Page();
+$base_layout_page->layout = $base_layout;
 @endphp
 
 {{-- 管理画面ベース画面 --}}
@@ -177,28 +184,37 @@ use App\Models\Common\Page;
             </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-striped cc-font-90 mb-0">
+        <div class="cc-table-scroll js-cc-table-scroll">
+            <div class="cc-table-scroll__sticky">
+                <div class="cc-table-scroll__top" aria-hidden="true">
+                    <div class="cc-table-scroll__top-inner"></div>
+                </div>
+                <div class="cc-table-scroll__header" aria-hidden="true"></div>
+            </div>
+            <div class="table-responsive cc-table-scroll__body">
+                <table class="table table-striped cc-font-90 mb-0 cc-table-sticky-header">
             <thead>
-                <th></th>
-                <th nowrap><i class="fas fa-sitemap" title="階層移動" alt="階層移動"></i></th>
-                <th nowrap>ページ名</th>
-                <th nowrap class="pl-1"><i class="far fa-eye" title="メニュー表示"></i></th>
-                <th nowrap>固定リンク</th>
-                <th nowrap class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
-                <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ・ログインユーザ全員参加"></i></th>
-                @if (config('connect.USE_CONTAINER_BETA'))
-                    <th nowrap class="pl-1"><i class="fas fa-box" title="コンテナページ"></i></th>
-                @endif
-                <th nowrap class="text-center"><i class="fas fa-users" title="ページ権限設定"></i></th>
-                <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
-                <th nowrap><img src="{{asset('/images/core/layout/header_icon.png')}}" title="ヘッダー色" class="cc-page-layout-icon" alt="ヘッダー色"></th>
-                <th nowrap><img src="{{asset('/images/core/layout/1111.png')}}" class="cc-page-layout-icon" title="レイアウト" alt="レイアウト"></th>
-                <th nowrap><i class="fas fa-window-restore" title="新ウィンドウ"></i></th>
-                <th nowrap><i class="fas fa-network-wired" title="IPアドレス制限"></i></th>
-                <th nowrap><i class="fas fa-external-link-alt" title="外部リンク"></i></th>
-                <th nowrap><i class="fas fa-robot" title="検索避け設定"></i></th>
-                <th nowrap><i class="fas fa-swatchbook" title="クラス名"></i></th>
+                <tr>
+                    <th></th>
+                    <th nowrap><i class="fas fa-sitemap" title="階層移動" alt="階層移動"></i></th>
+                    <th nowrap>ページ名</th>
+                    <th nowrap class="pl-1"><i class="far fa-eye" title="メニュー表示"></i></th>
+                    <th nowrap>固定リンク</th>
+                    <th nowrap class="pl-1"><i class="fas fa-key" title="閲覧パスワードあり"></i></th>
+                    <th nowrap class="pl-1"><i class="fas fa-lock" title="メンバーシップページ・ログインユーザ全員参加"></i></th>
+                    @if (config('connect.USE_CONTAINER_BETA'))
+                        <th nowrap class="pl-1"><i class="fas fa-box" title="コンテナページ"></i></th>
+                    @endif
+                    <th nowrap class="text-center"><i class="fas fa-users" title="ページ権限設定"></i></th>
+                    <th nowrap><i class="fas fa-paint-roller" title="背景色"></i></th>
+                    <th nowrap><img src="{{asset('/images/core/layout/header_icon.png')}}" title="ヘッダー色" class="cc-page-layout-icon" alt="ヘッダー色"></th>
+                    <th nowrap><img src="{{asset('/images/core/layout/1111.png')}}" class="cc-page-layout-icon" title="レイアウト" alt="レイアウト"></th>
+                    <th nowrap><i class="fas fa-window-restore" title="新ウィンドウ"></i></th>
+                    <th nowrap><i class="fas fa-network-wired" title="IPアドレス制限"></i></th>
+                    <th nowrap><i class="fas fa-external-link-alt" title="外部リンク"></i></th>
+                    <th nowrap><i class="fas fa-robot" title="検索避け設定"></i></th>
+                    <th nowrap><i class="fas fa-swatchbook" title="クラス名"></i></th>
+                </tr>
             </thead>
             <tbody>
                 @foreach($pages as $page_item)
@@ -374,7 +390,14 @@ use App\Models\Common\Page;
                     </td>
                     <td class="table-text p-1 text-center">
                         @if ($page_item->getSimpleLayout())
-                            <div><img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}"></div>
+                            @php
+                            $layout_inherit_flag = (string)($page_item->layout_inherit_flag ?? '1');
+                            $layout_scope_label = ($layout_inherit_flag === '0') ? 'このページのみ' : '下層にも適用';
+                            @endphp
+                            <div>
+                                <img src="{{asset('/images/core/layout/' . $page_item->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$page_item->getLayoutTitle()}}（{{$layout_scope_label}}）">
+                                <div class="small text-muted">{{$layout_scope_label}}</div>
+                            </div>
                         @else
 
                             @php
@@ -382,6 +405,9 @@ use App\Models\Common\Page;
                             // 自分及び先祖ページを遡る
                             foreach ($page_tree as $page_tmp) {
                                 if ($page_tmp->getSimpleLayout()) {
+                                    if (!is_null($page_tmp->layout_inherit_flag) && (int)$page_tmp->layout_inherit_flag === 0) {
+                                        continue;
+                                    }
                                     $layout_page_parent = $page_tmp;
                                     break;
                                 }
@@ -390,7 +416,7 @@ use App\Models\Common\Page;
                             @if ($layout_page_parent->getSimpleLayout())
                                 <div class="border border-warning"><img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}（親ページを継承）"></div>
                             @else
-                                <div></div>
+                                <div class="border border-info"><img src="{{asset('/images/core/layout/' . $base_layout_page->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$base_layout_page->getLayoutTitle()}}（基本レイアウト）"></div>
                             @endif
 
                         @endif
@@ -451,8 +477,9 @@ use App\Models\Common\Page;
                 </tr>
                 @endforeach
             </tbody>
-            </table>
-            <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
-        </div><!-- /table-responsive -->
+                </table>
+                <small class="text-muted">※ 表示内容が多い場合、横スクロールできます。</small>
+            </div><!-- /table-responsive -->
+        </div>
     @endif
 @endsection

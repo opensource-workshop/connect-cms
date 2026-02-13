@@ -569,3 +569,15 @@ a.cc-cursor-text:hover {
     0% {opacity: 0;}
     100% {opacity: 1;}
 }
+
+/* ハニーポット（スパムボット対策用の隠しフィールド）
+------------------------------------- */
+.connect-hp-field {
+    opacity: 0 !important;
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    height: 0;
+    width: 0;
+    z-index: -1;
+}

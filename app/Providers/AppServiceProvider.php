@@ -532,7 +532,19 @@ class AppServiceProvider extends AuthServiceProvider
             return false;
         }
 
-        // return $buckets->getBucketsRoles();
+        $request = app(Request::class);
+        $bucket_id = $buckets->id ?? null;
+        // GETは読み取り専用のため、同一リクエスト内キャッシュでSQLを減らしても整合性に影響しない。
+        // POST系は同一リクエスト内で権限やバケツ設定が更新される可能性があるためキャッシュしない。
+        if ($bucket_id && $request->isMethod('get')) {
+            static $cached_post_roles = [];
+            if (array_key_exists($bucket_id, $cached_post_roles)) {
+                return $cached_post_roles[$bucket_id];
+            }
+            $cached_post_roles[$bucket_id] = $buckets->getPostArrayBucketsRoles();
+            return $cached_post_roles[$bucket_id];
+        }
+
         return $buckets->getPostArrayBucketsRoles();
 
         // // Buckets にrole がない場合などで、Buckets のrole を使用しない場合はfalse を返す。

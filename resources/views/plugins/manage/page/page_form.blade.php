@@ -11,6 +11,7 @@
 @php
 use App\Enums\PageMetaRobots;
 use App\Models\Common\Page;
+use App\Models\Core\Configs;
 @endphp
 
 {{-- 共通エラーメッセージ 呼び出し --}}
@@ -26,6 +27,12 @@ use App\Models\Common\Page;
     @php
     // 検索避け設定で継承表示に使うため、自分自身から親ページを順に取得
     $page_tree = $page->getPageTreeByGoingBackParent(null);
+    $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+    $base_layout = Configs::getSharedConfigsValue('base_layout', $layout_default);
+    $base_layout = $base_layout ?: $layout_default;
+    $base_layout_page = new Page();
+    $base_layout_page->layout = $base_layout;
+    $layout_inherit_flag_value = old('layout_inherit_flag', $page->layout_inherit_flag ?? 1);
     @endphp
 
     <!-- Page form  -->
@@ -466,17 +473,50 @@ use App\Models\Common\Page;
             // 自分及び先祖ページを遡る
             foreach ($page_tree as $page_tmp) {
                 if ($page_tmp->getSimpleLayout()) {
+                    if (!is_null($page_tmp->layout_inherit_flag) && (int)$page_tmp->layout_inherit_flag === 0) {
+                        continue;
+                    }
                     $layout_page_parent = $page_tmp;
                     break;
                 }
             }
             @endphp
             {{-- 公開設定が公開以外＆親ページありなら --}}
-            @if (!$page->getSimpleLayout() && $layout_page_parent->getSimpleLayout())
-                <div class="alert alert-warning small mb-0">
-                    未設定 <img src="{{asset('/images/core/layout/null.png')}}" title="未設定"> のため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
-                </div>
+            @if (!$page->getSimpleLayout())
+                @if ($layout_page_parent->getSimpleLayout())
+                    <div class="alert alert-warning small mb-0">
+                        未設定 <img src="{{asset('/images/core/layout/null.png')}}" title="未設定"> のため、親ページ「<a href="{{url('/manage/page/edit')}}/{{$layout_page_parent->id}}" target="_blank">{{$layout_page_parent->page_name}} <i class="fas fa-external-link-alt"></i></a>」のレイアウト <img src="{{asset('/images/core/layout/' . $layout_page_parent->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$layout_page_parent->getLayoutTitle()}}"> を継承しています。<br />
+                    </div>
+                @else
+                    <div class="alert alert-warning small mb-0">
+                        未設定 <img src="{{asset('/images/core/layout/null.png')}}" title="未設定"> のため、基本レイアウト <img src="{{asset('/images/core/layout/' . $base_layout_page->getSimpleLayout() . '.png')}}" class="cc-page-layout-icon" title="{{$base_layout_page->getLayoutTitle()}}"> を適用しています。<br />
+                        <a href="{{url('/manage/site')}}" target="_blank">サイト基本設定 <i class="fas fa-external-link-alt"></i></a>で変更できます。
+                    </div>
+                @endif
             @endif
+        </div>
+    </div>
+
+    <div class="form-group row">
+        <label class="col-md-3 col-form-label text-md-right">レイアウトの適用範囲</label>
+        <div class="col-md-9">
+            <div class="custom-control custom-radio custom-control-inline">
+                @if ((string)$layout_inherit_flag_value === '0')
+                    <input type="radio" value="0" id="layout_inherit_flag_0" name="layout_inherit_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="0" id="layout_inherit_flag_0" name="layout_inherit_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="layout_inherit_flag_0">このページのみ</label>
+            </div>
+            <div class="custom-control custom-radio custom-control-inline">
+                @if ((string)$layout_inherit_flag_value === '1')
+                    <input type="radio" value="1" id="layout_inherit_flag_1" name="layout_inherit_flag" class="custom-control-input" checked="checked">
+                @else
+                    <input type="radio" value="1" id="layout_inherit_flag_1" name="layout_inherit_flag" class="custom-control-input">
+                @endif
+                <label class="custom-control-label" for="layout_inherit_flag_1">このページと下層にも適用</label>
+            </div>
+            <small class="form-text text-muted w-100">レイアウトが未設定の場合は、親ページまたは基本レイアウトを継承します。</small>
         </div>
     </div>
 

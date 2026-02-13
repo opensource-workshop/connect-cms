@@ -2,6 +2,7 @@
 
 namespace App\Plugins\User\Photoalbums;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -66,7 +67,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail'];
+        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail', 'moreContents'];
         $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence', 'updateHiddenFolders'];
         return $functions;
     }
@@ -141,29 +142,312 @@ class PhotoalbumsPlugin extends UserPluginBase
             return;
         }
 
-        // フォルダ、ファイルの比較条件の取得
-        $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
-        $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
-
-        $photoalbum_contents = $this->getSortedChildren($parent, $sort_folder, $sort_file);
-        if (!empty($hidden_folder_ids)) {
-            $photoalbum_contents = $photoalbum_contents->reject(function ($content) use ($hidden_folder_ids) {
-                return $content->is_folder == PhotoalbumContent::is_folder_on
-                    && in_array($content->id, $hidden_folder_ids, true);
-            });
-        }
-
-        // カバー写真に指定されている写真
-        $covers = PhotoalbumContent::whereIn('parent_id', $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->pluck('id'))->where('is_cover', PhotoalbumContent::is_cover_on)->get();
+        $photoalbum_contents = $this->getSortedVisibleChildren($parent, $hidden_folder_ids);
+        $load_more_state = $this->getIndexLoadMoreState();
+        $index_display_items = $this->buildIndexDisplayItems(
+            $photoalbum_contents,
+            $load_more_state['load_more_use'],
+            $load_more_state['load_more_count']
+        );
+        $covers = $this->fetchFolderCovers($index_display_items['photoalbum_folder_items'], $parent->photoalbum_id);
 
         // 表示テンプレートを呼び出す。
-        return $this->view('index', [
+        return $this->view('index', array_merge([
             'photoalbum' => $photoalbum,
             'photoalbum_contents' => $photoalbum_contents,
             'breadcrumbs' => $this->fetchBreadCrumbs($photoalbum->id, $parent->id),
             'parent_id' =>  $parent->id,
             'covers' => $covers,
-        ]);
+        ], $index_display_items));
+    }
+
+    /**
+     * 親配下の表示可能コンテンツを、表示設定の並び順で取得する。
+     *
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent
+     * @param array $hidden_folder_ids
+     * @return \Illuminate\Support\Collection
+     */
+    private function getSortedVisibleChildren(PhotoalbumContent $parent, array $hidden_folder_ids): Collection
+    {
+        $folder_items = $this->getSortedVisibleItemsByTarget($parent, $hidden_folder_ids, 'folder');
+        $image_items = $this->getSortedVisibleItemsByTarget($parent, $hidden_folder_ids, 'image');
+
+        return $folder_items->concat($image_items)->values();
+    }
+
+    /**
+     * 並び順設定（フォルダ/画像）を取得する。
+     *
+     * @return array
+     */
+    private function getPhotoalbumSortConfig(): array
+    {
+        return [
+            'sort_folder' => FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder),
+            'sort_file' => FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file),
+        ];
+    }
+
+    /**
+     * 親配下の対象種別コンテンツを取得するクエリを返す。
+     *
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent
+     * @param string $target 対象種別（folder|image）
+     * @param array $hidden_folder_ids
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function getVisibleChildrenQueryByTarget(PhotoalbumContent $parent, string $target, array $hidden_folder_ids): Builder
+    {
+        $is_folder = $target === 'folder'
+            ? PhotoalbumContent::is_folder_on
+            : PhotoalbumContent::is_folder_off;
+
+        $query = PhotoalbumContent::query()
+            ->where('photoalbum_id', $parent->photoalbum_id)
+            ->where('parent_id', $parent->id)
+            ->where('is_folder', $is_folder);
+
+        if ($is_folder == PhotoalbumContent::is_folder_on && !empty($hidden_folder_ids)) {
+            $query->whereNotIn('id', $hidden_folder_ids);
+        }
+
+        return $this->appendTargetRelations($query, $target);
+    }
+
+    /**
+     * フォトアルバム全体の対象種別コンテンツを取得するクエリを返す。
+     */
+    private function getPhotoalbumItemsQueryByTarget(int $photoalbum_id, string $target): Builder
+    {
+        $is_folder = $target === 'folder'
+            ? PhotoalbumContent::is_folder_on
+            : PhotoalbumContent::is_folder_off;
+
+        $query = PhotoalbumContent::query()
+            ->where('photoalbum_id', $photoalbum_id)
+            ->where('is_folder', $is_folder);
+
+        return $this->appendTargetRelations($query, $target);
+    }
+
+    /**
+     * 対象種別で必要な関連をクエリへ付与する。
+     */
+    private function appendTargetRelations(Builder $query, string $target): Builder
+    {
+        if ($target === 'image') {
+            $query->with('upload');
+        }
+
+        return $query;
+    }
+
+    /**
+     * ソート設定値を有効値へ正規化する。
+     */
+    private function normalizePhotoalbumSortKey(?string $sort_key): string
+    {
+        if (in_array($sort_key, [
+            PhotoalbumSort::name_asc,
+            PhotoalbumSort::name_desc,
+            PhotoalbumSort::created_asc,
+            PhotoalbumSort::created_desc,
+            PhotoalbumSort::manual_order,
+        ], true)) {
+            return $sort_key;
+        }
+
+        return PhotoalbumSort::name_asc;
+    }
+
+    /**
+     * 対象種別のソートキーを取得する。
+     */
+    private function getTargetSortKey(string $target, ?string $sort_folder, ?string $sort_file): string
+    {
+        $target_sort = $target === 'folder' ? $sort_folder : $sort_file;
+        return $this->normalizePhotoalbumSortKey($target_sort);
+    }
+
+    /**
+     * 対象種別のクエリにソート条件を適用する。
+     */
+    private function applySortToVisibleChildrenQuery(Builder $query, string $target, ?string $sort_folder, ?string $sort_file): Builder
+    {
+        $target_sort = $this->getTargetSortKey($target, $sort_folder, $sort_file);
+        $name_column = 'photoalbum_contents.name';
+
+        if ($target === 'image' && in_array($target_sort, [PhotoalbumSort::name_asc, PhotoalbumSort::name_desc], true)) {
+            $query->leftJoin('uploads as sort_uploads', 'sort_uploads.id', '=', 'photoalbum_contents.upload_id')
+                ->select('photoalbum_contents.*');
+            $name_column = 'sort_uploads.client_original_name';
+        }
+
+        switch ($target_sort) {
+            case PhotoalbumSort::name_desc:
+                $query->orderBy($name_column, 'desc');
+                break;
+            case PhotoalbumSort::created_asc:
+                $query->orderBy('photoalbum_contents.created_at', 'asc');
+                break;
+            case PhotoalbumSort::created_desc:
+                $query->orderBy('photoalbum_contents.created_at', 'desc');
+                break;
+            case PhotoalbumSort::manual_order:
+                $query->orderBy('photoalbum_contents.display_sequence', 'asc');
+                break;
+            case PhotoalbumSort::name_asc:
+            default:
+                $query->orderBy($name_column, 'asc');
+                break;
+        }
+
+        return $query->orderBy('photoalbum_contents.id', 'asc');
+    }
+
+    /**
+     * 親配下の表示可能コンテンツ（対象種別）を並び順付きクエリで取得する。
+     */
+    private function getSortedVisibleItemsQueryByTarget(
+        PhotoalbumContent $parent,
+        array $hidden_folder_ids,
+        string $target,
+        ?string $sort_folder = null,
+        ?string $sort_file = null
+    ): Builder {
+        if (is_null($sort_folder) || is_null($sort_file)) {
+            $sort_config = $this->getPhotoalbumSortConfig();
+            $sort_folder = $sort_config['sort_folder'];
+            $sort_file = $sort_config['sort_file'];
+        }
+
+        $query = $this->getVisibleChildrenQueryByTarget($parent, $target, $hidden_folder_ids);
+        return $this->applySortToVisibleChildrenQuery($query, $target, $sort_folder, $sort_file);
+    }
+
+    /**
+     * 親配下の表示可能コンテンツを、対象種別ごとに並び替えて取得する。
+     *
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent
+     * @param array $hidden_folder_ids
+     * @param string $target 対象種別（folder|image）
+     * @param string|null $sort_folder
+     * @param string|null $sort_file
+     * @return \Illuminate\Support\Collection
+     */
+    private function getSortedVisibleItemsByTarget(
+        PhotoalbumContent $parent,
+        array $hidden_folder_ids,
+        string $target,
+        ?string $sort_folder = null,
+        ?string $sort_file = null
+    ): Collection {
+        return $this->getSortedVisibleItemsQueryByTarget(
+            $parent,
+            $hidden_folder_ids,
+            $target,
+            $sort_folder,
+            $sort_file
+        )->get()->values();
+    }
+
+    /**
+     * フォトアルバム全体の対象種別コンテンツを並び順付きで取得する。
+     */
+    private function getSortedPhotoalbumItemsByTarget(
+        int $photoalbum_id,
+        string $target,
+        ?string $sort_folder = null,
+        ?string $sort_file = null
+    ): Collection {
+        if (is_null($sort_folder) || is_null($sort_file)) {
+            $sort_config = $this->getPhotoalbumSortConfig();
+            $sort_folder = $sort_config['sort_folder'];
+            $sort_file = $sort_config['sort_file'];
+        }
+
+        $query = $this->getPhotoalbumItemsQueryByTarget($photoalbum_id, $target);
+        return $this->applySortToVisibleChildrenQuery($query, $target, $sort_folder, $sort_file)->get()->values();
+    }
+
+    /**
+     * 一覧表示で利用する「もっと見る」設定値を取得する。
+     *
+     * @return array
+     */
+    private function getIndexLoadMoreState(): array
+    {
+        return [
+            'load_more_use' => FrameConfig::getConfigValueAndOld(
+                $this->frame_configs,
+                PhotoalbumFrameConfig::load_more_use_flag,
+                \App\Enums\UseType::not_use
+            ),
+            'load_more_count' => FrameConfig::getConfigValueAndOld(
+                $this->frame_configs,
+                PhotoalbumFrameConfig::load_more_count,
+                (int) config('photoalbums.load_more_image_limit', 10)
+            ),
+        ];
+    }
+
+    /**
+     * 一覧画面で表示するフォルダ/画像の初期表示情報を構築する。
+     *
+     * @param \Illuminate\Support\Collection $photoalbum_contents
+     * @param mixed $load_more_use
+     * @param mixed $load_more_count
+     * @return array
+     */
+    private function buildIndexDisplayItems(Collection $photoalbum_contents, $load_more_use, $load_more_count): array
+    {
+        $folder_items_all = $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_on)->values();
+        $image_items_all = $photoalbum_contents->where('is_folder', PhotoalbumContent::is_folder_off)->values();
+
+        if ($load_more_use == \App\Enums\UseType::use) {
+            $folder_limit = $this->getLoadMoreLimit('folder', $load_more_count);
+            $image_limit = $this->getLoadMoreLimit('image', $load_more_count);
+        } else {
+            $folder_limit = $folder_items_all->count();
+            $image_limit = $image_items_all->count();
+        }
+
+        $folder_items = $folder_items_all->slice(0, $folder_limit)->values();
+        $image_items = $image_items_all->slice(0, $image_limit)->values();
+
+        return [
+            'photoalbum_folder_items' => $folder_items,
+            'photoalbum_image_items' => $image_items,
+            'photoalbum_folder_total' => $folder_items_all->count(),
+            'photoalbum_image_total' => $image_items_all->count(),
+            'photoalbum_folder_limit' => $folder_limit,
+            'photoalbum_image_limit' => $image_limit,
+            'photoalbum_folder_offset' => $folder_items->count(),
+            'photoalbum_image_offset' => $image_items->count(),
+            'photoalbum_load_more_use' => $load_more_use,
+        ];
+    }
+
+    /**
+     * 表示対象フォルダに設定されたカバー画像一覧を取得する。
+     *
+     * @param \Illuminate\Support\Collection $folder_items
+     * @param int $photoalbum_id
+     * @return \Illuminate\Support\Collection
+     */
+    private function fetchFolderCovers(Collection $folder_items, int $photoalbum_id): Collection
+    {
+        $folder_ids = $folder_items->pluck('id');
+        if ($folder_ids->isEmpty()) {
+            return collect();
+        }
+
+        return PhotoalbumContent::where('photoalbum_id', $photoalbum_id)
+            ->whereIn('parent_id', $folder_ids)
+            ->where('is_cover', PhotoalbumContent::is_cover_on)
+            ->with(['upload', 'posterUpload'])
+            ->get();
     }
 
     /**
@@ -370,105 +654,32 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
-     * 指定した親の子要素をフレーム設定に合わせて並び替えて取得する
-     */
-    private function getSortedChildren(PhotoalbumContent $parent, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
-    {
-        $children = is_null($preloaded_children)
-            ? $parent->children()->get()
-            : $preloaded_children->get($parent->id, collect());
-
-        // 設定画面などで事前に読み込んだ子要素一覧を再利用し、追加クエリを避ける
-        if (!is_null($preloaded_children) && $children->isEmpty()) {
-            return collect();
-        }
-
-        return $children->sort(function ($first, $second) use ($sort_folder, $sort_file) {
-            return $this->comparePhotoalbumContents($first, $second, $sort_folder, $sort_file);
-        })->values();
-    }
-
-    /**
-     * 並び替え比較処理
-     */
-    private function comparePhotoalbumContents(PhotoalbumContent $first, PhotoalbumContent $second, ?string $sort_folder, ?string $sort_file)
-    {
-        if ($first->is_folder == $second->is_folder) {
-            $sort_key = $first->is_folder == PhotoalbumContent::is_folder_on ? $sort_folder : $sort_file;
-
-            switch ($sort_key) {
-                case PhotoalbumSort::name_desc:
-                    return strnatcasecmp($second->displayName, $first->displayName);
-                case PhotoalbumSort::created_asc:
-                    return $this->compareDates($first->created_at, $second->created_at);
-                case PhotoalbumSort::created_desc:
-                    return $this->compareDates($second->created_at, $first->created_at);
-                case PhotoalbumSort::manual_order:
-                    $sequence = $first->display_sequence <=> $second->display_sequence;
-                    return $sequence !== 0 ? $sequence : $first->id <=> $second->id;
-                default:
-                    return strnatcasecmp($first->displayName, $second->displayName);
-            }
-        }
-
-        return $second->is_folder <=> $first->is_folder;
-    }
-
-    /**
-     * 日付比較
-     */
-    private function compareDates($first, $second)
-    {
-        $first_timestamp = $this->convertToTimestamp($first);
-        $second_timestamp = $this->convertToTimestamp($second);
-
-        return $first_timestamp <=> $second_timestamp;
-    }
-
-    /**
-     * 日付をタイムスタンプへ変換する
-     */
-    private function convertToTimestamp($value)
-    {
-        if (empty($value)) {
-            return 0;
-        }
-
-        if ($value instanceof \Carbon\Carbon) {
-            return $value->timestamp;
-        }
-
-        return strtotime((string) $value) ?: 0;
-    }
-
-    /**
      * 並び替え済みの子要素マップを作成する
      */
-    private function buildSortedChildrenMap(PhotoalbumContent $root, ?string $sort_folder, ?string $sort_file, ?Collection $preloaded_children = null)
+    private function buildSortedChildrenMap(PhotoalbumContent $root, Collection $folder_children_map, Collection $image_children_map)
     {
         $map = [];
-        $this->appendSortedChildrenToMap($root, $sort_folder, $sort_file, $map, $preloaded_children);
+        $this->appendSortedChildrenToMap($root, $folder_children_map, $image_children_map, $map);
         return $map;
     }
 
     /**
-     * 事前取得済みデータを元に、各親IDの並び済み子リストをマップへ格納する
+     * 各親IDの並び済み子リストをマップへ格納する
      */
-    private function appendSortedChildrenToMap(PhotoalbumContent $node, ?string $sort_folder, ?string $sort_file, array &$map, ?Collection $preloaded_children = null)
+    private function appendSortedChildrenToMap(PhotoalbumContent $node, Collection $folder_children_map, Collection $image_children_map, array &$map)
     {
         if (isset($map[$node->id])) {
             return;
         }
 
-        $children = $this->getSortedChildren($node, $sort_folder, $sort_file, $preloaded_children);
+        $folder_children = $folder_children_map->get($node->id, collect())->values();
+        $image_children = $image_children_map->get($node->id, collect())->values();
+        $children = $folder_children->concat($image_children)->values();
+
         $map[$node->id] = $children;
 
-        foreach ($children as $child) {
-            if ($child->is_folder == PhotoalbumContent::is_folder_off) {
-                continue;
-            }
-
-            $this->appendSortedChildrenToMap($child, $sort_folder, $sort_file, $map, $preloaded_children);
+        foreach ($folder_children as $child) {
+            $this->appendSortedChildrenToMap($child, $folder_children_map, $image_children_map, $map);
         }
     }
 
@@ -1747,16 +1958,20 @@ class PhotoalbumsPlugin extends UserPluginBase
         $sorted_children_map = [];
         $focus_open_ids = [];
         if (!empty($photoalbum->id)) {
-            $all_contents = PhotoalbumContent::with(['upload', 'posterUpload'])
-                ->where('photoalbum_id', $photoalbum->id)
-                ->get();
+            // 表示設定画面はフォルダ・画像をそれぞれ1回ずつ取得し、親IDごとに再利用してN+1を防ぐ
+            $folder_contents = $this->getSortedPhotoalbumItemsByTarget($photoalbum->id, 'folder', $sort_folder, $sort_file);
+            $image_contents = $this->getSortedPhotoalbumItemsByTarget($photoalbum->id, 'image', $sort_folder, $sort_file);
+            $all_contents = $folder_contents->concat($image_contents)->values();
 
-            $preview_root = $all_contents->firstWhere('parent_id', null);
+            $preview_root = $folder_contents->firstWhere('parent_id', null);
 
             if (!empty($preview_root)) {
                 // プレビュー／編集の双方で使えるよう、親IDごとの並び済みリストを構築
-                $grouped_children = $all_contents->groupBy('parent_id');
-                $sorted_children_map = $this->buildSortedChildrenMap($preview_root, $sort_folder, $sort_file, $grouped_children);
+                $sorted_children_map = $this->buildSortedChildrenMap(
+                    $preview_root,
+                    $folder_contents->groupBy('parent_id'),
+                    $image_contents->groupBy('parent_id')
+                );
             }
 
             $focus_open_ids = $this->buildFocusOpenIds($all_contents, session('photoalbum_sort_focus'));
@@ -1806,11 +2021,20 @@ class PhotoalbumsPlugin extends UserPluginBase
     public function saveView($request, $page_id, $frame_id, $photoalbum_id)
     {
         // 項目のエラーチェック
+        $max_load_more_limit = (int) config('photoalbums.load_more_max_limit', 100);
+        if ($max_load_more_limit < 1) {
+            $max_load_more_limit = 100;
+        }
+
         $validator = Validator::make($request->all(), [
             'description_list_length' => ['nullable', 'integer', 'min:1'],
+            'load_more_use_flag' => ['required', Rule::in(\App\Enums\UseType::getMemberKeys())],
+            'load_more_count' => ['nullable', 'integer', 'min:1', 'max:' . $max_load_more_limit],
         ]);
         $validator->setAttributeNames([
             'description_list_length' => PhotoalbumFrameConfig::enum['description_list_length'],
+            'load_more_use_flag' => PhotoalbumFrameConfig::enum['load_more_use_flag'],
+            'load_more_count' => PhotoalbumFrameConfig::enum['load_more_count'],
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -1930,16 +2154,10 @@ class PhotoalbumsPlugin extends UserPluginBase
      */
     private function respondViewSequenceJson(PhotoalbumContent $content)
     {
-        $sort_folder = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_folder);
-        $sort_file = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::sort_file);
-
-        $siblings = PhotoalbumContent::where('parent_id', $content->parent_id)
-            ->with('upload')
-            ->get(['id', 'is_folder', 'display_sequence', 'created_at', 'name', 'upload_id'])
-            ->sort(function ($first, $second) use ($sort_folder, $sort_file) {
-                return $this->comparePhotoalbumContents($first, $second, $sort_folder, $sort_file);
-            })
-            ->values();
+        $parent = PhotoalbumContent::find($content->parent_id);
+        $siblings = empty($parent)
+            ? collect()
+            : $this->getSortedVisibleChildren($parent, []);
 
         return response()->json([
             'message' => '並び順を更新しました。',
@@ -2002,6 +2220,218 @@ class PhotoalbumsPlugin extends UserPluginBase
             'message' => '表示設定を更新しました。',
             'hidden_folder_ids' => $hidden_folder_ids,
         ]);
+    }
+
+    /**
+     * フォトアルバムの「もっと見る」用データを返す（JSON）
+     */
+    public function moreContents($request, $page_id, $frame_id, $parent_id = null)
+    {
+        $target = $request->get('target');
+        if (!$this->isValidMoreContentsTarget($target)) {
+            return response()->json(['message' => 'invalid target'], 400);
+        }
+
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        $parent = $this->resolveMoreContentsParent($parent_id, $hidden_folder_ids);
+        if (empty($parent)) {
+            return response()->json(['message' => 'フォトアルバムが見つかりません。'], 404);
+        }
+
+        $offset = max(0, (int) $request->get('offset', 0));
+        $limit = $this->resolveMoreContentsLimit($target, $request->get('limit'));
+        list($slice, $total) = $this->getMoreContentsSlice($parent, $target, $hidden_folder_ids, $offset, $limit);
+
+        if ($offset >= $total) {
+            return $this->makeMoreContentsResponse('', $total, $total);
+        }
+
+        $html = $this->renderMoreContentsHtml($target, $slice, $parent->photoalbum_id);
+        $next_offset = min($offset + $slice->count(), $total);
+
+        return $this->makeMoreContentsResponse($html, $next_offset, $total);
+    }
+
+    /**
+     * もっと見る機能の対象値が有効か判定する。
+     *
+     * @param mixed $target
+     * @return bool
+     */
+    private function isValidMoreContentsTarget($target): bool
+    {
+        return in_array($target, ['folder', 'image'], true);
+    }
+
+    /**
+     * もっと見る対象の親コンテンツを取得する。
+     *
+     * @param int|null $parent_id
+     * @param array $hidden_folder_ids
+     * @return \App\Models\User\Photoalbums\PhotoalbumContent|null
+     */
+    private function resolveMoreContentsParent($parent_id, array $hidden_folder_ids): ?PhotoalbumContent
+    {
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $parent = $this->fetchPhotoalbumContent($parent_id, $photoalbum->id);
+        if (empty($parent) || $parent->photoalbum_id != $photoalbum->id) {
+            return null;
+        }
+        if ($this->isHiddenPhotoalbumContent($parent, $hidden_folder_ids)) {
+            return null;
+        }
+        return $parent;
+    }
+
+    /**
+     * もっと見る対象のアイテム一覧（対象種別ごとの1ページ分）を取得する。
+     *
+     * @param \App\Models\User\Photoalbums\PhotoalbumContent $parent
+     * @param string $target 対象種別（folder|image）
+     * @param array $hidden_folder_ids
+     * @param int $offset
+     * @param int $limit
+     * @return array [\Illuminate\Support\Collection $slice, int $total]
+     */
+    private function getMoreContentsSlice(PhotoalbumContent $parent, string $target, array $hidden_folder_ids, int $offset, int $limit): array
+    {
+        $sort_config = $this->getPhotoalbumSortConfig();
+        $sort_folder = $sort_config['sort_folder'];
+        $sort_file = $sort_config['sort_file'];
+
+        $query = $this->getSortedVisibleItemsQueryByTarget($parent, $hidden_folder_ids, $target, $sort_folder, $sort_file);
+        $total = (clone $query)->count();
+        if ($total === 0 || $offset >= $total) {
+            return [collect(), $total];
+        }
+
+        $slice = $query
+            ->offset($offset)
+            ->limit($limit)
+            ->get()
+            ->values();
+
+        return [$slice, $total];
+    }
+
+    /**
+     * もっと見る機能で使用する取得件数を決定する。
+     *
+     * @param string $target 対象種別（folder|image）
+     * @param mixed $request_limit リクエスト上書き件数
+     * @return int
+     */
+    private function resolveMoreContentsLimit(string $target, $request_limit): int
+    {
+        $load_more_use = FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::load_more_use_flag, \App\Enums\UseType::not_use);
+        if ($load_more_use != \App\Enums\UseType::use) {
+            return $this->getLoadMoreLimit($target, $request_limit);
+        }
+
+        $load_more_count = FrameConfig::getConfigValue(
+            $this->frame_configs,
+            PhotoalbumFrameConfig::load_more_count,
+            (int) config('photoalbums.load_more_image_limit', 10)
+        );
+
+        return $this->getLoadMoreLimit($target, $load_more_count);
+    }
+
+    /**
+     * もっと見る機能のHTML断片を描画する。
+     *
+     * @param string $target 対象種別（folder|image）
+     * @param \Illuminate\Support\Collection $slice
+     * @param int $photoalbum_id
+     * @return string
+     */
+    private function renderMoreContentsHtml(string $target, Collection $slice, int $photoalbum_id): string
+    {
+        $download_check = $this->getDownloadCheck();
+        if ($target === 'folder') {
+            $folder_ids = $slice->pluck('id');
+            $covers = $folder_ids->isEmpty()
+                ? collect()
+                : PhotoalbumContent::where('photoalbum_id', $photoalbum_id)
+                    ->whereIn('parent_id', $folder_ids)
+                    ->where('is_cover', PhotoalbumContent::is_cover_on)
+                    ->with(['upload', 'posterUpload'])
+                    ->get();
+
+            return $this->view('index_folder_items', [
+                'photoalbum_folder_items' => $slice,
+                'covers' => $covers,
+                'download_check' => $download_check,
+                'page' => $this->page,
+            ])->render();
+        }
+
+        return $this->view('index_image_items', [
+            'photoalbum_image_items' => $slice,
+            'download_check' => $download_check,
+            'page' => $this->page,
+        ])->render();
+    }
+
+    /**
+     * もっと見る機能のJSONレスポンスを生成する。
+     *
+     * @param string $html
+     * @param int $next_offset
+     * @param int $total
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function makeMoreContentsResponse(string $html, int $next_offset, int $total)
+    {
+        return response()->json([
+            'html' => $html,
+            'next_offset' => $next_offset,
+            'total' => $total,
+        ]);
+    }
+
+    /**
+     * もっと見る機能の取得件数を返す。
+     *
+     * @param string $target 対象種別（folder|image）
+     * @param mixed $override 上書き件数
+     * @return int
+     */
+    private function getLoadMoreLimit(string $target, $override = null): int
+    {
+        $folder_default = (int) config('photoalbums.load_more_folder_limit', 10);
+        if ($folder_default < 1) {
+            $folder_default = 10;
+        }
+        $image_default = (int) config('photoalbums.load_more_image_limit', 10);
+        if ($image_default < 1) {
+            $image_default = 10;
+        }
+        $max_limit = (int) config('photoalbums.load_more_max_limit', 100);
+        if ($max_limit < 1) {
+            $max_limit = 100;
+        }
+
+        $default = $target === 'folder' ? $folder_default : $image_default;
+        $limit = is_numeric($override) ? (int) $override : $default;
+        if ($limit < 1) {
+            $limit = $default;
+        }
+        return min($limit, $max_limit);
+    }
+
+    /**
+     * ダウンロード操作の表示可否を返す。
+     *
+     * @return bool
+     */
+    private function getDownloadCheck(): bool
+    {
+        if (Auth::user() && Auth::user()->can('posts.create', [[null, $this->frame->plugin_name, $this->buckets]])) {
+            return true;
+        }
+
+        return (bool) FrameConfig::getConfigValue($this->frame_configs, PhotoalbumFrameConfig::download);
     }
 
     /**

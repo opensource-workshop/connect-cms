@@ -46,6 +46,15 @@
         <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/listInputs/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">登録一覧</a>
     </li>
 @endif
+@if ($action == 'editSpamFilter')
+    <li role="presentation" class="nav-item">
+        <span class="nav-link"><span class="active">スパムフィルタリング</span></span>
+    </li>
+@else
+    <li role="presentation" class="nav-item">
+        <a href="{{url('/')}}/plugin/{{$frame->plugin_name}}/editSpamFilter/{{$page->id}}/{{$frame->id}}#frame-{{$frame->id}}" class="nav-link">スパムフィルタリング</a>
+    </li>
+@endif
 @if ($action == 'listBuckets')
     <li role="presentation" class="nav-item">
         <span class="nav-link"><span class="active">フォーム選択</span></span>

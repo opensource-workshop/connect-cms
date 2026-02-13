@@ -72,7 +72,7 @@ class FrameCore
         $frame->frame_design = "default";
         $frame->plugin_name = $request->add_plugin;
         $frame->frame_col = 0;
-        $frame->template = "default";
+        $frame->template = config('cc_plugin_defaults.default_template_map.' . $request->add_plugin, 'default');
         $frame->bucket_id = null;
         $frame->display_sequence = 0;
         $frame->save();
