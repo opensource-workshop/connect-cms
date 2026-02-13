@@ -335,7 +335,7 @@ class DefaultController extends ConnectController
     private function getLayout($page, $page_tree)
     {
         // レイアウトの初期値
-        $layout_default = '1|1|0|1';
+        $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
 
         // if (empty($this->page)) {
         if (empty($page)) {
@@ -344,15 +344,24 @@ class DefaultController extends ConnectController
 
         // レイアウト
         $layout = null;
-
         foreach ($page_tree as $tmp_page) {
             // レイアウト
-            if (empty($layout) && $tmp_page->layout) {
-                $layout = $tmp_page->layout;
+            if (empty($tmp_page->layout)) {
+                continue;
             }
+            if ($tmp_page->id != $page->id && !is_null($tmp_page->layout_inherit_flag) && (int)$tmp_page->layout_inherit_flag === 0) {
+                // 祖先のレイアウトが「このページのみ」指定なら下層への継承対象から外す。
+                continue;
+            }
+            $layout = $tmp_page->layout;
+            break;
         }
-        // 親も含めて空の場合は、初期値を返却
+        // 親も含めて空の場合は、基本レイアウトを使い、未設定なら初期値を返却
         if (empty($layout)) {
+            $layout = Configs::getSharedConfigsValue('base_layout', $layout_default);
+        }
+        if (empty($layout)) {
+            // DBに不正な値が入るなどして予期せず空になった場合の安全弁
             $layout = $layout_default;
         }
         return $layout;
