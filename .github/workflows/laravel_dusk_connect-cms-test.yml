@@ -12,19 +12,17 @@ on:
         description: 'テストするPHPバージョン'
         required: true
         options:
-        # - '7.3'
-        - '7.4'
-        - '8.0'
         - '8.1'
         - '8.2'
-        default: '7.4'
+        - '8.3'
+        default: '8.1'
       # is_output_manual:
       #   type: boolean
       #   description: 'マニュアル出力'
       #   default: 'false'
 env:
   # schedule用
-  PHP_VERSION_DEFAULT: '7.4'
+  PHP_VERSION_DEFAULT: '8.1'
   # IS_OUTPUT_MANUAL_DEFAULT: 'false'
   # Disable manual output and external API tests by default for CI stability
   DUSK_NO_MANUAL_ALL: '1'
@@ -61,6 +59,10 @@ jobs:
           sed -i -e 's|PDF_THUMBNAIL_API_URL=""|PDF_THUMBNAIL_API_URL="http://localhost:8000"|g' .env
           sed -i -e 's|FACE_AI_API_URL=""|FACE_AI_API_URL="http://localhost:8000"|g' .env
           # sed -e "$ a MANUAL_PUT_BASE=\"$GITHUB_WORKSPACE/tests/Manual/html/\"" .env
+          # マニュアル出力しない
+          sed -i -e 's|#DUSK_NO_MANUAL_ALL=true|DUSK_NO_MANUAL_ALL=true|g' .env
+          # APIテストを実行しない
+          sed -i -e 's|#DUSK_NO_API_TEST_ALL=true|DUSK_NO_API_TEST_ALL=true|g' .env
 
       # schedule でphpバージョン指定
       - name: Set if input php_version is empty
@@ -94,14 +96,14 @@ jobs:
         run: |
           mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
 
-      - name: PHP 7.3 changes database user authentication method
-        run: |
-          if [[ "$PHP_VERSION" = "7.3" ]]; then
-            mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"
-            mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
-          fi
-        env:
-          PHP_VERSION: ${{ env.PHP_VERSION }}
+      # - name: PHP 7.3 changes database user authentication method
+      #   run: |
+      #     if [[ "$PHP_VERSION" = "7.3" ]]; then
+      #       mysql --user="root" --password="root" -e "alter user 'root'@'localhost' identified with mysql_native_password by 'root';"
+      #       mysql --user="root" --password="root" -e "SELECT user, host, plugin FROM mysql.user;"
+      #     fi
+      #   env:
+      #     PHP_VERSION: ${{ env.PHP_VERSION }}
 
       # Composer
       - name: Validate composer.json and composer.lock
@@ -143,9 +145,21 @@ jobs:
       - name: Chrome Version
         run: /opt/google/chrome/chrome --version
 
-      # https://readouble.com/laravel/8.x/ja/dusk.html#managing-chromedriver-installations
-      #- name: Upgrade Chrome Driver
-      #  run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+      # https://readouble.com/laravel/10.x/ja/dusk.html#managing-chromedriver-installations
+      # https://readouble.com/laravel/10.x/ja/dusk.html#running-tests-on-github-actions
+      # Chrome Version と Chrome Driverを同じにする
+      - name: Upgrade Chrome Driver
+        run: php artisan dusk:chrome-driver --detect
+        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1`
+        # run: php artisan dusk:chrome-driver `/opt/google/chrome/chrome --version | cut -d " " -f3`
+
+      # - name: Chrome Driver Copy
+      #   run: sudo \cp -f ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver ./vendor/laravel/dusk/bin/chromedriver-linux
+
+      # - name: Chrome Driver Permission Denied 対応
+      #   run: |
+      #     sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux64/chromedriver
+      #     sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
 
       # https://stackoverflow.com/questions/76980975/chrome-driver-failing-in-laravel-dusk-failed-to-open-stream-http-request-fai
       # https://voicetechno-jp.secure-web.jp/ChromeDriverV115orNewer.html
@@ -161,25 +175,6 @@ jobs:
       # - name: Downgrade Chrome driver to v114
       #   run: php artisan dusk:chrome-driver 114
 
-      - name: Set env CHROME_VERSION
-        run: |
-          echo CHROME_VERSION=`/opt/google/chrome/chrome --version | cut -d " " -f3 | cut -d "." -f1` >> $GITHUB_ENV
-
-      # https://github.com/browser-actions/setup-chrome (community)
-      - name: Download Chrome and Chrome Driver(use Chrome Driver Only)
-        uses: browser-actions/setup-chrome@v1
-        id: setup-chrome
-        with:
-          chrome-version: ${{ env.CHROME_VERSION }}
-          install-chromedriver: true
-
-      - name: Chrome Driver Copy
-        run: sudo \cp -f ${{ steps.setup-chrome.outputs.chromedriver-path }} ./vendor/laravel/dusk/bin/chromedriver-linux
-
-      - name: Chrome Driver Permission Denied 対応
-        run: |
-          sudo chmod +x ./vendor/laravel/dusk/bin/chromedriver-linux
-
       - name: Start Chrome Driver
         run: ./vendor/laravel/dusk/bin/chromedriver-linux --port=9515 &
 
@@ -191,9 +186,9 @@ jobs:
       # - 事前準備用の実行
       # ---------------------------------------------
 
-      - name: 'Run Dusk データ準備用 - ログ管理 - マニュアルなし'
+      - name: 'Run Dusk データ準備用 - ログ管理'
         if: always()
-        run: php artisan dusk tests/Browser/Manage/LogManageTest.php no_manual
+        run: php artisan dusk tests/Browser/Manage/LogManageTest.php
 
       # ---------------------------------------------
       # - 設計 ①
@@ -361,7 +356,7 @@ jobs:
 
       - name: 'Run Dusk スライドショー'
         if: always()
-        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php no_api_test
+        run: php artisan dusk tests/Browser/User/SlideshowsPluginTest.php
 
       - name: 'Run Dusk 開館カレンダー'
         if: always()

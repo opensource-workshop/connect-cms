@@ -66,8 +66,8 @@ rem ---------------------------------------------
 rem - 事前準備用の実行
 rem ---------------------------------------------
 
-echo --- データ準備用 - ログ管理 - マニュアルなし
-php artisan dusk tests\Browser\Manage\LogManageTest.php no_manual
+echo --- データ準備用 - ログ管理
+php artisan dusk tests\Browser\Manage\LogManageTest.php
 
 rem ---------------------------------------------
 rem - 設計 ①
