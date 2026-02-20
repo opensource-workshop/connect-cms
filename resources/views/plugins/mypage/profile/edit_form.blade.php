@@ -16,7 +16,7 @@ use App\Models\Core\UsersColumns;
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
 
-<form action="{{url('/')}}/mypage/profile/update/{{$id}}" class="form-horizontal" method="POST" name="form_profile">
+<form action="{{url('/')}}/mypage/profile/update" class="form-horizontal" method="POST" name="form_profile">
     {{ csrf_field() }}
 
     @foreach($users_columns as $column)

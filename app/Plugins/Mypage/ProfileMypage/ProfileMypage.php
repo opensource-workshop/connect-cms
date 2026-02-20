@@ -12,7 +12,6 @@ use App\Plugins\Manage\UserManage\UsersTool;
 use App\Plugins\Mypage\MypagePluginBase;
 use App\Rules\CustomValiLoginIdAndPasswordDoNotMatch;
 use App\Rules\CustomValiUserEmailUnique;
-use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -62,7 +61,6 @@ class ProfileMypage extends MypagePluginBase
             'themes'                  => $request->themes,
             "function"                => __FUNCTION__,
             "plugin_name"             => "profile",
-            "id"                      => $user->id,
             "user"                    => $user,
             "users_columns"           => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
@@ -75,9 +73,11 @@ class ProfileMypage extends MypagePluginBase
     /**
      * 更新
      */
-    public function update($request, $id)
+    public function update($request, $id = null)
     {
-        $user = User::where('id', $id)->first();
+        // URLのidではなく、ログインユーザー自身のみを更新対象にする。
+        $user = Auth::user();
+        $user_id = $user->id;
 
         // ユーザーのカラム
         $users_columns_all = UsersTool::getUsersColumns($user->columns_set_id);
@@ -100,11 +100,11 @@ class ProfileMypage extends MypagePluginBase
                 $base_rules = ['required', 'string', 'max:255'];
                 $validator_array['column']['name'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::login_id) {
-                $base_rules = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($id)];
+                $base_rules = ['required', 'max:255', Rule::unique('users', 'userid')->ignore($user_id)];
                 $validator_array['column']['userid'] = UsersTool::getDefaultColumnAdditionalRules($base_rules, $users_column);
             } elseif ($users_column->column_type == UserColumnType::user_email) {
                 // $validator_array['column']['email'] = ['nullable', 'email', 'max:255', Rule::unique('users')->ignore($id)];
-                $base_rules = ['email', 'max:255', new CustomValiUserEmailUnique($request->columns_set_id, $id)];
+                $base_rules = ['email', 'max:255', new CustomValiUserEmailUnique($user->columns_set_id, $user_id)];
                 if ($users_column->required) {
                     array_unshift($base_rules, 'required');
                 } else {
@@ -146,7 +146,7 @@ class ProfileMypage extends MypagePluginBase
                 // チェックしない
             } else {
                 // バリデータールールをセット
-                $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $user->columns_set_id, $id);
+                $validator_array = UsersTool::getValidatorRule($validator_array, $users_column, $user->columns_set_id, $user_id);
             }
         }
 
