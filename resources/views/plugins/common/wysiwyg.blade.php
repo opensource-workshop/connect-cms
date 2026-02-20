@@ -244,6 +244,14 @@
     }
 @endphp
 
+{{-- wysiwyg.js の条件付き読み込み。TinyMCE・tui-image-editor は app.js から分離されており、編集ページでのみ読み込む。
+     同一ページ内で複数回 include された場合に備え、予防的プログラミングとして static 変数で重複読み込みを防止する。 --}}
+@php(static $wysiwyg_js_loaded = false)
+@if (!$wysiwyg_js_loaded)
+    @php($wysiwyg_js_loaded = true)
+    <script src="{{ url('/') }}{{ mix('/js/wysiwyg.js') }}"></script>
+@endif
+
 {{-- 非表示のinput type file. file plugin用. see) resources\js\tinymce\plugins\file\plugin.js --}}
 <input type="file" class="d-none" id="cc-file-upload-file1-{{$frame_id}}">
 <input type="file" class="d-none" id="cc-file-upload-file2-{{$frame_id}}">
