@@ -246,7 +246,9 @@
 
 {{-- wysiwyg.js の条件付き読み込み。TinyMCE・tui-image-editor は app.js から分離されており、編集ページでのみ読み込む。
      同一ページ内で複数回 include された場合に備え、予防的プログラミングとして static 変数で重複読み込みを防止する。 --}}
-@php(static $wysiwyg_js_loaded = false)
+@php
+    static $wysiwyg_js_loaded = false;
+@endphp
 @if (!$wysiwyg_js_loaded)
     @php($wysiwyg_js_loaded = true)
     <script src="{{ url('/') }}{{ mix('/js/wysiwyg.js') }}"></script>
