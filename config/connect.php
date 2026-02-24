@@ -24,7 +24,7 @@ return [
     'manual_voiceid' => env('MANUAL_VOICEID', 'takumi'),
 
     // プラグイン管理にも表示しないプラグイン(小文字で指定)
-    'PLUGIN_FORCE_HIDDEN' => ['knowledges', 'codestudies'],
+    'PLUGIN_FORCE_HIDDEN' => ['knowledges'],
 
     // 特別なPath定義(管理画面)
     'CC_SPECIAL_PATH_MANAGE' => array_merge(
