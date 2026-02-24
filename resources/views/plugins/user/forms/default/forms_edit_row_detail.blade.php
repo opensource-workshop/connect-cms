@@ -71,9 +71,51 @@
         form_column_detail.submit();
     }
 
+    /**
+     * ファイル拡張子の分類単位で一括チェック/一括解除する
+     */
+    function toggleFileExtensionGroup(group_index, trigger) {
+        const checked = !!(trigger && trigger.checked);
+        const selector = 'input[name="rule_file_extensions[]"][data-extension-group="' + group_index + '"]';
+        document.querySelectorAll(selector).forEach(function (checkbox) {
+            checkbox.checked = checked;
+        });
+        syncFileExtensionGroupMaster(group_index);
+    }
+
+    /**
+     * ファイル拡張子の分類単位で「全てチェック」状態を同期する
+     */
+    function syncFileExtensionGroupMaster(group_index) {
+        const master = document.getElementById('rule_file_extensions_group_check_' + group_index);
+        if (!master) {
+            return;
+        }
+
+        const selector = 'input[name="rule_file_extensions[]"][data-extension-group="' + group_index + '"]';
+        const children = Array.from(document.querySelectorAll(selector));
+        if (children.length === 0) {
+            master.checked = false;
+            return;
+        }
+
+        master.checked = children.every(function (checkbox) {
+            return checkbox.checked;
+        });
+    }
+
     $(function () {
         // ツールチップ有効化
         $('[data-toggle="tooltip"]').tooltip()
+
+        // 初期表示時に「全てチェック」状態を同期
+        const group_indexes = new Set();
+        document.querySelectorAll('input[name="rule_file_extensions[]"][data-extension-group]').forEach(function (checkbox) {
+            group_indexes.add(checkbox.getAttribute('data-extension-group'));
+        });
+        group_indexes.forEach(function (group_index) {
+            syncFileExtensionGroupMaster(group_index);
+        });
     })
 </script>
 
@@ -430,6 +472,119 @@
     <br>
     @endif
 
+    @if ($column->column_type == FormColumnType::file)
+        @php
+            $file_extension_options = \App\Plugins\User\Forms\FormsUploadHelper::normalizeExtensions(
+                config('forms.upload.allowed_extensions', [])
+            );
+            $selected_extensions = \App\Plugins\User\Forms\FormsUploadHelper::resolveSelectedExtensionsForEdit(
+                old('rule_file_extensions'),
+                old('rule_file_extensions_submitted'),
+                $column->rule_file_extensions,
+                $file_extension_options
+            );
+            $categorized_extension_groups = \App\Plugins\User\Forms\FormsUploadHelper::buildCategorizedExtensionGroups(
+                $file_extension_options,
+                config('forms.upload.extension_categories', [])
+            );
+            $php_upload_max_filesize = \App\Plugins\User\Forms\FormsUploadHelper::getPhpUploadMaxFilesizeCaption();
+            $max_size_options = \App\Plugins\User\Forms\FormsUploadHelper::buildMaxSizeOptions(
+                \App\Plugins\User\Forms\FormsUploadHelper::getPhpUploadMaxKb()
+            );
+            $selected_file_max_kb = \App\Plugins\User\Forms\FormsUploadHelper::normalizeSelectedFileMaxKb(
+                old('rule_file_max_kb', $column->rule_file_max_kb)
+            );
+        @endphp
+
+        <div class="card">
+            <h5 class="card-header">ファイルアップロード設定</h5>
+            <div class="card-body">
+                {{-- 許可拡張子 --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">許可拡張子 <span class="badge badge-danger">必須</span></label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <input type="hidden" name="rule_file_extensions_submitted" value="1">
+                        @foreach ($categorized_extension_groups as $group_index => $extension_group)
+                            <div class="border rounded p-2 mb-2 bg-light">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center">
+                                    <div class="font-weight-bold">{{$extension_group['label']}}</div>
+                                    <div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input
+                                                type="checkbox"
+                                                id="rule_file_extensions_group_check_{{$group_index}}"
+                                                class="custom-control-input"
+                                                onchange="toggleFileExtensionGroup({{$group_index}}, this)"
+                                            >
+                                            <label class="custom-control-label small" for="rule_file_extensions_group_check_{{$group_index}}">全てチェック</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (! empty($extension_group['description']))
+                                    <small class="text-muted d-block mt-1">{{$extension_group['description']}}</small>
+                                @endif
+                                <div class="row mt-2">
+                                    @foreach ($extension_group['extensions'] as $extension)
+                                        @php
+                                            $checkbox_id = 'rule_file_extensions_' . $group_index . '_' . $extension;
+                                        @endphp
+                                        <div class="col-md-3 col-sm-4 col-6">
+                                            <div class="custom-control custom-checkbox">
+                                                <input
+                                                    type="checkbox"
+                                                    name="rule_file_extensions[]"
+                                                    id="{{$checkbox_id}}"
+                                                    value="{{$extension}}"
+                                                    class="custom-control-input"
+                                                    data-extension-group="{{$group_index}}"
+                                                    onchange="syncFileExtensionGroupMaster({{$group_index}})"
+                                                    @if (in_array($extension, $selected_extensions, true)) checked @endif
+                                                >
+                                                <label class="custom-control-label" for="{{$checkbox_id}}">.{{$extension}}</label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                        @if ($errors && $errors->has('rule_file_extensions')) <div class="text-danger">{{$errors->first('rule_file_extensions')}}</div> @endif
+                    </div>
+                </div>
+
+                {{-- 最大ファイルサイズ --}}
+                <div class="form-group row">
+                    <label class="{{$frame->getSettingLabelClass()}}">最大ファイルサイズ</label>
+                    <div class="{{$frame->getSettingInputClass()}}">
+                        <select name="rule_file_max_kb" class="form-control">
+                            <option value="">
+                                @if (! empty($php_upload_max_filesize))
+                                    サーバ設定を使用（{{$php_upload_max_filesize}}）
+                                @else
+                                    サーバ設定を使用
+                                @endif
+                            </option>
+                            @foreach ($max_size_options as $size_kb => $size_label)
+                                <option value="{{$size_kb}}" @if ((string) $size_kb === $selected_file_max_kb) selected @endif>
+                                    {{$size_label}}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small id="upload-size-help" class="text-muted d-block">※ サーバの設定によるため、サイズを変更しても反映されない場合があります。</small>
+                        @if (! empty($php_upload_max_filesize))
+                            <small id="upload-size-server-help" class="text-muted d-block">※ サーバ設定：アップロードできる最大サイズ <span class="font-weight-bold">{{$php_upload_max_filesize}}</span></small>
+                        @endif
+                        @if ($errors && $errors->has('rule_file_max_kb')) <div class="text-danger">{{$errors->first('rule_file_max_kb')}}</div> @endif
+                    </div>
+                </div>
+
+                {{-- ボタンエリア --}}
+                <div class="form-group text-center">
+                    <button onclick="javascript:submit_update_column_detail();" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+                </div>
+            </div>
+        </div>
+        <br>
+    @endif
 
     {{-- キャプション設定 --}}
     <div class="card" id="div_caption">

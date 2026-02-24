@@ -99,16 +99,14 @@
                                     {{-- 項目 ※まとめ設定行 --}}
                                     @include('plugins.user.forms.default.forms_input_' . $group_row->column_type, ['form_obj' => $group_row, 'label_id' => 'column-'.$group_row->id.'-'.$frame_id])
                                     @php
-                                        $caption = nl2br($group_row->caption);
-                                        $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                                        $caption = \App\Plugins\User\Forms\FormsUploadHelper::replaceUploadMaxFilesize($group_row->caption, $group_row);
                                     @endphp
                                     <div class="small {{ $group_row->caption_color }}">{!! $caption !!}</div>
                                         </div>
                                 @endforeach
                             </div>
                             @php
-                                $caption = nl2br($form_column->caption);
-                                $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                                $caption = \App\Plugins\User\Forms\FormsUploadHelper::replaceUploadMaxFilesize($form_column->caption, $form_column);
                             @endphp
                             <div class="small {{ $form_column->caption_color }}">{!! $caption !!}</div>
                         </div>
@@ -140,8 +138,7 @@
                         <div class="col-sm">
                             @include('plugins.user.forms.default.forms_input_' . $form_column->column_type, ['form_obj' => $form_column, 'label_id' => 'column-'.$form_column->id.'-'.$frame_id])
                             @php
-                                $caption = nl2br($form_column->caption);
-                                $caption = str_ireplace('[[upload_max_filesize]]', ini_get('upload_max_filesize'), $caption);
+                                $caption = \App\Plugins\User\Forms\FormsUploadHelper::replaceUploadMaxFilesize($form_column->caption, $form_column);
                             @endphp
                             <div class="small {{ $form_column->caption_color }}">{!! $caption !!}</div>
                         </div>
