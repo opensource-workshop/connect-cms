@@ -31,6 +31,7 @@ class ConnectPage
      *   ・pages
      *   ・top_page
      *   ・page_tree （pageがあれば）
+     *   ・frame （routeにframe_idがある場合。frameが存在しなければnull）
      *   ・http_status_code （403, 404エラー時で403,404ページを指定していた場合）
      * ・全ビュー間のデータ共有
      *   ・page_list
@@ -49,10 +50,17 @@ class ConnectPage
 
         $router = app(Router::class);
 
+        // frame_id があれば先にフレームを取得し、同一リクエスト内で再利用する。
+        $route_frame_id = $request->route('frame_id');
+        if (!empty($route_frame_id)) {
+            $request->attributes->add(['frame' => Frame::find($route_frame_id)]);
+        }
+
         // ページの特定
-        if (!empty($request->page_id)) {
+        $route_page_id = $request->route('page_id');
+        if (!empty($route_page_id)) {
             // ページID が渡ってきた場合
-            $this->page = Page::where('id', $request->page_id)->first();
+            $this->page = Page::where('id', $route_page_id)->first();
         } else {
             // ページID が渡されなかった場合、URL から取得
             $this->page = $this->getCurrentPage();
@@ -150,7 +158,7 @@ class ConnectPage
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         // （ページがある（管理画面ではページがない）＆IP制限がかかっていない場合は参照OK）
         // HTTP ステータスコード（null なら200）
-        $http_status_code = $this->checkPageForbidden($page_tree, $router);
+        $http_status_code = $this->checkPageForbidden($request, $page_tree, $router);
         if ($http_status_code) {
             // requestにセット
             $request->attributes->add(['http_status_code' => $http_status_code]);
@@ -225,17 +233,8 @@ class ConnectPage
         }
 
         // 対象となる処理は、画面を持つルートの処理とする。
-        // bugfix: php artisan route:list 実行時「Call to a member function getName() on null」エラー対応
-        // $route_name = $router->current()->getName();
         $route_name = is_null($router->current()) ? null : $router->current()->getName();
-        if ($route_name == 'get_plugin'    ||
-            $route_name == 'post_plugin'   ||
-            $route_name == 'post_redirect' ||
-            $route_name == 'get_redirect'  ||
-            $route_name == 'get_all'       ||
-            $route_name == 'post_all') {
-            // 対象として次へ
-        } else {
+        if (!$this->isPageLimitCheckRoute($route_name)) {
             // 対象外の処理なので、戻る
             return;
         }
@@ -383,20 +382,18 @@ class ConnectPage
      *
      * （$this->page 有り＋チェックする $route_name なら、参照可否チェック）
      */
-    private function checkPageForbidden($page_tree, $router)
+    private function checkPageForbidden($request, $page_tree, $router)
     {
-        // 対象となる処理は、画面を持つルートの処理とする。
-        $route_name = $router->current()->getName();
-        if ($route_name == 'get_plugin'    ||
-            $route_name == 'post_plugin'   ||
-            $route_name == 'post_redirect' ||
-            $route_name == 'get_redirect'  ||
-            $route_name == 'get_all'       ||
-            $route_name == 'post_all') {
-            // 対象として次へ
-        } else {
+        // 対象となる処理は、ページ/フレームの情報を受け取るルートとする。
+        $route_name = is_null($router->current()) ? null : $router->current()->getName();
+        if (!$this->isPageLimitCheckRoute($route_name)) {
             // 対象外の処理なので、戻る
             return;
+        }
+
+        // page_id と frame_id の組み合わせが不整合なら、不正アクセスとして 403 扱いにする。
+        if (!$this->isValidPageAndFrame($request)) {
+            return $this->doForbidden();
         }
 
         if ($this->page && get_class($this->page) == 'App\Models\Common\Page') {
@@ -409,6 +406,52 @@ class ConnectPage
         }
         // 参照可能
         return;
+    }
+
+    /**
+     * ページ閲覧制限チェックの対象ルート判定
+     */
+    private function isPageLimitCheckRoute($route_name)
+    {
+        return in_array($route_name, [
+            'get_plugin',
+            'post_plugin',
+            'get_json',
+            'post_json',
+            'post_redirect',
+            'get_redirect',
+            'post_download',
+            'get_download',
+            'get_all',
+            'post_all',
+        ], true);
+    }
+
+    /**
+     * page_id と frame_id の整合性判定
+     */
+    private function isValidPageAndFrame($request)
+    {
+        $route_page_id = $request->route('page_id');
+        $route_frame_id = $request->route('frame_id');
+
+        // frame_id がなければ判定不要
+        if (empty($route_frame_id)) {
+            return true;
+        }
+
+        // frame_id があるのに page_id がない場合は不正
+        if (empty($route_page_id)) {
+            return false;
+        }
+
+        // frameはhandle()で事前に取得済み
+        $frame = $request->attributes->get('frame');
+        if (empty($frame)) {
+            return false;
+        }
+
+        return ((int)$frame->page_id === (int)$route_page_id);
     }
 
     /**
