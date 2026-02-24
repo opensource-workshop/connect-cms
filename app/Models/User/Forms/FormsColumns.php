@@ -2,6 +2,7 @@
 
 namespace App\Models\User\Forms;
 
+use App\Enums\FormColumnType;
 use App\UserableNohistory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,19 @@ class FormsColumns extends Model
     public static function isFileColumnType($column_type)
     {
         // ファイルタイプ
-        if ($column_type == \FormColumnType::file) {
+        if ($column_type == FormColumnType::file) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 選択肢タイプのカラム型か
+     */
+    public static function isChoicesColumnType($column_type)
+    {
+        // 選択肢タイプ
+        if ($column_type == FormColumnType::select || $column_type == FormColumnType::radio || $column_type == FormColumnType::checkbox) {
             return true;
         }
         return false;

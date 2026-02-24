@@ -876,8 +876,9 @@ class FormsPlugin extends UserPluginBase
         // 入力値をトリム
         // bugfix: 【データベース】（Laravel6テスト）ファイル型項目にファイルをアップするとシステムエラーと同じ対応 https://github.com/opensource-workshop/connect-cms/issues/732
         foreach ($forms_columns as $forms_column) {
-            // ファイルタイプ以外の入力値をトリム
-            if (! FormsColumns::isFileColumnType($forms_column->column_type)) {
+            // ファイルタイプ, 選択肢タイプ以外の入力値をトリム
+            if (FormsColumns::isFileColumnType($forms_column->column_type) || FormsColumns::isChoicesColumnType($forms_column->column_type)) {
+            } else {
                 if (isset($request->forms_columns_value[$forms_column->id])) {
                     // 一度配列にして、trim後、また文字列に戻す。
                     $tmp_columns_value = StringUtils::trimInput($request->forms_columns_value[$forms_column->id]);
