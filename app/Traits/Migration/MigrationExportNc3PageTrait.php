@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 use App\Utilities\Migration\MigrationUtils;
+use App\Utilities\Url\UrlUtils;
 
 /**
  * NC3 の１つのウェブページからデータをエクスポート
@@ -30,6 +31,11 @@ trait MigrationExportNc3PageTrait
      */
     private function migrationNC3Page($url, $page_id)
     {
+        if (!UrlUtils::isGlobalHttpUrl((string) $url)) {
+            Log::warning('[migrationNC3Page] Rejected non-global URL: ' . $url);
+            return;
+        }
+
         /*
         ページ移行関数呼び出し(URL, 移行先のページid)
 
@@ -136,6 +142,11 @@ trait MigrationExportNc3PageTrait
                     $image_index++;
                     $downloadPath = $image_url;
 
+                    if (!UrlUtils::isGlobalHttpUrl((string) $downloadPath)) {
+                        Log::warning('[migrationNC3Page] Skip non-global image URL: ' . $downloadPath);
+                        continue;
+                    }
+
                     $file_name = "frame_" . $frame_index_str . '_' . $image_index;
                     $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;
                     $saveStragePath = storage_path() . '/app/' . $savePath;
@@ -206,6 +217,11 @@ trait MigrationExportNc3PageTrait
                         // 保存するファイルのパス
                         $file_index++;
                         $downloadPath = $anchor_href;
+
+                        if (!UrlUtils::isGlobalHttpUrl((string) $downloadPath)) {
+                            Log::warning('[migrationNC3Page] Skip non-global file URL: ' . $downloadPath);
+                            continue;
+                        }
 
                         $file_name = "frame_" . $frame_index_str . '_file_' . $file_index;
                         $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;

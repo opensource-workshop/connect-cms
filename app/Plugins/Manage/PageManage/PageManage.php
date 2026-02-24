@@ -22,6 +22,7 @@ use App\Traits\Migration\MigrationExportHtmlPageTrait;
 use App\User;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
+use App\Utilities\Url\UrlUtils;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -1040,7 +1041,15 @@ class PageManage extends ManagePluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'source_system'       => 'required',
-            'url'                 => 'required',
+            'url'                 => [
+                'required',
+                'url',
+                function ($attribute, $value, $fail) {
+                    if (!UrlUtils::isGlobalHttpUrl((string) $value)) {
+                        $fail('移行元URLには、グローバルな http/https URL（プライベート/予約アドレス以外）を指定してください。');
+                    }
+                },
+            ],
             'destination_page_id' => 'required',
         ]);
         $validator->setAttributeNames([

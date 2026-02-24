@@ -2,11 +2,15 @@
 
 namespace App\Traits\Migration;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Uri;
+use GuzzleHttp\Psr7\UriResolver;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 use App\Utilities\Migration\MigrationUtils;
-use App\Utilities\Curl\CurlUtils;
+use App\Utilities\Url\UrlUtils;
 
 /**
  * １つのウェブページからデータをエクスポート（想定形式：HTML）
@@ -34,22 +38,32 @@ trait MigrationExportHtmlPageTrait
      */
     private function migrationHtmlPage(string $url, int $page_id) : void
     {
+        if (!UrlUtils::isGlobalHttpUrl($url)) {
+            Log::warning('[migrationHtmlPage] Rejected non-global URL: ' . $url);
+            return;
+        }
+
         // マイグレーション用のディレクトリに$page_idのディレクトリが存在する場合は削除する
         if (Storage::exists("migration/import/pages/" . $page_id)) {
             // 指定されたディレクトリを削除
             Storage::deleteDirectory("migration/import/pages/" . $page_id);
         }
 
-        // $urlからルートURLとディレクトリまでのURLをそれぞれ抽出する
-        $root_url = $this->extractRootURL($url);
-        $target_dir_url = $this->extractUrlDirectory($url);
-
         // 画像ファイルや添付ファイルを取得する場合のテンポラリ・ディレクトリ
         Storage::makeDirectory('migration/import/pages/' . $page_id);
 
-        // 指定されたページのHTML を取得
-        $result_array = CurlUtils::execute($url);
+        // 指定されたページのHTML を取得（リダイレクト先URLも都度検証する）
+        $result_array = $this->executeMigrationHtmlRequest($url);
+        if ($result_array === null) {
+            return;
+        }
+
         $html = $result_array['body'];
+        $effective_url = $result_array['effective_url'];
+
+        // 実際に取得したURLからルートURLとディレクトリまでのURLを抽出する
+        $root_url = $this->extractRootURL($effective_url);
+        $target_dir_url = $this->extractUrlDirectory($effective_url);
 
         // HTMLドキュメントの解析準備
         $dom = new \DOMDocument;
@@ -96,7 +110,7 @@ trait MigrationExportHtmlPageTrait
         $frame_ini .= "source_key = \"" . 'xxxxx' . "\"\n";
 
         $frame_ini .= "target_source_table = \"announcement\"\n";
-        
+
 
         // 画像ファイルの抽出 ※抽出ファイルがない場合はfalseが返る
         $image_paths = MigrationUtils::getContentImage($content_html);
@@ -119,6 +133,11 @@ trait MigrationExportHtmlPageTrait
                     $download_img_path = strpos($image_path, '/') === 0 ?  $root_url . $image_path : $target_dir_url . '/' . $image_path;
                 }
                 Log::debug('download_img_path: ' . $download_img_path);
+
+                if (!UrlUtils::isGlobalHttpUrl((string) $download_img_path)) {
+                    Log::warning('[migrationHtmlPage] Skip non-global resource URL: ' . $download_img_path);
+                    continue;
+                }
 
                 $file_name = "frame_0001_" . $image_index;
                 $save_path = 'migration/import/pages/' . $page_id . "/" . $file_name;
@@ -173,7 +192,7 @@ trait MigrationExportHtmlPageTrait
                 // ファイルが存在する、且つ、拡張子が取得できた場合、ファイル名に拡張子を付与して保存
                 if (Storage::exists($save_path) && $img_extension) {
                     Storage::move($save_path, $save_path . '.' . $img_extension);
-    
+
                     // 画像の設定情報の記載
                     $frame_ini .= $file_name . '.' . $img_extension . ' = ""' . PHP_EOL;
 
@@ -195,6 +214,199 @@ trait MigrationExportHtmlPageTrait
 
         // HTML content の保存
         Storage::put('migration/import/pages/' . $page_id . "/frame_0001.html", trim($content_html));
+    }
+
+    /**
+     * ページのHTMLを取得する（リダイレクト時は遷移先URLを都度検証）
+     *
+     * @param string $url
+     * @return array|null ['body' => string, 'effective_url' => string]
+     */
+    private function executeMigrationHtmlRequest(string $url): ?array
+    {
+        $current_url = $url;
+        $max_redirects = 5;
+        $http_client = $this->createMigrationHttpClient();
+
+        for ($redirect_count = 0; $redirect_count <= $max_redirects; $redirect_count++) {
+            $response = $this->executeSingleMigrationRequest($http_client, $current_url);
+
+            if (!$this->isRedirectHttpCode($response['http_code'])) {
+                return [
+                    'body' => $response['body'],
+                    'effective_url' => $current_url,
+                ];
+            }
+
+            if ($redirect_count === $max_redirects) {
+                Log::warning('[migrationHtmlPage] Too many redirects: ' . $url);
+                return null;
+            }
+
+            $redirect_url = $this->buildRedirectUrl($current_url, $response['location']);
+            if ($redirect_url === '') {
+                Log::warning('[migrationHtmlPage] Invalid redirect URL. Source URL: ' . $current_url . ' Location: ' . $response['location']);
+                return null;
+            }
+
+            if (!UrlUtils::isGlobalHttpUrl($redirect_url)) {
+                Log::warning('[migrationHtmlPage] Rejected redirect destination URL: ' . $redirect_url);
+                return null;
+            }
+
+            $current_url = $redirect_url;
+        }
+
+        return null;
+    }
+
+    /**
+     * 単一URLへHTTPリクエストを実行する（自動リダイレクト追跡なし）
+     *
+     * @param Client $http_client
+     * @param string $url
+     * @return array ['body' => string, 'http_code' => int, 'location' => string]
+     */
+    private function executeSingleMigrationRequest(Client $http_client, string $url): array
+    {
+        if (!UrlUtils::isGlobalHttpUrl($url)) {
+            Log::warning('[migrationHtmlPage] Rejected non-global URL: ' . $url);
+            throw new \RuntimeException('[migrationHtmlPage] Rejected non-global URL: ' . $url);
+        }
+
+        try {
+            $response = $http_client->request('GET', $url);
+        } catch (GuzzleException $e) {
+            $error_message = "HTTP [GET] {$url} : failed. " . $e->getMessage();
+            Log::error($error_message);
+            throw new \RuntimeException($error_message, 0, $e);
+        }
+
+        $body = (string) $response->getBody();
+        $http_code = (int) $response->getStatusCode();
+        $location = trim($response->getHeaderLine('Location'));
+
+        return [
+            'body' => $body,
+            'http_code' => $http_code,
+            'location' => $location,
+        ];
+    }
+
+    /**
+     * HTTPステータスコードがリダイレクトかどうかを判定する
+     *
+     * @param int $http_code
+     * @return bool
+     */
+    private function isRedirectHttpCode(int $http_code): bool
+    {
+        return in_array($http_code, [301, 302, 303, 307, 308], true);
+    }
+
+    /**
+     * マイグレーションHTML取得用のHTTPクライアントを生成する
+     *
+     * @return Client
+     */
+    private function createMigrationHttpClient(): Client
+    {
+        $http_client_options = [
+            'http_errors' => false,
+            'allow_redirects' => false,
+        ];
+
+        $timeout = config('connect.CURL_TIMEOUT');
+        if (!empty($timeout)) {
+            $http_client_options['timeout'] = (float) $timeout;
+        }
+
+        if (config('connect.HTTPPROXYTUNNEL')) {
+            $proxy = $this->buildMigrationProxyOption();
+            if ($proxy !== null) {
+                $http_client_options['proxy'] = $proxy;
+            }
+        }
+
+        return new Client($http_client_options);
+    }
+
+    /**
+     * connect設定からGuzzle用のプロキシURLを生成する
+     *
+     * @return string|null
+     */
+    private function buildMigrationProxyOption(): ?string
+    {
+        $proxy = trim((string) config('connect.PROXY'));
+        if ($proxy === '') {
+            return null;
+        }
+
+        if (strpos($proxy, '://') === false) {
+            $proxy = 'http://' . $proxy;
+        }
+
+        $proxy_parts = parse_url($proxy);
+        if ($proxy_parts === false || !isset($proxy_parts['host'])) {
+            return null;
+        }
+
+        $scheme = $proxy_parts['scheme'] ?? 'http';
+        $host = $proxy_parts['host'];
+        if (strpos($host, ':') !== false && strpos($host, '[') !== 0) {
+            $host = '[' . $host . ']';
+        }
+
+        $port = $proxy_parts['port'] ?? null;
+        $config_proxy_port = trim((string) config('connect.PROXYPORT'));
+        if ($config_proxy_port !== '') {
+            $port = $config_proxy_port;
+        }
+
+        $user = $proxy_parts['user'] ?? null;
+        $pass = $proxy_parts['pass'] ?? null;
+        $proxy_user_pwd = trim((string) config('connect.PROXYUSERPWD'));
+        if ($proxy_user_pwd !== '') {
+            list($user, $pass) = array_pad(explode(':', $proxy_user_pwd, 2), 2, '');
+        }
+
+        $auth = '';
+        if (!empty($user)) {
+            $auth = rawurlencode($user);
+            if (!empty($pass)) {
+                $auth .= ':' . rawurlencode($pass);
+            }
+            $auth .= '@';
+        }
+
+        $proxy_url = $scheme . '://' . $auth . $host;
+        if (!empty($port)) {
+            $proxy_url .= ':' . $port;
+        }
+
+        return $proxy_url;
+    }
+
+    /**
+     * レスポンスLocationヘッダーを絶対URLへ解決する
+     *
+     * @param string $current_url
+     * @param string $location
+     * @return string
+     */
+    private function buildRedirectUrl(string $current_url, string $location): string
+    {
+        $location = trim($location);
+        if ($location === '') {
+            return '';
+        }
+
+        try {
+            return (string) UriResolver::resolve(new Uri($current_url), new Uri($location));
+        } catch (\InvalidArgumentException $e) {
+            return '';
+        }
     }
 
     /**
