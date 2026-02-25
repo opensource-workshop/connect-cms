@@ -31,7 +31,7 @@ class FormsColumns extends Model
     /**
      * 選択肢タイプのカラム型か
      */
-    public static function isChoicesColumnType($column_type)
+    public static function isSelectColumnType($column_type)
     {
         // 選択肢タイプ
         if ($column_type == FormColumnType::select || $column_type == FormColumnType::radio || $column_type == FormColumnType::checkbox) {
