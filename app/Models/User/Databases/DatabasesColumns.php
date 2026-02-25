@@ -60,7 +60,7 @@ class DatabasesColumns extends Model
     /**
      * ファイルタイプのカラム型か
      */
-    public static function isFileColumnType($column_type)
+    public static function isFileColumnType($column_type): bool
     {
         // ファイルタイプ
         if ($column_type == DatabaseColumnType::file ||
@@ -72,9 +72,21 @@ class DatabasesColumns extends Model
     }
 
     /**
+     * 選択肢タイプのカラム型か
+     */
+    public static function isSelectColumnType($column_type): bool
+    {
+        // 選択肢タイプ
+        if ($column_type == DatabaseColumnType::select || $column_type == DatabaseColumnType::radio || $column_type == DatabaseColumnType::checkbox) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * 埋め込みタグから除外するカラム型か
      */
-    public static function isNotEmbeddedTagsColumnType($column_type)
+    public static function isNotEmbeddedTagsColumnType($column_type): bool
     {
         // 登録日型・更新日型・公開日型・表示順型は入力しない
         if ($column_type == DatabaseColumnType::created ||
