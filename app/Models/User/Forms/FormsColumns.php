@@ -19,7 +19,7 @@ class FormsColumns extends Model
     /**
      * ファイルタイプのカラム型か
      */
-    public static function isFileColumnType($column_type)
+    public static function isFileColumnType($column_type): bool
     {
         // ファイルタイプ
         if ($column_type == FormColumnType::file) {
@@ -31,7 +31,7 @@ class FormsColumns extends Model
     /**
      * 選択肢タイプのカラム型か
      */
-    public static function isSelectColumnType($column_type)
+    public static function isSelectColumnType($column_type): bool
     {
         // 選択肢タイプ
         if ($column_type == FormColumnType::select || $column_type == FormColumnType::radio || $column_type == FormColumnType::checkbox) {
