@@ -137,7 +137,7 @@ class UrlUtils
      * @param string $ip
      * @return bool
      */
-    private static function isGlobalIp(string $ip): bool
+    public static function isGlobalIp(string $ip): bool
     {
         if (self::isIpv4MappedIpv6($ip)) {
             return false;

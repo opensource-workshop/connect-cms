@@ -3,12 +3,12 @@
 namespace App\Traits\Migration;
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Psr7\UriResolver;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
+use App\Utilities\Migration\MigrationHttpClientUtils;
 use App\Utilities\Migration\MigrationUtils;
 use App\Utilities\Url\UrlUtils;
 
@@ -36,7 +36,7 @@ trait MigrationExportHtmlPageTrait
      * @param integer $page_id
      * @return void
      */
-    private function migrationHtmlPage(string $url, int $page_id) : void
+    private function migrationHtmlPage(string $url, int $page_id, array $http_options = []) : void
     {
         if (!UrlUtils::isGlobalHttpUrl($url)) {
             Log::warning('[migrationHtmlPage] Rejected non-global URL: ' . $url);
@@ -53,7 +53,7 @@ trait MigrationExportHtmlPageTrait
         Storage::makeDirectory('migration/import/pages/' . $page_id);
 
         // 指定されたページのHTML を取得（リダイレクト先URLも都度検証する）
-        $result_array = $this->executeMigrationHtmlRequest($url);
+        $result_array = $this->executeMigrationHtmlRequest($url, $http_options);
         if ($result_array === null) {
             return;
         }
@@ -68,8 +68,9 @@ trait MigrationExportHtmlPageTrait
         // HTMLドキュメントの解析準備
         $dom = new \DOMDocument;
 
-        // DOMDocument が返ってくる。
-        @$dom->loadHTML($html);
+        // 外部ページには非標準タグ/壊れたEntityが含まれることがあるため、
+        // libxml警告は内部エラーとして扱い、取り込み処理は継続する。
+        $this->loadHtmlDocument($dom, $html);
         $xpath = new \DOMXPath($dom);
 
         // bodyタグ配下を抽出する
@@ -117,6 +118,8 @@ trait MigrationExportHtmlPageTrait
 
         // 画像ファイルのダウンロード
         if ($image_paths) {
+            $http_client = $this->migrationHttpCreateClient($http_options);
+
             // HTML 中の画像ファイルをループで処理
             $frame_ini .= "\n[image_names]\n";
             $image_index = 0;
@@ -143,29 +146,20 @@ trait MigrationExportHtmlPageTrait
                 $save_path = 'migration/import/pages/' . $page_id . "/" . $file_name;
                 $save_storage_path = storage_path() . '/app/' . $save_path;
 
-                // CURL 設定、ファイル取得
-                $ch = curl_init($download_img_path);
-                $fp = fopen($save_storage_path, 'w');
-                curl_setopt($ch, CURLOPT_FILE, $fp);
-                curl_setopt($ch, CURLOPT_HEADER, false);
-                curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'callbackHtmlHeader'));
-                $result = curl_exec($ch);
-
-                // エラーがあった場合はスキップ
-                if (!empty(curl_errno($ch))) {
-                    Log::debug('curl_errno: ' . curl_errno($ch));
-                    continue;
-                }
-                // ステータス404はスキップ
-                Log::debug('curl_getinfo: ' . curl_getinfo($ch, CURLINFO_HTTP_CODE));
-                if (trim(curl_getinfo($ch, CURLINFO_HTTP_CODE)) == '404') {
-                    Log::debug('File deleted.');
+                try {
+                    $download_response = $this->migrationHttpDownloadToFile($http_client, $download_img_path, $save_storage_path, $http_options);
+                } catch (\RuntimeException $e) {
                     Storage::delete($save_path);
                     continue;
                 }
 
-                curl_close($ch);
-                fclose($fp);
+                // ステータス404はスキップ
+                Log::debug('http_code: ' . $download_response['http_code']);
+                if ((int) $download_response['http_code'] === 404) {
+                    Log::debug('File deleted.');
+                    Storage::delete($save_path);
+                    continue;
+                }
 
                 //@getimagesize関数で画像情報を取得する
                 list($img_width, $img_height, $mime_type, $attr) = @getimagesize($save_storage_path);
@@ -222,14 +216,14 @@ trait MigrationExportHtmlPageTrait
      * @param string $url
      * @return array|null ['body' => string, 'effective_url' => string]
      */
-    private function executeMigrationHtmlRequest(string $url): ?array
+    private function executeMigrationHtmlRequest(string $url, array $http_options = []): ?array
     {
         $current_url = $url;
         $max_redirects = 5;
-        $http_client = $this->createMigrationHttpClient();
+        $http_client = $this->migrationHttpCreateClient($http_options);
 
         for ($redirect_count = 0; $redirect_count <= $max_redirects; $redirect_count++) {
-            $response = $this->executeSingleMigrationRequest($http_client, $current_url);
+            $response = $this->executeSingleMigrationRequest($http_client, $current_url, $http_options);
 
             if (!$this->isRedirectHttpCode($response['http_code'])) {
                 return [
@@ -267,30 +261,49 @@ trait MigrationExportHtmlPageTrait
      * @param string $url
      * @return array ['body' => string, 'http_code' => int, 'location' => string]
      */
-    private function executeSingleMigrationRequest(Client $http_client, string $url): array
+    private function executeSingleMigrationRequest(Client $http_client, string $url, array $http_options = []): array
     {
         if (!UrlUtils::isGlobalHttpUrl($url)) {
             Log::warning('[migrationHtmlPage] Rejected non-global URL: ' . $url);
             throw new \RuntimeException('[migrationHtmlPage] Rejected non-global URL: ' . $url);
         }
 
-        try {
-            $response = $http_client->request('GET', $url);
-        } catch (GuzzleException $e) {
-            $error_message = "HTTP [GET] {$url} : failed. " . $e->getMessage();
-            Log::error($error_message);
-            throw new \RuntimeException($error_message, 0, $e);
-        }
+        return $this->migrationHttpGet($http_client, $url, $http_options);
+    }
 
-        $body = (string) $response->getBody();
-        $http_code = (int) $response->getStatusCode();
-        $location = trim($response->getHeaderLine('Location'));
+    /**
+     * 移行処理用HTTPクライアントを生成する
+     *
+     * @return Client
+     */
+    protected function migrationHttpCreateClient(array $http_options = []): Client
+    {
+        return MigrationHttpClientUtils::createClient($http_options);
+    }
 
-        return [
-            'body' => $body,
-            'http_code' => $http_code,
-            'location' => $location,
-        ];
+    /**
+     * 移行処理用HTTP GET（文字列レスポンス）
+     *
+     * @param Client $http_client
+     * @param string $url
+     * @return array
+     */
+    protected function migrationHttpGet(Client $http_client, string $url, array $http_options = []): array
+    {
+        return MigrationHttpClientUtils::get($http_client, $url, $http_options);
+    }
+
+    /**
+     * 移行処理用HTTP GET（ファイル保存）
+     *
+     * @param Client $http_client
+     * @param string $url
+     * @param string $sink_path
+     * @return array
+     */
+    protected function migrationHttpDownloadToFile(Client $http_client, string $url, string $sink_path, array $http_options = []): array
+    {
+        return MigrationHttpClientUtils::downloadToFile($http_client, $url, $sink_path, $http_options);
     }
 
     /**
@@ -302,90 +315,6 @@ trait MigrationExportHtmlPageTrait
     private function isRedirectHttpCode(int $http_code): bool
     {
         return in_array($http_code, [301, 302, 303, 307, 308], true);
-    }
-
-    /**
-     * マイグレーションHTML取得用のHTTPクライアントを生成する
-     *
-     * @return Client
-     */
-    private function createMigrationHttpClient(): Client
-    {
-        $http_client_options = [
-            'http_errors' => false,
-            'allow_redirects' => false,
-        ];
-
-        $timeout = config('connect.CURL_TIMEOUT');
-        if (!empty($timeout)) {
-            $http_client_options['timeout'] = (float) $timeout;
-        }
-
-        if (config('connect.HTTPPROXYTUNNEL')) {
-            $proxy = $this->buildMigrationProxyOption();
-            if ($proxy !== null) {
-                $http_client_options['proxy'] = $proxy;
-            }
-        }
-
-        return new Client($http_client_options);
-    }
-
-    /**
-     * connect設定からGuzzle用のプロキシURLを生成する
-     *
-     * @return string|null
-     */
-    private function buildMigrationProxyOption(): ?string
-    {
-        $proxy = trim((string) config('connect.PROXY'));
-        if ($proxy === '') {
-            return null;
-        }
-
-        if (strpos($proxy, '://') === false) {
-            $proxy = 'http://' . $proxy;
-        }
-
-        $proxy_parts = parse_url($proxy);
-        if ($proxy_parts === false || !isset($proxy_parts['host'])) {
-            return null;
-        }
-
-        $scheme = $proxy_parts['scheme'] ?? 'http';
-        $host = $proxy_parts['host'];
-        if (strpos($host, ':') !== false && strpos($host, '[') !== 0) {
-            $host = '[' . $host . ']';
-        }
-
-        $port = $proxy_parts['port'] ?? null;
-        $config_proxy_port = trim((string) config('connect.PROXYPORT'));
-        if ($config_proxy_port !== '') {
-            $port = $config_proxy_port;
-        }
-
-        $user = $proxy_parts['user'] ?? null;
-        $pass = $proxy_parts['pass'] ?? null;
-        $proxy_user_pwd = trim((string) config('connect.PROXYUSERPWD'));
-        if ($proxy_user_pwd !== '') {
-            list($user, $pass) = array_pad(explode(':', $proxy_user_pwd, 2), 2, '');
-        }
-
-        $auth = '';
-        if (!empty($user)) {
-            $auth = rawurlencode($user);
-            if (!empty($pass)) {
-                $auth .= ':' . rawurlencode($pass);
-            }
-            $auth .= '@';
-        }
-
-        $proxy_url = $scheme . '://' . $auth . $host;
-        if (!empty($port)) {
-            $proxy_url .= ':' . $port;
-        }
-
-        return $proxy_url;
     }
 
     /**
@@ -419,6 +348,26 @@ trait MigrationExportHtmlPageTrait
             return "";
         }
         return $node->ownerDocument->saveHTML($node);
+    }
+
+    /**
+     * HTMLをDOMへ読み込む（libxml警告は内部で処理）
+     *
+     * @param \DOMDocument $dom
+     * @param string $html
+     * @return void
+     */
+    private function loadHtmlDocument(\DOMDocument $dom, string $html): void
+    {
+        $previous_internal_errors = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            $dom->loadHTML($html);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_internal_errors);
+        }
     }
 
     /**

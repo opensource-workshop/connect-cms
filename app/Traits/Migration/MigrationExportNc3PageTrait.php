@@ -5,6 +5,7 @@ namespace App\Traits\Migration;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
+use App\Utilities\Migration\MigrationHttpClientUtils;
 use App\Utilities\Migration\MigrationUtils;
 use App\Utilities\Url\UrlUtils;
 
@@ -29,7 +30,7 @@ trait MigrationExportNc3PageTrait
     /**
      * ページのHTML取得
      */
-    private function migrationNC3Page($url, $page_id)
+    private function migrationNC3Page($url, $page_id, array $http_options = [])
     {
         if (!UrlUtils::isGlobalHttpUrl((string) $url)) {
             Log::warning('[migrationNC3Page] Rejected non-global URL: ' . $url);
@@ -55,19 +56,28 @@ trait MigrationExportNc3PageTrait
         // 画像ファイルや添付ファイルを取得する場合のテンポラリ・ディレクトリ
         Storage::makeDirectory('migration/import/pages/' . $page_id);
 
+        $http_client = $this->migrationHttpCreateClientForNc3($http_options);
+
         // 指定されたページのHTML を取得
         // $html = $this->getHTMLPage($url);
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $html =  curl_exec($ch);
-        curl_close($ch);
+        try {
+            $page_response = $this->migrationHttpGetForNc3($http_client, (string) $url, $http_options);
+        } catch (\RuntimeException $e) {
+            Log::error('[migrationNC3Page] Failed to fetch page HTML.', [
+                'page_id' => $page_id,
+                'url' => (string) $url,
+                'exception' => $e,
+            ]);
+            return;
+        }
+        $html = $page_response['body'];
 
         // HTMLドキュメントの解析準備
         $dom = new \DOMDocument;
 
-        // DOMDocument が返ってくる。
-        @$dom->loadHTML($html);
+        // 外部HTMLには非標準タグ/壊れたEntityが含まれることがあるため、
+        // libxml警告は内部エラーとして扱い、取り込み処理は継続する。
+        $this->loadNc3HtmlDocument($dom, $html);
         $xpath = new \DOMXPath($dom);
 
         // NC3 のメイン部分を抜き出します。
@@ -151,18 +161,18 @@ trait MigrationExportNc3PageTrait
                     $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;
                     $saveStragePath = storage_path() . '/app/' . $savePath;
 
-                    // CURL 設定、ファイル取得
-                    $ch = curl_init($downloadPath);
-                    $fp = fopen($saveStragePath, 'w');
-                    curl_setopt($ch, CURLOPT_FILE, $fp);
-                    curl_setopt($ch, CURLOPT_HEADER, false);
-                    curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'callbackNc3Header'));
-                    $result = curl_exec($ch);
-                    if (!empty(curl_errno($ch))) {
+                    try {
+                        $download_response = $this->migrationHttpDownloadToFileForNc3($http_client, (string) $downloadPath, $saveStragePath, $http_options);
+                    } catch (\RuntimeException $e) {
+                        Log::error('[migrationNC3Page] Failed to download image.', [
+                            'page_id' => $page_id,
+                            'url' => (string) $downloadPath,
+                            'exception' => $e,
+                        ]);
+                        Storage::delete($savePath);
                         continue;
                     }
-                    curl_close($ch);
-                    fclose($fp);
+                    $this->content_disposition = $download_response['content_disposition'];
                     //echo $this->content_disposition;
 
                     //@getimagesize関数で画像情報を取得する
@@ -227,15 +237,18 @@ trait MigrationExportNc3PageTrait
                         $savePath = 'migration/import/pages/' . $page_id . "/" . $file_name;
                         $saveStragePath = storage_path() . '/app/' . $savePath;
 
-                        // CURL 設定、ファイル取得
-                        $ch = curl_init($downloadPath);
-                        $fp = fopen($saveStragePath, 'w');
-                        curl_setopt($ch, CURLOPT_FILE, $fp);
-                        curl_setopt($ch, CURLOPT_HEADER, false);
-                        curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'callbackNc3Header'));
-                        $result = curl_exec($ch);
-                        curl_close($ch);
-                        fclose($fp);
+                        try {
+                            $download_response = $this->migrationHttpDownloadToFileForNc3($http_client, (string) $downloadPath, $saveStragePath, $http_options);
+                        } catch (\RuntimeException $e) {
+                            Log::error('[migrationNC3Page] Failed to download file.', [
+                                'page_id' => $page_id,
+                                'url' => (string) $downloadPath,
+                                'exception' => $e,
+                            ]);
+                            Storage::delete($savePath);
+                            continue;
+                        }
+                        $this->content_disposition = $download_response['content_disposition'];
 
                         //echo $this->content_disposition;
 
@@ -276,6 +289,41 @@ trait MigrationExportNc3PageTrait
     }
 
     /**
+     * NC3移行処理用HTTPクライアントを生成する
+     *
+     * @return \GuzzleHttp\Client
+     */
+    protected function migrationHttpCreateClientForNc3(array $http_options = [])
+    {
+        return MigrationHttpClientUtils::createClient($http_options);
+    }
+
+    /**
+     * NC3移行処理用HTTP GET（文字列レスポンス）
+     *
+     * @param \GuzzleHttp\Client $http_client
+     * @param string $url
+     * @return array
+     */
+    protected function migrationHttpGetForNc3($http_client, string $url, array $http_options = []): array
+    {
+        return MigrationHttpClientUtils::get($http_client, $url, $http_options);
+    }
+
+    /**
+     * NC3移行処理用HTTP GET（ファイル保存）
+     *
+     * @param \GuzzleHttp\Client $http_client
+     * @param string $url
+     * @param string $sink_path
+     * @return array
+     */
+    protected function migrationHttpDownloadToFileForNc3($http_client, string $url, string $sink_path, array $http_options = []): array
+    {
+        return MigrationHttpClientUtils::downloadToFile($http_client, $url, $sink_path, $http_options);
+    }
+
+    /**
      * nodeをHTMLとして取り出す
      */
     private function getNc3InnerHtml($node)
@@ -291,6 +339,26 @@ trait MigrationExportNc3PageTrait
             $html .= $node->ownerDocument->saveHTML($child);
         }
         return $html;
+    }
+
+    /**
+     * HTMLをDOMへ読み込む（libxml警告は内部で処理）
+     *
+     * @param \DOMDocument $dom
+     * @param string $html
+     * @return void
+     */
+    private function loadNc3HtmlDocument(\DOMDocument $dom, string $html): void
+    {
+        $previous_internal_errors = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            $dom->loadHTML($html);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_internal_errors);
+        }
     }
 
     /**
