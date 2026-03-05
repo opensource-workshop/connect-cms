@@ -69,37 +69,11 @@
 @can('role_update_or_approval', [[$inputs, $frame->plugin_name, $buckets]])
 <div class="row mt-2">
     <div class="col-12 text-right mb-1">
-        @if ($inputs->status == 2)
-            @can('role_update_or_approval',[[$inputs, $frame->plugin_name, $buckets]])
-                <span class="badge badge-warning align-bottom">承認待ち</span>
-            @endcan
-            @can('posts.approval',[[$inputs, $frame->plugin_name, $buckets]])
-                <form action="{{url('/')}}/plugin/databases/approval/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}" method="post" name="form_approval" class="d-inline">
-                    {{ csrf_field() }}
-                    <button type="submit" class="btn btn-primary btn-sm" onclick="javascript:return confirm('承認します。\nよろしいですか？');">
-                        <i class="fas fa-check"></i> <span class="d-none d-sm-inline">承認</span>
-                    </button>
-                </form>
-            @endcan
-        @endif
-        @can('role_update_or_approval',[[$inputs, $frame->plugin_name, $buckets]])
-            @if (!empty($inputs->expires_at) && $inputs->expires_at <= Carbon::now())
-                <span class="badge badge-secondary align-bottom">公開終了</span>
-            @endif
-
-            @if ($inputs->posted_at > Carbon::now())
-                <span class="badge badge-info align-bottom">公開前</span>
-            @endif
-        @endcan
-        @can('posts.update',[[$inputs, $frame->plugin_name, $buckets]])
-            @if ($inputs->status == 1)
-                <span class="badge badge-warning align-bottom">一時保存</span>
-            @endif
-
-            <button type="button" class="btn btn-success btn-sm ml-2" onclick="location.href='{{url('/')}}/plugin/databases/input/{{$page->id}}/{{$frame_id}}/{{$inputs->id}}#frame-{{$frame_id}}'">
-                <i class="far fa-edit"></i> 編集
-            </button>
-        @endcan
+        {{-- ステータス表示＋ボタン --}}
+        @include('plugins.user.databases.default.databases_include_status_and_button', [
+            'add_badge_class' => 'align-bottom',
+            'input' => $inputs,
+        ])        
     </div>
 </div>
 @endcan
