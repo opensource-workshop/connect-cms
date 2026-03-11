@@ -61,6 +61,7 @@ class ProfileMypage extends MypagePluginBase
             'themes'                  => $request->themes,
             "function"                => __FUNCTION__,
             "plugin_name"             => "profile",
+            "id"                      => $user->id,
             "user"                    => $user,
             "users_columns"           => $users_columns,
             "users_columns_id_select" => $users_columns_id_select,
