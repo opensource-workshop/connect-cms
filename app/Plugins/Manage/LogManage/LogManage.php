@@ -66,6 +66,16 @@ class LogManage extends ManagePluginBase
             $app_logs_query->where('uri', 'like', '%' . $request->session()->get('app_log_search_condition.uri') . '%');
         }
 
+        // IPアドレス
+        if ($request->session()->has('app_log_search_condition.ip_address')) {
+            $app_logs_query->where('ip_address', 'like', '%' . $request->session()->get('app_log_search_condition.ip_address') . '%');
+        }
+
+        // 値など
+        if ($request->session()->has('app_log_search_condition.value')) {
+            $app_logs_query->where('value', 'like', '%' . $request->session()->get('app_log_search_condition.value') . '%');
+        }
+
         // 詳細条件
         $app_logs_query->where(function ($query) use ($request) {
             // ログイン
