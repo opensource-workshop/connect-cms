@@ -36,7 +36,7 @@
             @if($link_pattern[$searchs_result->plugin_name] == 'show_page_frame_post')
             <a href="{{url('/')}}{{$link_base[$searchs_result->plugin_name]}}/{{$searchs_result->page_id}}/{{$searchs_result->frame_id}}/{{$searchs_result->post_id}}#frame-{{$searchs_result->frame_id}}">
             @elseif($link_pattern[$searchs_result->plugin_name] == 'show_page')
-            <a href="{{url('/')}}{{$searchs_result->permanent_link}}">
+            <a href="{{url('/')}}{{$searchs_result->permanent_link}}#frame-{{$searchs_result->frame_id}}">
             @else
             {{-- 上記以外は想定していない為、取り敢えず permanent_link をリンク先とする --}}
             <a href="{{url('/')}}{{$searchs_result->permanent_link}}">
