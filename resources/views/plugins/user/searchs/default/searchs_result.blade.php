@@ -20,7 +20,7 @@
 @if($searchs_results)
 <div class="mt-3">
     <dl>
-    @foreach($searchs_results as $searchs_result)
+    @forelse($searchs_results as $searchs_result)
         <dt>
             {{-- 登録日 --}}
             @if($searchs_frame->view_posted_at)
@@ -57,7 +57,10 @@
         <dd class="text-secondary search-result-body border-bottom">
             {!! mb_strimwidth(strip_tags($searchs_result->body), 0, 160, '…') !!}
         </dd>
-    @endforeach
+    @empty
+        {{-- 検索結果0件 --}}
+        <dd>{{ __('messages.search_results_empty') }}</dd>
+    @endforelse
     </dl>
 @php
     $appends['search_keyword'] = old('search_keyword');
