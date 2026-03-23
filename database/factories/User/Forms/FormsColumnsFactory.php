@@ -40,6 +40,8 @@ class FormsColumnsFactory extends Factory
             'rule_min' => null,
             'rule_word_count' => null,
             'rule_date_after_equal' => null,
+            'rule_file_extensions' => null,
+            'rule_file_max_kb' => null,
             'display_sequence' => 0,
         ];
     }

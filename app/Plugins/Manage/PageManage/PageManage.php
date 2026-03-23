@@ -22,6 +22,7 @@ use App\Traits\Migration\MigrationExportHtmlPageTrait;
 use App\User;
 use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
+use App\Utilities\Url\UrlUtils;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -1040,14 +1041,35 @@ class PageManage extends ManagePluginBase
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'source_system'       => 'required',
-            'url'                 => 'required',
+            'url'                 => [
+                'required',
+                'url',
+                function ($attribute, $value, $fail) {
+                    if (!UrlUtils::isGlobalHttpUrl((string) $value)) {
+                        $fail('移行元URLには、グローバルな http/https URL（プライベート/予約アドレス以外）を指定してください。');
+                    }
+                },
+            ],
+            'use_proxy'           => 'sometimes|accepted',
             'destination_page_id' => 'required',
         ]);
         $validator->setAttributeNames([
             'source_system'       => '移行元システム',
             'url'                 => '移行元URL',
+            'use_proxy'           => 'プロキシ使用',
             'destination_page_id' => '移行先ページ',
         ]);
+
+        $use_proxy = $request->boolean('use_proxy');
+        if ($use_proxy) {
+            $proxy_tunnel_enabled = (bool) config('connect.HTTPPROXYTUNNEL');
+            $proxy_host = trim((string) config('connect.PROXY'));
+            if (!$proxy_tunnel_enabled || $proxy_host === '') {
+                $validator->after(function ($validator) {
+                    $validator->errors()->add('use_proxy', 'プロキシを使用する場合は、プロキシ設定（HTTPPROXYTUNNEL / PROXY）を設定してください。');
+                });
+            }
+        }
 
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -1074,14 +1096,15 @@ class PageManage extends ManagePluginBase
         }
 
         // 移行元システムによって処理を分岐
+        $migration_http_options = ['use_proxy' => $use_proxy];
         if ($request->source_system == WebsiteType::netcommons2) {
             // TODO: netcommons2 からの移行
         } elseif ($request->source_system == WebsiteType::netcommons3) {
             // netcommons3 からの移行
-            $this->migrationNC3Page($request->url, $request->destination_page_id);
+            $this->migrationNC3Page($request->url, $request->destination_page_id, $migration_http_options);
         } elseif ($request->source_system == WebsiteType::html) {
             // html からの移行
-            $this->migrationHtmlPage($request->url, $request->destination_page_id);
+            $this->migrationHtmlPage($request->url, $request->destination_page_id, $migration_http_options);
         }
 
         // リクエストを送信した時間をファイルに書き込む

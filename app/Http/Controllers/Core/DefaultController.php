@@ -742,12 +742,22 @@ class DefaultController extends ConnectController
         // app\Http\Middleware\ConnectPage.php でセットした値
         $page = $request->attributes->get('page');
         $pages = $request->attributes->get('pages');
+        $http_status_code = $request->attributes->get('http_status_code');
+
+        // 403/404 判定済みのリクエストは処理を継続させない。
+        if ($http_status_code) {
+            abort($http_status_code);
+        }
 
         // アプリのロケールを変更
         $this->setAppLocale($page);
 
         // プラグインのインスタンス生成
-        $frame = Frame::find($frame_id);
+        $frame = $request->attributes->get('frame');
+        if (empty($frame)) {
+            abort(404);
+        }
+
         $class_name = $this->getClassName($frame->plugin_name);
         // $plugin_instance = new $class_name($this->page, $frame, $this->pages);
         $plugin_instance = new $class_name($page, $frame, $pages);
@@ -920,6 +930,13 @@ class DefaultController extends ConnectController
      */
     public function invokePostDownload(Request $request, $plugin_name, $action = null, $page_id = null, $frame_id = null, $id = null)
     {
+        $http_status_code = $request->attributes->get('http_status_code');
+
+        // 403/404 判定済みのリクエストは処理を継続させない。
+        if ($http_status_code) {
+            abort($http_status_code);
+        }
+
         // プラグイン毎に動的にnew する。
         // Todo：プラグインを動的にインスタンス生成すること。
 
