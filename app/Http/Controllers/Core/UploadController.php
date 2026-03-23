@@ -162,7 +162,6 @@ class UploadController extends ConnectController
             'jpe',
             'jpeg',
             'gif',
-            'html',
         ];
 
         // サムネイル指定の場合は、キャッシュを使ってファイルを返す。

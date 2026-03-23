@@ -583,7 +583,12 @@
                 // 選択リストの更新
                 const selectedList = document.getElementById('selected-contents{{$frame_id}}');
                 if (selectedList) {
-                    selectedList.innerHTML = this.selectedContents.map(name => `<li>${name}</li>`).join('');
+                    selectedList.textContent = '';
+                    this.selectedContents.forEach((name) => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = name;
+                        selectedList.appendChild(listItem);
+                    });
                 }
 
                 // 全選択チェックボックスの更新

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\UploadedFile;
 
 use Carbon\Carbon;
 
@@ -30,6 +31,8 @@ use App\Rules\CustomValiTimeFromTo;
 use App\Rules\CustomValiBothRequired;
 use App\Rules\CustomValiTokenExists;
 use App\Rules\CustomValiEmails;
+use App\Rules\CustomValiUploadExtensions;
+use App\Rules\CustomValiUploadMimetypes;
 use App\Rules\CustomValiWysiwygMax;
 
 use App\Plugins\User\UserPluginBase;
@@ -47,6 +50,7 @@ use App\Enums\PluginName;
 use App\Enums\SpamBlockType;
 use App\Enums\Required;
 use App\Enums\StatusType;
+use App\Enums\UploadMaxSize;
 use App\Models\User\Bbses\Bbs;
 use App\Models\User\Bbses\BbsPost;
 use App\Models\User\Blogs\Blogs;
@@ -578,6 +582,142 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
+     * フォームファイルアップロードの許可拡張子（既定値）
+     *
+     * @return array<int, string>
+     */
+    private function getFormsUploadAllowedExtensions(): array
+    {
+        $extensions = config('forms.upload.allowed_extensions', []);
+        return FormsUploadHelper::normalizeExtensions($extensions);
+    }
+
+    /**
+     * 拡張子ごとの許可MIMEタイプ
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function getFormsUploadMimetypeMap(): array
+    {
+        $mimetype_map = config('forms.upload.mimetype_map', []);
+        if (! is_array($mimetype_map)) {
+            return [];
+        }
+
+        $normalized_map = [];
+        foreach ($mimetype_map as $extension => $mimetypes) {
+            $extension = FormsUploadHelper::normalizeExtension($extension);
+            if ($extension === '') {
+                continue;
+            }
+
+            if (! is_array($mimetypes)) {
+                $mimetypes = [$mimetypes];
+            }
+
+            $normalized_mimetypes = array_map(function ($mimetype) {
+                return mb_strtolower((string) $mimetype);
+            }, $mimetypes);
+
+            $normalized_mimetypes = array_values(array_unique(array_filter($normalized_mimetypes)));
+            if (! empty($normalized_mimetypes)) {
+                $normalized_map[$extension] = $normalized_mimetypes;
+            }
+        }
+
+        return $normalized_map;
+    }
+
+    /**
+     * フォームファイルアップロードの最大サイズ（KB・PHP設定値）
+     */
+    private function getFormsUploadMaxKb(): int
+    {
+        $php_max_bytes = UploadedFile::getMaxFilesize();
+        if (! is_numeric($php_max_bytes) || (float) $php_max_bytes <= 0) {
+            return 0;
+        }
+
+        return max(1, (int) floor(((float) $php_max_bytes) / 1024));
+    }
+
+    /**
+     * 項目設定で選択できる最大アップロードサイズ一覧（KB）
+     *
+     * @return array<int, int>
+     */
+    private function getFormsSelectableUploadMaxKb(): array
+    {
+        $php_upload_max_kb = $this->getFormsUploadMaxKb();
+        $selectable_upload_max_kb = [];
+
+        foreach (UploadMaxSize::getMemberKeys() as $size_kb) {
+            if (! is_numeric($size_kb)) {
+                continue;
+            }
+            $size_kb = (int) $size_kb;
+            if ($size_kb <= 0) {
+                continue;
+            }
+            if ($php_upload_max_kb > 0 && $size_kb > $php_upload_max_kb) {
+                continue;
+            }
+            $selectable_upload_max_kb[] = $size_kb;
+        }
+
+        $selectable_upload_max_kb = array_values(array_unique($selectable_upload_max_kb));
+        sort($selectable_upload_max_kb);
+
+        return $selectable_upload_max_kb;
+    }
+
+    /**
+     * 項目設定を反映した許可拡張子を取得
+     *
+     * @return array<int, string>
+     */
+    private function getFormsColumnUploadExtensions($forms_column): array
+    {
+        $default_extensions = $this->getFormsUploadAllowedExtensions();
+        return FormsUploadHelper::resolveAllowedExtensions($default_extensions, $forms_column->rule_file_extensions ?? null);
+    }
+
+    /**
+     * 項目設定を反映した拡張子ごとの許可MIMEタイプを取得
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function getFormsColumnUploadMimetypeMap($forms_column): array
+    {
+        $extensions = $this->getFormsColumnUploadExtensions($forms_column);
+        $mimetype_map = $this->getFormsUploadMimetypeMap();
+
+        $column_mimetype_map = [];
+        foreach ($extensions as $extension) {
+            if (isset($mimetype_map[$extension]) && ! empty($mimetype_map[$extension])) {
+                $column_mimetype_map[$extension] = $mimetype_map[$extension];
+            }
+        }
+        return $column_mimetype_map;
+    }
+
+    /**
+     * 項目設定を反映した最大アップロードサイズ（KB）を取得
+     */
+    private function getFormsColumnUploadMaxKb($forms_column): int
+    {
+        $php_upload_max_kb = $this->getFormsUploadMaxKb();
+        $column_max_kb = $forms_column->rule_file_max_kb ?? null;
+        if (is_numeric($column_max_kb) && (int) $column_max_kb > 0) {
+            if ($php_upload_max_kb > 0) {
+                return min((int) $column_max_kb, $php_upload_max_kb);
+            }
+            return (int) $column_max_kb;
+        }
+        return $php_upload_max_kb;
+    }
+
+    /**
      * セットすべきバリデータールールが存在する場合、受け取った配列にセットして返す
      *
      * @param [array] $validator_array 二次元配列
@@ -591,6 +731,26 @@ class FormsPlugin extends UserPluginBase
         // 必須チェック
         if ($forms_column->required) {
             $validator_rule[] = 'required';
+        }
+        // ファイルチェック
+        if ($forms_column->column_type == FormColumnType::file) {
+            if (! $forms_column->required) {
+                $validator_rule[] = 'nullable';
+            }
+            $validator_rule[] = 'file';
+
+            $allowed_extensions = $this->getFormsColumnUploadExtensions($forms_column);
+            if (! empty($allowed_extensions)) {
+                $validator_rule[] = new CustomValiUploadExtensions($allowed_extensions);
+            }
+
+            $allowed_mimetype_map = $this->getFormsColumnUploadMimetypeMap($forms_column);
+            $validator_rule[] = new CustomValiUploadMimetypes($allowed_mimetype_map, $allowed_extensions);
+
+            $max_kb = $this->getFormsColumnUploadMaxKb($forms_column);
+            if ($max_kb > 0) {
+                $validator_rule[] = 'max:' . $max_kb;
+            }
         }
         // メールアドレスチェック
         if ($forms_column->column_type == FormColumnType::mail) {
@@ -937,12 +1097,16 @@ class FormsPlugin extends UserPluginBase
                 if ($request->hasFile($req_filename)) {
                     // ファイルチェック
 
+                    $upload_file = $request->file($req_filename);
+                    $upload_extension = FormsUploadHelper::normalizeExtension($upload_file->getClientOriginalExtension());
+                    $upload_mimetype = $upload_file->getMimeType() ?: $upload_file->getClientMimeType();
+
                     // uploads テーブルに情報追加、ファイルのid を取得する
                     $upload = Uploads::create([
-                        'client_original_name' => $request->file($req_filename)->getClientOriginalName(),
-                        'mimetype'             => $request->file($req_filename)->getClientMimeType(),
-                        'extension'            => $request->file($req_filename)->getClientOriginalExtension(),
-                        'size'                 => $request->file($req_filename)->getSize(),
+                        'client_original_name' => $upload_file->getClientOriginalName(),
+                        'mimetype'             => $upload_mimetype,
+                        'extension'            => $upload_extension,
+                        'size'                 => $upload_file->getSize(),
                         'plugin_name'          => 'forms',
                         'check_method'         => 'canDownload',
                         'page_id'              => $page_id,
@@ -952,7 +1116,7 @@ class FormsPlugin extends UserPluginBase
 
                     // ファイル保存
                     $directory = $this->getDirectory($upload->id);
-                    $upload_path = $request->file($req_filename)->storeAs($directory, $upload->id . '.' . $request->file($req_filename)->getClientOriginalExtension());
+                    $upload_path = $upload_file->storeAs($directory, $upload->id . '.' . $upload_extension);
 
                     // 項目とファイルID の関連保持
                     $upload->column_type = $forms_column->column_type;
@@ -2396,6 +2560,43 @@ class FormsPlugin extends UserPluginBase
             $validator_values['rule_date_after_equal'] = ['numeric'];
             $validator_attributes['rule_date_after_equal'] = '～日以降を許容';
         }
+        // ファイル型の拡張子チェック
+        if ($column->column_type == FormColumnType::file) {
+            $allowed_extensions = $this->getFormsUploadAllowedExtensions();
+
+            $validator_values['rule_file_extensions'] = [
+                'required',
+                'array',
+                'min:1',
+                function ($attribute, $value, $fail) use ($allowed_extensions) {
+                    $extensions = FormsUploadHelper::normalizeExtensions($value);
+                    if (empty($extensions)) {
+                        return;
+                    }
+                    foreach ($extensions as $extension) {
+                        if (! in_array($extension, $allowed_extensions, true)) {
+                            $fail('許可拡張子に未対応の形式が含まれています。');
+                            return;
+                        }
+                    }
+                },
+            ];
+            $validator_attributes['rule_file_extensions'] = '許可拡張子';
+
+            // ファイル型の最大サイズ(KB)チェック
+            if ($request->rule_file_max_kb !== null && $request->rule_file_max_kb !== '') {
+                $validator_values['rule_file_max_kb'] = ['integer', 'min:1'];
+                $selectable_upload_max_kb = $this->getFormsSelectableUploadMaxKb();
+                if (! empty($selectable_upload_max_kb)) {
+                    $validator_values['rule_file_max_kb'][] = 'in:' . implode(',', $selectable_upload_max_kb);
+                }
+                $php_upload_max_kb = $this->getFormsUploadMaxKb();
+                if ($php_upload_max_kb > 0) {
+                    $validator_values['rule_file_max_kb'][] = 'max:' . $php_upload_max_kb;
+                }
+                $validator_attributes['rule_file_max_kb'] = '最大ファイルサイズ';
+            }
+        }
         // アンケートの場合、項目名のwysiwygチェック
         if ($form->form_mode == FormMode::questionnaire) {
             $validator_values['column_name'] = ['required', new CustomValiWysiwygMax()];
@@ -2445,6 +2646,16 @@ class FormsPlugin extends UserPluginBase
         $column->rule_regex = $request->rule_regex;
         // ～日以降を許容
         $column->rule_date_after_equal = $request->rule_date_after_equal;
+        // ファイル型設定
+        if ($column->column_type == FormColumnType::file) {
+            $file_extensions = FormsUploadHelper::normalizeExtensions($request->input('rule_file_extensions', []));
+            $file_extensions = array_values(array_intersect($file_extensions, $this->getFormsUploadAllowedExtensions()));
+            $column->rule_file_extensions = empty($file_extensions) ? null : implode(',', $file_extensions);
+            $column->rule_file_max_kb = ($request->rule_file_max_kb === null || $request->rule_file_max_kb === '') ? null : (int) $request->rule_file_max_kb;
+        } else {
+            $column->rule_file_extensions = null;
+            $column->rule_file_max_kb = null;
+        }
         // アンケートの場合、項目名の更新
         if ($form->form_mode == FormMode::questionnaire) {
             $column->column_name = $request->column_name;

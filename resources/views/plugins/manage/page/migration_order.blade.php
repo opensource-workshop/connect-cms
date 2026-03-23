@@ -73,6 +73,22 @@
                 </div>
             </div>
 
+            @if (config('connect.HTTPPROXYTUNNEL'))
+                <div class="form-group row">
+                    <label for="use_proxy" class="col-md-3 col-form-label text-md-right">プロキシ使用</label>
+                    <div class="col-md-9">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" id="use_proxy" name="use_proxy" class="custom-control-input" @if(old('use_proxy')) checked @endif>
+                            <label class="custom-control-label" for="use_proxy">プロキシを使う</label>
+                        </div>
+                        <div class="alert alert-warning mt-2 mb-0 py-2">
+                            プロキシ使用時は、接続先IP固定（DNS pinning）および接続先IP検証（primary_ip）を行いません。SSRF対策が弱くなるため、必要時のみ使用してください。
+                        </div>
+                        @include('plugins.common.errors_inline', ['name' => 'use_proxy'])
+                    </div>
+                </div>
+            @endif
+
             {{-- UI的に、セレクトボックスは不要だったのでとりあえず、コメントアウト
             <div class="form-group row">
                 <label for="page_name" class="col-md-3 col-form-label text-md-right">移行先ページ</label>
