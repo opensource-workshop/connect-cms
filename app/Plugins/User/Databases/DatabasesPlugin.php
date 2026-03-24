@@ -1426,8 +1426,8 @@ class DatabasesPlugin extends UserPluginBase
         //$request->merge(StringUtils::trimInput($request->all()));
 
         foreach ($databases_columns as $databases_column) {
-            // ファイルタイプ以外の入力値をトリム
-            if (! DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+            // ファイルタイプ, 選択肢タイプ以外の入力値をトリム
+            if (!DatabasesColumns::isFileColumnType($databases_column->column_type) && !DatabasesColumns::isSelectColumnType($databases_column->column_type)) {
                 if (isset($request->databases_columns_value[$databases_column->id])) {
                     // 一度配列にして、trim後、また文字列に戻す。
                     $tmp_columns_value = StringUtils::trimInput($request->databases_columns_value[$databases_column->id]);
