@@ -93,6 +93,22 @@
                                 </div>
                             </div>
 
+                            <!-- IPアドレス -->
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">IPアドレス</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="app_log_search_condition[ip_address]" value="{{Session::get('app_log_search_condition.ip_address')}}" class="form-control">
+                                </div>
+                            </div>
+
+                            <!-- 値など -->
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">値など</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="app_log_search_condition[value]" value="{{Session::get('app_log_search_condition.value')}}" class="form-control">
+                                </div>
+                            </div>
+
                             <div class="row">
                                 <div class="col-md-3"></div>
                                 <div class="col-md-9">
