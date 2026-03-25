@@ -24,21 +24,14 @@ class AddFullTextSearchToDatabases extends Migration
 
         // Laravel10対応(Laravel8でも動作)
         $result = DB::select("select version() as version");
-        $version = $result[0]->version;
-
+        $version =  $result[0]->version;
         // MariaDBはNGRAMが使えない
         if (strpos($version, 'Maria') !== false) {
             // MariaDB
-            // バージョン文字列から余分なサフィックスを除去（例: "10.5.19-MariaDB-log" → "10.5.19"）
-            // str_replace('-MariaDB', '', ...) だけでは "-log" 等のサフィックスが残り
-            // explode後の $version_arr[1] が "19-log" のような文字列になってしまい
-            // $version_arr[1] >= 6 の比較が正しく動作しないバグを修正
-            preg_match('/^(\d+)\.(\d+)\.(\d+)/', $version, $matches);
-            $major = isset($matches[1]) ? (int)$matches[1] : 0;
-            $minor = isset($matches[2]) ? (int)$matches[2] : 0;
-
+            $version = str_replace('-MariaDB', '', $version);
+            $version_arr = explode('.', $version);
             // MariaDBは5.6以上でFULLTEXT対応
-            if ($major > 5 || ($major === 5 && $minor >= 6)) {
+            if ($version_arr[0] >= 5 && $version_arr[1] >= 6) {
                 DB::statement('ALTER TABLE databases_inputs ADD FULLTEXT INDEX ft_idx_databases_inputs_full_text (full_text);');
             }
         } else {
@@ -61,5 +54,6 @@ class AddFullTextSearchToDatabases extends Migration
             $table->dropIndex('ft_idx_databases_inputs_full_text');
             $table->dropColumn('full_text');
         });
+
     }
 }
