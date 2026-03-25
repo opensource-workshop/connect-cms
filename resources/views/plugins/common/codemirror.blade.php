@@ -19,6 +19,16 @@
         height: {{$height}};
     }
 </style>
+{{-- codemirror.js の条件付き読み込み。CodeMirror は app.js から分離されており、コード編集ページでのみ読み込む。
+     同一ページ内で複数回 include された場合に備え、予防的プログラミングとして static 変数で重複読み込みを防止する。 --}}
+@php
+    static $codemirror_js_loaded = false;
+@endphp
+@if (!$codemirror_js_loaded)
+    @php($codemirror_js_loaded = true)
+    <script src="{{ url('/') }}{{ mix('/js/codemirror.js') }}"></script>
+@endif
+
 <script type="text/javascript">
     let view_{{$element_id}} = editorFromTextArea(document.getElementById("{{$element_id}}"))
 
