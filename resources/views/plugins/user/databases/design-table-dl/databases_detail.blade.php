@@ -70,7 +70,7 @@
         @include('plugins.user.databases.default.databases_include_status_and_button', [
             'add_badge_class' => 'align-bottom',
             'input' => $inputs,
-        ])        
+        ])
     </div>
 </div>
 @endcan
