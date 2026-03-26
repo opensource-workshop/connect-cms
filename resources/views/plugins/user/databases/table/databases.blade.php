@@ -62,6 +62,11 @@
                                 <td class="{{$column->classname}}">
                                     <a href="{{url('/')}}/plugin/databases/detail/{{$page->id}}/{{$frame_id}}/{{$input->id}}#frame-{{$frame_id}}">
                                         @include('plugins.user.databases.default.databases_include_value')
+
+                                        {{-- ステータス表示のみ --}}
+                                        @include('plugins.user.databases.default.databases_include_status_and_button', [
+                                            'use_button' => 0,
+                                        ])
                                     </a>
                                 </td>
                                 @php
