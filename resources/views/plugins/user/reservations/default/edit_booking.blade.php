@@ -90,10 +90,12 @@ use App\Models\User\Reservations\ReservationsFacility;
 </script>
 
 @if ($booking->id)
-<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+{{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。送信時に全エディタの内容をtextareaに書き戻す。 --}}
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST" onsubmit="if(typeof tinymce !== 'undefined') tinymce.triggerSave()">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}">
 @else
-<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
+{{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。送信時に全エディタの内容をtextareaに書き戻す。 --}}
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST" onsubmit="if(typeof tinymce !== 'undefined') tinymce.triggerSave()">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}?facility_id={{$facility->id}}&target_date={{$target_date->format('Y-m-d')}}#frame-{{$frame_id}}">
 @endif
     {{-- 共通エラーメッセージ 呼び出し --}}
@@ -499,10 +501,13 @@ use App\Models\User\Reservations\ReservationsFacility;
                     @case(ReservationColumnType::wysiwyg)
 
                         {{-- WYSIWYG 呼び出し --}}
-                        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
+                        {{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。
+                             target_class をカラム固有にして tinymce.init() のセレクタが1対1で対応するようにする。 --}}
+                        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame_id . '_' . $column->id])
 
                         <div @if ($errors->has("columns_value.$column->id")) class="border border-danger" @endif>
-                            <textarea name="columns_value[{{$column->id}}]" class="form-control wysiwyg">{{old('columns_value.'.$column->id, $column->value)}}</textarea>
+                            {{-- bugfix: target_class に合わせてクラス名をカラム固有にする --}}
+                            <textarea name="columns_value[{{$column->id}}]" class="form-control wysiwyg{{$frame_id}}_{{$column->id}}">{{old('columns_value.'.$column->id, $column->value)}}</textarea>
                         </div>
                         @include('plugins.common.errors_inline_wysiwyg', ['name' => "columns_value.$column->id"])
                         @break

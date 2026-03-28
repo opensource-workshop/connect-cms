@@ -15,9 +15,12 @@
 @endphp
 
 {{-- WYSIWYG 呼び出し --}}
-@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
+{{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。
+     target_class をカラム固有にして tinymce.init() のセレクタが1対1で対応するようにする。 --}}
+@include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame_id . '_' . $database_obj->id])
 
 <div @if ($errors && $errors->has("databases_columns_value.$database_obj->id")) class="border border-danger" @endif>
-    <textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control wysiwyg">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
+    {{-- bugfix: target_class に合わせてクラス名をカラム固有にする --}}
+    <textarea name="databases_columns_value[{{$database_obj->id}}]" class="form-control wysiwyg{{$frame_id}}_{{$database_obj->id}}">{{old('databases_columns_value.'.$database_obj->id, $value)}}</textarea>
 </div>
 @include('plugins.common.errors_inline_wysiwyg', ['name' => "databases_columns_value.$database_obj->id"])
