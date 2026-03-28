@@ -93,12 +93,10 @@ use App\Models\User\Reservations\ReservationsFacility;
 </script>
 
 @if ($booking->id)
-{{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。送信時に全エディタの内容をtextareaに書き戻す。 --}}
-<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST" onsubmit="if(typeof tinymce !== 'undefined') tinymce.triggerSave()">
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}/{{$booking->id}}#frame-{{$frame_id}}">
 @else
-{{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。送信時に全エディタの内容をtextareaに書き戻す。 --}}
-<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST" onsubmit="if(typeof tinymce !== 'undefined') tinymce.triggerSave()">
+<form action="{{url('/')}}/redirect/plugin/reservations/saveBooking/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="form_save_booking{{$frame_id}}" method="POST">
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/reservations/editBooking/{{$page->id}}/{{$frame_id}}?facility_id={{$facility->id}}&target_date={{$target_date->format('Y-m-d')}}#frame-{{$frame_id}}">
 @endif
     {{-- 共通エラーメッセージ 呼び出し --}}
