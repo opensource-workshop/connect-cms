@@ -248,11 +248,17 @@
      同一ページ内で複数回 include された場合に備え、予防的プログラミングとして static 変数で重複読み込みを防止する。 --}}
 @php
     static $wysiwyg_js_loaded = false;
+
+    // bugfix: ファイル入力要素の重複出力を防止（IDがフレーム単位のため、同一フレーム内で1回のみ出力）
+    static $wysiwyg_frame_loaded = [];
 @endphp
 @if (!$wysiwyg_js_loaded)
     @php($wysiwyg_js_loaded = true)
     <script src="{{ url('/') }}{{ mix('/js/wysiwyg.js') }}"></script>
 @endif
+
+@if (!in_array($frame_id ?? '', $wysiwyg_frame_loaded))
+@php($wysiwyg_frame_loaded[] = $frame_id ?? '')
 
 {{-- 非表示のinput type file. file plugin用. see) resources\js\tinymce\plugins\file\plugin.js --}}
 <input type="file" class="d-none" id="cc-file-upload-file1-{{$frame_id}}">
@@ -273,6 +279,12 @@
 
 {{-- 登録時のリサイズ用 --}}
 <input type="text" class="d-none" id="cc-resized-image-size-{{$frame_id}}">
+@endif
+
+{{-- bugfix: tinymce.init() はカラム固有の target_class (セレクタ) 毎に出力する。
+     データベース・予約プラグイン等で同一フォーム内にWYSIWYG項目が複数ある場合、
+     各 textarea に固有のセレクタで tinymce.init() を呼び出す必要がある。 --}}
+
 {{-- テーマ固有 簡易テンプレート設定 --}}
 <script>
     window.cc_templates = {{!!$templates_file!!}};
