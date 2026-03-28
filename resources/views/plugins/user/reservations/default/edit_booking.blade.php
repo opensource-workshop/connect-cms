@@ -17,6 +17,9 @@ use App\Models\User\Reservations\ReservationsFacility;
 <script type="text/javascript">
     /** 登録ボタン押下 */
     function submit_booking_store(btn) {
+        // bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。
+        // form.submit() はonsubmitイベントを発火しないため、ここで明示的にtriggerSaveを呼ぶ。
+        if (typeof tinymce !== 'undefined') tinymce.triggerSave();
         btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
