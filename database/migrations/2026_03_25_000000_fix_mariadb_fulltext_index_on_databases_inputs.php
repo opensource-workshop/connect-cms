@@ -39,8 +39,8 @@ class FixMariadbFulltextIndexOnDatabasesInputs extends Migration
             return;
         }
 
-        $major = (int)$matches[1];
-        $minor = (int)$matches[2];
+        $major = (int) $matches[1];
+        $minor = (int) $matches[2];
 
         // MariaDBは5.6以上でFULLTEXT対応（NGRAMは使えないためパーサー指定なし）
         if ($major > 5 || ($major === 5 && $minor >= 6)) {
