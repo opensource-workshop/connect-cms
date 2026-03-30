@@ -20,7 +20,7 @@
 @if($searchs_results)
 <div class="mt-3">
     <dl>
-    @foreach($searchs_results as $searchs_result)
+    @forelse($searchs_results as $searchs_result)
         <dt>
             {{-- 登録日 --}}
             @if($searchs_frame->view_posted_at)
@@ -36,7 +36,7 @@
             @if($link_pattern[$searchs_result->plugin_name] == 'show_page_frame_post')
             <a href="{{url('/')}}{{$link_base[$searchs_result->plugin_name]}}/{{$searchs_result->page_id}}/{{$searchs_result->frame_id}}/{{$searchs_result->post_id}}#frame-{{$searchs_result->frame_id}}">
             @elseif($link_pattern[$searchs_result->plugin_name] == 'show_page')
-            <a href="{{url('/')}}{{$searchs_result->permanent_link}}">
+            <a href="{{url('/')}}{{$searchs_result->permanent_link}}#frame-{{$searchs_result->frame_id}}">
             @else
             {{-- 上記以外は想定していない為、取り敢えず permanent_link をリンク先とする --}}
             <a href="{{url('/')}}{{$searchs_result->permanent_link}}">
@@ -57,7 +57,10 @@
         <dd class="text-secondary search-result-body border-bottom">
             {!! mb_strimwidth(strip_tags($searchs_result->body), 0, 160, '…') !!}
         </dd>
-    @endforeach
+    @empty
+        {{-- 検索結果0件 --}}
+        <dd>{{ __('messages.search_results_empty') }}</dd>
+    @endforelse
     </dl>
 @php
     $appends['search_keyword'] = old('search_keyword');
