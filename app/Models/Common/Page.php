@@ -59,6 +59,14 @@ class Page extends Model
     }
 
     /**
+     * hasMany 設定
+     */
+    public function frames()
+    {
+        return $this->hasMany(Frame::class);
+    }
+
+    /**
      * 言語設定があれば、特定の言語ページのみに絞る
      */
     public static function getPageIds($current_page_obj = null, $menu = null, $setting_mode = false)

@@ -15,6 +15,7 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
 use App\Models\Migration\MigrationMapping;
+use App\Enums\AreaType;
 
 class ConnectPage
 {
@@ -154,6 +155,9 @@ class ConnectPage
         if (!is_null($page_tree) && $page_tree[count($page_tree)-1]->id != $top_page->id) {
             $page_tree->push($top_page);
         }
+
+        // 403 判定で共通エリアフレームを辿るため、ページツリーに紐づくフレームをまとめて取得して N+1 を避ける。
+        $this->loadCommonAreaFrames($page_tree);
 
         // 現在のページが参照可能か判定して、NG なら403 ページを振り向ける。
         // （ページがある（管理画面ではページがない）＆IP制限がかかっていない場合は参照OK）
@@ -392,7 +396,7 @@ class ConnectPage
         }
 
         // page_id と frame_id の組み合わせが不整合なら、不正アクセスとして 403 扱いにする。
-        if (!$this->isValidPageAndFrame($request)) {
+        if (!$this->isValidPageAndFrame($request, $page_tree)) {
             return $this->doForbidden();
         }
 
@@ -430,28 +434,117 @@ class ConnectPage
     /**
      * page_id と frame_id の整合性判定
      */
-    private function isValidPageAndFrame($request)
+    private function isValidPageAndFrame($request, $page_tree)
     {
         $route_page_id = $request->route('page_id');
         $route_frame_id = $request->route('frame_id');
 
-        // frame_id がなければ判定不要
+        // frame_id を伴わないルートは、ページとフレームの組み合わせ判定自体が不要。
         if (empty($route_frame_id)) {
             return true;
         }
 
-        // frame_id があるのに page_id がない場合は不正
+        // frame_id があるのに page_id がない組み合わせは、対象ページを特定できないので不正扱い。
         if (empty($route_page_id)) {
             return false;
         }
 
-        // frameはhandle()で事前に取得済み
+        // frame は handle() で先に読み込んでいる前提。取得できない frame_id は不正扱い。
         $frame = $request->attributes->get('frame');
         if (empty($frame)) {
             return false;
         }
 
-        return ((int)$frame->page_id === (int)$route_page_id);
+        // メインエリアは継承しないため、配置ページと現在ページが完全一致する場合だけ許可する。
+        if ((int)$frame->area_id === AreaType::main) {
+            return ((int)$frame->page_id === (int)$route_page_id);
+        }
+
+        // 共通エリアは「現在ページの祖先ツリー上で実際に採用されるフレームか」を判定する。
+        // そのため、現在ページと祖先ツリーが解決できない場合は許可できない。
+        if (empty($page_tree) || empty($this->page) || empty($this->page->id)) {
+            return false;
+        }
+
+        // 表示中ページから親へ辿ったとき、この共通エリアで最初に有効になる配置ページを求める。
+        $effective_page_id = $this->getEffectiveCommonAreaPageId($page_tree, (int)$route_page_id, (int)$frame->area_id);
+        if (empty($effective_page_id)) {
+            return false;
+        }
+
+        // 要求された frame の配置ページが、実際にこの画面で採用される継承元ページと一致するときだけ許可する。
+        return ((int)$effective_page_id === (int)$frame->page_id);
+    }
+
+    /**
+     * ページツリーに紐づく共通エリアフレームを一括取得
+     */
+    private function loadCommonAreaFrames($page_tree): void
+    {
+        if (empty($page_tree)) {
+            return;
+        }
+
+        $page_tree->load(['frames' => function ($query) {
+            $query->select(['id', 'page_id', 'area_id', 'page_only'])
+                ->where('area_id', '!=', AreaType::main)
+                ->orderBy('display_sequence', 'asc');
+        }]);
+    }
+
+    /**
+     * 共通エリアフレームの有効な継承元ページIDを取得
+     */
+    private function getEffectiveCommonAreaPageId($page_tree, int $current_page_id, int $area_id): ?int
+    {
+        // page_tree は表示中ページ→親→祖先の順なので、最初に見つかったページが実際に採用される継承元になる。
+        foreach ($page_tree as $page) {
+            if (empty($page) || empty($page->id)) {
+                continue;
+            }
+
+            if ($this->hasCommonAreaFrames($page, $current_page_id, $area_id)) {
+                return (int)$page->id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 共通エリアフレームを持つか
+     */
+    private function hasCommonAreaFrames(Page $page, int $current_page_id, int $area_id): bool
+    {
+        // page_tree に対して frames を eager load 済みなら、追加クエリを打たずにメモリ上で判定する。
+        if ($page->relationLoaded('frames')) {
+            return $page->frames->contains(function ($frame) use ($page, $current_page_id, $area_id) {
+                if ((int)$frame->area_id !== $area_id) {
+                    return false;
+                }
+
+                return (int)$frame->page_only === 0
+                    || ((int)$frame->page_only === 1 && (int)$page->id === $current_page_id)
+                    || (int)$frame->page_only === 2;
+            });
+        }
+
+        // relation 未ロードの経路でも同じ条件で判定できるよう、フォールバックする。
+        return Frame::where('page_id', $page->id)
+            ->where('area_id', $area_id)
+            ->where(function ($query) use ($current_page_id) {
+                // 共通エリアの取得条件は DefaultController と揃える。
+                // page_only=0: 常に継承候補
+                // page_only=1: 配置ページ本人のときだけ継承候補
+                // page_only=2: 配置ページ本人では非表示でも、子ページでは継承候補
+                $query->where('page_only', 0)
+                    ->orWhere(function ($query2) use ($current_page_id) {
+                        $query2->where('page_only', 1)
+                            ->where('page_id', $current_page_id);
+                    })
+                    ->orWhere('page_only', 2);
+            })
+            ->exists();
     }
 
     /**
