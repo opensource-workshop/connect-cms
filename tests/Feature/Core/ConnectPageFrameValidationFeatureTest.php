@@ -197,6 +197,24 @@ class ConnectPageFrameValidationFeatureTest extends TestCase
 
     /**
      * テストの意図:
+     * 同一祖先ページ・同一エリアに継承可能フレームが混在しても、page_only=1 の本人専用フレームまでは子ページから操作できないことを守る。
+     */
+    public function testPageOnlyCurrentAncestorFrameRemainsForbiddenWhenSiblingFrameOnSameAreaIsInherited(): void
+    {
+        [, $parent, $child] = $this->createPageTree();
+        $this->createContentsFrame($parent, AreaType::header);
+        $page_only_frame = $this->createContentsFrame($parent, AreaType::header, [
+            'display_sequence' => 2,
+            'page_only' => 1,
+        ]);
+
+        $response = $this->handleRequest($this->createRequest($child->id, $page_only_frame->id));
+
+        $this->assertSame(403, $response->getStatusCode());
+    }
+
+    /**
+     * テストの意図:
      * メインエリアは継承しないため、親ページ配置のフレームを子ページから操作できないことを守る。
      */
     public function testAncestorMainAreaFrameIsForbiddenFromDescendantPage(): void
@@ -217,6 +235,24 @@ class ConnectPageFrameValidationFeatureTest extends TestCase
     {
         [, , $child, $sibling] = $this->createPageTree();
         $frame = $this->createContentsFrame($sibling, AreaType::header);
+
+        $response = $this->handleRequest($this->createRequest($child->id, $frame->id));
+
+        $this->assertSame(403, $response->getStatusCode());
+    }
+
+    /**
+     * テストの意図:
+     * 現在ページの解決済みレイアウトで共通エリアが非表示なら、祖先の継承フレームを手動URLで操作できないことを守る。
+     */
+    public function testAncestorCommonAreaFrameIsForbiddenWhenCurrentLayoutHidesArea(): void
+    {
+        [, $parent, $child] = $this->createPageTree();
+        $frame = $this->createContentsFrame($parent, AreaType::header);
+        $child->update([
+            'layout' => '0|1|1|1',
+            'layout_inherit_flag' => 1,
+        ]);
 
         $response = $this->handleRequest($this->createRequest($child->id, $frame->id));
 
