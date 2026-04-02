@@ -468,9 +468,9 @@ class ConnectPage
         if (empty($page_tree) || empty($this->page) || empty($this->page->id)) {
             return false;
         }
-
+        // この画面で実際に適用される共通エリアフレーム群を取得する。
         $effective_frames = $this->getEffectiveCommonAreaFrames($page_tree, (int)$frame->area_id);
-
+        // 要求された frame_id が、この画面で実際に適用されるフレーム群に含まれている場合だけ許可する。
         return $effective_frames->contains(function ($effective_frame) use ($frame) {
             return (int)($effective_frame->frame_id ?? $effective_frame->id) === (int)$frame->id;
         });
@@ -525,10 +525,12 @@ class ConnectPage
             return collect();
         }
 
+        // 元の page_tree は壊さず、共通エリア判定用の並びを別コレクションで組み直す。
         $normalized_page_tree = collect($page_tree->all());
         $top_page = Page::getTopPage();
         $language_top_page = $this->getLanguageTopPage();
 
+        // root 系ページは末尾へ正しい順序で付け直すため、いったん除外対象として集める。
         $excluded_page_ids = collect([
             $top_page->id ?? null,
             $language_top_page->id ?? null,
@@ -536,12 +538,14 @@ class ConnectPage
             return (int)$page_id;
         })->all();
 
+        // 通常の祖先チェーンだけを残し、root 系ページはこの後に付け直す。
         $normalized_page_tree = $normalized_page_tree->filter(function ($tree_page) use ($excluded_page_ids) {
             return !empty($tree_page)
                 && !empty($tree_page->id)
                 && !in_array((int)$tree_page->id, $excluded_page_ids, true);
         })->values();
 
+        // 表示側の解決順に合わせて、言語トップ -> 全体トップの順で末尾に戻す。
         if (!empty($language_top_page) && !empty($language_top_page->id)) {
             $normalized_page_tree->push($language_top_page);
         }
