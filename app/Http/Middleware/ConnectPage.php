@@ -59,14 +59,7 @@ class ConnectPage
         }
 
         // ページの特定
-        $route_page_id = $request->route('page_id');
-        if (!empty($route_page_id)) {
-            // ページID が渡ってきた場合
-            $this->page = Page::where('id', $route_page_id)->first();
-        } else {
-            // ページID が渡されなかった場合、URL から取得
-            $this->page = $this->getCurrentPage();
-        }
+        $this->page = $this->resolveRequestPage($request);
 
         // 下層ページへ自動転送
         if ($this->page && $this->page->transfer_lower_page_flag) {
@@ -205,6 +198,66 @@ class ConnectPage
             return false;
         }
         return $page;
+    }
+
+    /**
+     * リクエストから現在ページを特定する。
+     */
+    private function resolveRequestPage($request)
+    {
+        $route_page_id = $request->route('page_id');
+        if ($this->isValidPageId($route_page_id)) {
+            return Page::where('id', (int)$route_page_id)->first();
+        }
+
+        $upload_page_id = $this->getUploadFallbackPageId($request);
+        if (!is_null($upload_page_id)) {
+            return Page::where('id', $upload_page_id)->first();
+        }
+
+        return $this->getCurrentPage();
+    }
+
+    /**
+     * /upload/{method?} 限定で body の page_id を補完する。
+     */
+    private function getUploadFallbackPageId($request): ?int
+    {
+        if (!$this->isUploadPostRoute($request)) {
+            return null;
+        }
+
+        $page_id = $request->input('page_id');
+        if (!$this->isValidPageId($page_id)) {
+            return null;
+        }
+
+        return (int)$page_id;
+    }
+
+    /**
+     * body の page_id fallback を許可する upload POST か判定する。
+     */
+    private function isUploadPostRoute($request): bool
+    {
+        if (!$request->isMethod('post')) {
+            return false;
+        }
+
+        $route = $request->route();
+        return !is_null($route) && $route->getName() === 'post_upload';
+    }
+
+    /**
+     * page_id として扱える正の整数か判定する。
+     */
+    private function isValidPageId($page_id): bool
+    {
+        if (filter_var($page_id, FILTER_VALIDATE_INT) === false) {
+            return false;
+        }
+
+        return (int)$page_id > 0;
     }
 
     /**
