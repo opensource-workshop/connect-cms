@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\View;
@@ -15,6 +16,7 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\Common\Permalink;
 use App\Models\Migration\MigrationMapping;
+use App\Enums\AreaType;
 
 class ConnectPage
 {
@@ -392,7 +394,7 @@ class ConnectPage
         }
 
         // page_id と frame_id の組み合わせが不整合なら、不正アクセスとして 403 扱いにする。
-        if (!$this->isValidPageAndFrame($request)) {
+        if (!$this->isValidPageAndFrame($request, $page_tree)) {
             return $this->doForbidden();
         }
 
@@ -430,28 +432,282 @@ class ConnectPage
     /**
      * page_id と frame_id の整合性判定
      */
-    private function isValidPageAndFrame($request)
+    private function isValidPageAndFrame($request, $page_tree)
     {
         $route_page_id = $request->route('page_id');
         $route_frame_id = $request->route('frame_id');
 
-        // frame_id がなければ判定不要
+        // frame_id を伴わないルートは、ページとフレームの組み合わせ判定自体が不要。
         if (empty($route_frame_id)) {
             return true;
         }
 
-        // frame_id があるのに page_id がない場合は不正
+        // frame_id があるのに page_id がない組み合わせは、対象ページを特定できないので不正扱い。
         if (empty($route_page_id)) {
             return false;
         }
 
-        // frameはhandle()で事前に取得済み
+        // frame は handle() で先に読み込んでいる前提。取得できない frame_id は不正扱い。
         $frame = $request->attributes->get('frame');
         if (empty($frame)) {
             return false;
         }
 
-        return ((int)$frame->page_id === (int)$route_page_id);
+        // メインエリアは継承しないため、配置ページと現在ページが完全一致する場合だけ許可する。
+        if ((int)$frame->area_id === AreaType::main) {
+            return ((int)$frame->page_id === (int)$route_page_id);
+        }
+
+        // 共通エリアでも、配置ページ本人からの操作は従来通り許可する。
+        if ((int)$frame->page_id === (int)$route_page_id) {
+            return true;
+        }
+
+        // 共通エリアは「現在ページの祖先ツリー上で実際に採用されるフレームか」を判定する。
+        // そのため、現在ページと祖先ツリーが解決できない場合は許可できない。
+        if (empty($page_tree) || empty($this->page) || empty($this->page->id)) {
+            return false;
+        }
+        // この画面で実際に適用される共通エリアフレーム群を取得する。
+        $effective_frames = $this->getEffectiveCommonAreaFrames($page_tree, (int)$frame->area_id);
+        // 要求された frame_id が、この画面で実際に適用されるフレーム群に含まれている場合だけ許可する。
+        return $effective_frames->contains(function ($effective_frame) use ($frame) {
+            return (int)($effective_frame->frame_id ?? $effective_frame->id) === (int)$frame->id;
+        });
+    }
+
+    /**
+     * 現ページで実際に採用される共通エリアフレームを取得する。
+     */
+    private function getEffectiveCommonAreaFrames($page_tree, int $area_id): Collection
+    {
+        if (empty($this->page) || empty($this->page->id)) {
+            return collect();
+        }
+
+        $normalized_page_tree = $this->normalizePageTreeForCommonArea($page_tree);
+        if ($normalized_page_tree->isEmpty()) {
+            return collect();
+        }
+
+        if (!$this->isCommonAreaVisibleOnCurrentPage($normalized_page_tree, $area_id)) {
+            return collect();
+        }
+
+        $page_ids = $normalized_page_tree->pluck('id')->filter()->all();
+        if (empty($page_ids)) {
+            return collect();
+        }
+
+        $effective_page_id = null;
+        $effective_frames = collect();
+        foreach ($this->queryCommonAreaFrames($page_ids, $area_id) as $frame) {
+            if (is_null($effective_page_id)) {
+                $effective_page_id = (int)$frame->page_id;
+            }
+
+            if ((int)$frame->page_id !== $effective_page_id) {
+                break;
+            }
+
+            $effective_frames->push($frame);
+        }
+
+        return $effective_frames;
+    }
+
+    /**
+     * 共通エリア判定用にページツリーを正規化する。
+     */
+    private function normalizePageTreeForCommonArea($page_tree): Collection
+    {
+        if (empty($page_tree)) {
+            return collect();
+        }
+
+        // 元の page_tree は壊さず、共通エリア判定用の並びを別コレクションで組み直す。
+        $normalized_page_tree = collect($page_tree->all());
+        $top_page = Page::getTopPage();
+        $language_top_page = $this->getLanguageTopPage();
+
+        // root 系ページは末尾へ正しい順序で付け直すため、いったん除外対象として集める。
+        $excluded_page_ids = collect([
+            $top_page->id ?? null,
+            $language_top_page->id ?? null,
+        ])->filter()->map(function ($page_id) {
+            return (int)$page_id;
+        })->all();
+
+        // 通常の祖先チェーンだけを残し、root 系ページはこの後に付け直す。
+        $normalized_page_tree = $normalized_page_tree->filter(function ($tree_page) use ($excluded_page_ids) {
+            return !empty($tree_page)
+                && !empty($tree_page->id)
+                && !in_array((int)$tree_page->id, $excluded_page_ids, true);
+        })->values();
+
+        // 表示側の解決順に合わせて、言語トップ -> 全体トップの順で末尾に戻す。
+        if (!empty($language_top_page) && !empty($language_top_page->id)) {
+            $normalized_page_tree->push($language_top_page);
+        }
+
+        if (!empty($top_page) && !empty($top_page->id)) {
+            if (empty($language_top_page) || (int)$language_top_page->id !== (int)$top_page->id) {
+                $normalized_page_tree->push($top_page);
+            }
+        }
+
+        return $normalized_page_tree;
+    }
+
+    /**
+     * 現在ページで共通エリアが描画対象か判定する。
+     */
+    private function isCommonAreaVisibleOnCurrentPage(Collection $page_tree, int $area_id): bool
+    {
+        $layout_array = $this->getLayoutArrayForCommonArea($page_tree);
+
+        if ($area_id === AreaType::header) {
+            return $layout_array[0] == '1';
+        }
+        if ($area_id === AreaType::left) {
+            return $layout_array[1] == '1';
+        }
+        if ($area_id === AreaType::right) {
+            return $layout_array[2] == '1';
+        }
+        if ($area_id === AreaType::footer) {
+            return $layout_array[3] == '1';
+        }
+
+        return false;
+    }
+
+    /**
+     * 共通エリア判定用のレイアウト配列を取得する。
+     */
+    private function getLayoutArrayForCommonArea(Collection $page_tree): array
+    {
+        $layout_array = explode('|', $this->getLayoutForCommonArea($page_tree));
+        if (count($layout_array) !== 4) {
+            return [1, 1, 1, 1];
+        }
+
+        return $layout_array;
+    }
+
+    /**
+     * 共通エリア判定用のレイアウトを取得する。
+     */
+    private function getLayoutForCommonArea(Collection $page_tree): string
+    {
+        $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+        if (empty($this->page)) {
+            return $layout_default;
+        }
+
+        $layout = null;
+        foreach ($page_tree as $tree_page) {
+            if (empty($tree_page) || empty($tree_page->layout)) {
+                continue;
+            }
+
+            if ($tree_page->id != $this->page->id
+                && !is_null($tree_page->layout_inherit_flag)
+                && (int)$tree_page->layout_inherit_flag === 0) {
+                continue;
+            }
+
+            $layout = $tree_page->layout;
+            break;
+        }
+
+        if (empty($layout)) {
+            $layout = Configs::getSharedConfigsValue('base_layout', $layout_default);
+        }
+        if (empty($layout)) {
+            $layout = $layout_default;
+        }
+
+        return $layout;
+    }
+
+    /**
+     * 共通エリアの継承候補フレームを取得する。
+     */
+    private function queryCommonAreaFrames(array $page_ids, int $area_id): Collection
+    {
+        return Frame::whereIn('frames.page_id', $page_ids)
+            ->where('frames.area_id', $area_id)
+            ->select('frames.*', 'frames.id as frame_id', 'pages.id as page_id')
+            ->join('pages', 'pages.id', '=', 'frames.page_id')
+            ->where(function ($query) {
+                $query->where('page_only', 0)
+                    ->orWhere(function ($query2) {
+                        $query2->where('page_only', 1)
+                            ->where('page_id', $this->page->id);
+                    })
+                    ->orWhere('page_only', 2);
+            })
+            ->orderBy('pages._lft', 'desc')
+            ->orderBy('frames.display_sequence', 'asc')
+            ->get();
+    }
+
+    /**
+     * 多言語トップページを取得する。
+     */
+    private function getLanguageTopPage(): ?Page
+    {
+        if (empty($this->page) || empty($this->page->permanent_link) || !$this->isLanguageMultiOn()) {
+            return null;
+        }
+
+        $languages = Configs::getLanguages();
+        if (empty($languages)) {
+            return null;
+        }
+
+        $page_language = $this->getPageLanguageFromPage($languages);
+        if (empty($page_language)) {
+            return null;
+        }
+
+        return Page::where('permanent_link', '/' . $page_language)->first();
+    }
+
+    /**
+     * ページオブジェクトから言語を取得する。
+     */
+    private function getPageLanguageFromPage($languages)
+    {
+        $page_language = null;
+        $page_paths = explode('/', $this->page->permanent_link);
+        if ($page_paths && is_array($page_paths) && array_key_exists(1, $page_paths)) {
+            foreach ($languages as $language) {
+                if (trim($language->additional1, '/') == $page_paths[1]) {
+                    $page_language = $page_paths[1];
+                    break;
+                }
+            }
+        }
+
+        return $page_language;
+    }
+
+    /**
+     * 多言語設定が有効か判定する。
+     */
+    private function isLanguageMultiOn(): bool
+    {
+        foreach (Configs::getSharedConfigs() as $config) {
+            if ($config->name !== 'language_multi_on') {
+                continue;
+            }
+
+            return $config->value == '1';
+        }
+
+        return false;
     }
 
     /**
