@@ -147,6 +147,28 @@
                 </div>
             </div>
 
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">ページの選択</label><br />
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(old('page_select', $searchs->page_select) == 0)
+                            <input type="radio" value="0" id="page_select_0" name="page_select" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="page_select_0" name="page_select" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="page_select_0">全て表示する</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(old('page_select', $searchs->page_select) == 1)
+                            <input type="radio" value="1" id="page_select_1" name="page_select" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="page_select_1" name="page_select" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="page_select_1">ページ管理のメニュー表示条件に従う</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group row mb-0">
                 <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
@@ -172,7 +194,10 @@
             <div class="form-group row">
                 <div class="{{$frame->getSettingLabelClass()}}"></div>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <small class="text-muted">※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。</small><br>
+                    <small class="text-muted">
+                        ※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。<br>
+                        　　また、メニュー非表示ページでも、選択したフレームは検索対象になります。<br>
+                    </small>
                 </div>
             </div>
 

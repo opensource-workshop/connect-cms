@@ -163,7 +163,7 @@ class SearchsPlugin extends UserPluginBase
 
         // 各プラグインのSQL をUNION
         // 公開されているページ、フレームを検索対象とする
-        $searchable_page_ids = $this->fetchSearchablePageIds($request);
+        $searchable_page_ids = $this->fetchSearchablePageIds($request, $searchs_frame);
         $searchable_frame_ids = Frame::visible()->get()->pluck('id');
 
         foreach ($union_sqls as $union_sql) {
@@ -427,6 +427,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs->frame_select      = intval($request->frame_select);
         $searchs->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
         $searchs->recieve_keyword   = intval($request->recieve_keyword);
+        $searchs->page_select       = intval($request->page_select);
 
         // データ保存
         $searchs->save();
@@ -474,9 +475,28 @@ class SearchsPlugin extends UserPluginBase
     /**
      * 検索対象のページIDを取得する
      */
-    private function fetchSearchablePageIds($request)
+    private function fetchSearchablePageIds($request, $searchs_frame)
     {
         $pages = Page::get();
+
+        // ページの選択「ページ管理のメニュー表示条件に従う」
+        if ($searchs_frame->page_select == 1) {
+
+            // 表示ページのみに絞る
+            $pages = $pages->filter(function ($page) {
+                return $page->base_display_flag == 1;
+            });
+
+            // フレームの選択「選択したものだけ表示する」
+            if ($searchs_frame->frame_select == 1) {
+                // 選択したフレームに紐づくページ を追加取得してマージ
+                $frame_page_ids =  Frame::whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids))->get()->pluck('page_id')->toArray();
+                $pages_frame = Page::whereIn('pages.id', $frame_page_ids)->get();
+
+                $pages = $pages->merge($pages_frame)->unique('id');
+            }
+        }
+
         // 見れないページ除外
         $visible_page_ids = [];
         foreach ($pages as $page) {
