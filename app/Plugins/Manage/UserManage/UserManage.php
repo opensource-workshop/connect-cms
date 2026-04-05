@@ -965,8 +965,10 @@ class UserManage extends ManagePluginBase
         }
 
         // 状態が利用不可や仮削除の場合は強制ログアウトする。
-        if ($request->status == UserStatus::not_active || $request->status == UserStatus::temporary_delete) {
+        if ((int)$request->status === UserStatus::not_active || (int)$request->status === UserStatus::temporary_delete) {
             $update_array['is_force_logout'] = 1;
+        } else {
+            $update_array['is_force_logout'] = 0;
         }
 
         // ユーザデータの更新
