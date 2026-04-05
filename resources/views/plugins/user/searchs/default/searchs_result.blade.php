@@ -59,6 +59,9 @@
         </dd>
     @endforeach
     </dl>
+    @if($searchs_results->isEmpty())
+        <div>{{ __('messages.search_results_empty') }}</div>
+    @endif
 @php
     $appends['search_keyword'] = old('search_keyword');
     // ページ配下の絞込み
