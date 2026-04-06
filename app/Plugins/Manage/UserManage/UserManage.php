@@ -964,6 +964,13 @@ class UserManage extends ManagePluginBase
             $update_array['password'] = Hash::make($request->password);
         }
 
+        // 状態が利用不可や仮削除の場合は強制ログアウトする。
+        if ((int)$request->status === UserStatus::not_active || (int)$request->status === UserStatus::temporary_delete) {
+            $update_array['is_force_logout'] = 1;
+        } else {
+            $update_array['is_force_logout'] = 0;
+        }
+
         // ユーザデータの更新
         User::where('id', $id)->update($update_array);
         // 更新後を再取得
