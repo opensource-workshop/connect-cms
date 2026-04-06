@@ -175,7 +175,7 @@
                             {{ csrf_field() }}
                             <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/forms/listInputs/{{$page->id}}/{{$frame_id}}/{{$form->id}}#frame-{{$frame_id}}">
                             <div class="px-3 py-2">
-                                <div class="font-weight-bold mb-2">スパムリストに追加</div>
+                                <div class="font-weight-bold mb-2">ブロックリストに追加</div>
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" name="add_ip_address" value="1" class="custom-control-input" id="add_ip_{{$input->id}}" @if($input->ip_address) checked @else disabled @endif>
                                     <label class="custom-control-label @if(!$input->ip_address) text-muted @endif" for="add_ip_{{$input->id}}">IPアドレス @if(!$input->ip_address)<small>（データなし）</small>@endif</label>
