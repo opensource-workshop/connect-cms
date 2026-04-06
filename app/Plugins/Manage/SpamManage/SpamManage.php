@@ -22,7 +22,7 @@ use App\Plugins\Manage\ManagePluginBase;
  * @category スパム管理
  * @package Controller
  * @plugin_title スパム管理
- * @plugin_desc スパムリストに関する機能が集まった管理機能です。
+ * @plugin_desc ブロックリストに関する機能が集まった管理機能です。
  */
 class SpamManage extends ManagePluginBase
 {
@@ -48,8 +48,8 @@ class SpamManage extends ManagePluginBase
      *  スパムリスト一覧表示
      *
      * @return view
-     * @method_title スパムリスト一覧
-     * @method_desc スパムリストを一覧で確認できます。
+     * @method_title ブロックリスト一覧
+     * @method_desc ブロックリストを一覧で確認できます。
      * @method_detail メールアドレス、ドメイン、IPアドレスを登録してスパムをブロックできます。
      */
     public function index($request)
@@ -149,15 +149,15 @@ class SpamManage extends ManagePluginBase
         ]);
 
         // スパムリスト一覧画面に戻る
-        return redirect("/manage/spam")->with('flash_message', 'スパムリストに追加しました。');
+        return redirect("/manage/spam")->with('flash_message', 'ブロックリストに追加しました。');
     }
 
     /**
      *  スパムリスト編集画面
      *
      * @return view
-     * @method_title スパムリスト編集
-     * @method_desc スパムリストを編集できます。
+     * @method_title ブロックリスト編集
+     * @method_desc ブロックリストを編集できます。
      * @method_detail
      */
     public function edit($request, $id)
@@ -232,7 +232,7 @@ class SpamManage extends ManagePluginBase
         $spam->save();
 
         // スパムリスト一覧画面に戻る
-        return redirect("/manage/spam")->with('flash_message', 'スパムリストを更新しました。');
+        return redirect("/manage/spam")->with('flash_message', 'ブロックリストを更新しました。');
     }
 
     /**
@@ -249,7 +249,7 @@ class SpamManage extends ManagePluginBase
         SpamList::where('id', $id)->delete();
 
         // スパムリスト一覧画面に戻る
-        return redirect("/manage/spam")->with('flash_message', 'スパムリストから削除しました。');
+        return redirect("/manage/spam")->with('flash_message', 'ブロックリストから削除しました。');
     }
 
     /**
