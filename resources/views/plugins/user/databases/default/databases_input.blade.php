@@ -15,10 +15,11 @@
 
 @if (empty($setting_error_messages))
 
+    {{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。送信時に全エディタの内容をtextareaに書き戻す。 --}}
     @if (isset($id))
-    <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
+    <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}/{{$id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data" onsubmit="if(typeof tinymce !== 'undefined') tinymce.triggerSave()">
     @else
-    <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data">
+    <form action="{{URL::to('/')}}/plugin/databases/publicConfirm/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" name="database_add_column{{$frame_id}}" method="POST" class="form-horizontal" enctype="multipart/form-data" onsubmit="if(typeof tinymce !== 'undefined') tinymce.triggerSave()">
     @endif
         {{ csrf_field() }}
 

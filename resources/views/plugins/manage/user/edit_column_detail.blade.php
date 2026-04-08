@@ -769,13 +769,23 @@ use App\Models\Core\UsersColumns;
                     @if ($column->conditional_display_flag && $column->conditional_trigger_column_id)
                         @php
                             $trigger_column = $trigger_columns->firstWhere('id', $column->conditional_trigger_column_id);
-                            $operator_text = match($column->conditional_operator) {
-                                ConditionalOperator::equals => '一致する',
-                                ConditionalOperator::not_equals => '一致しない',
-                                ConditionalOperator::is_empty => '未入力である',
-                                ConditionalOperator::is_not_empty => '未入力でない',
-                                default => ''
-                            };
+                            switch ($column->conditional_operator) {
+                                case ConditionalOperator::equals:
+                                    $operator_text = '一致する';
+                                    break;
+                                case ConditionalOperator::not_equals:
+                                    $operator_text = '一致しない';
+                                    break;
+                                case ConditionalOperator::is_empty:
+                                    $operator_text = '未入力である';
+                                    break;
+                                case ConditionalOperator::is_not_empty:
+                                    $operator_text = '未入力でない';
+                                    break;
+                                default:
+                                    $operator_text = '';
+                                    break;
+                            }
                         @endphp
                         @if ($trigger_column)
                             <div class="alert alert-info">

@@ -171,7 +171,7 @@ class Categories extends Model
         if (!empty($request->general_categories_id)) {
             foreach ($request->general_categories_id as $category_id) {
                 $field_name = 'general_display_sequence.' . $category_id;
-                $rules[$field_name] = ['required'];
+                $rules[$field_name] = ['required', 'numeric'];
                 $set_attribute_names[$field_name] = '表示順';
             }
         }
@@ -202,7 +202,7 @@ class Categories extends Model
             return;
         }
 
-        $rules['add_display_sequence'] = ['required'];
+        $rules['add_display_sequence'] = ['required', 'numeric'];
         $rules['add_classname'] = ['required', new CustomValiUniqueClassname()];
         $rules['add_category'] = ['required'];
         $rules['add_color'] = ['required'];
@@ -227,7 +227,7 @@ class Categories extends Model
     private static function addValidationRulesForExistingFields(array $category_ids, string $field_prefix, array &$rules, array &$set_attribute_names): void
     {
         foreach ($category_ids as $category_id) {
-            $rules[$field_prefix . 'display_sequence.' . $category_id] = ['required'];
+            $rules[$field_prefix . 'display_sequence.' . $category_id] = ['required', 'numeric'];
             $rules[$field_prefix . 'classname.' . $category_id] = ['required', new CustomValiUniqueClassname($category_id)];
             $rules[$field_prefix . 'category.' . $category_id] = ['required'];
             $rules[$field_prefix . 'color.' . $category_id] = ['required'];

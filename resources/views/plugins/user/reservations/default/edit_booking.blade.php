@@ -17,6 +17,9 @@ use App\Models\User\Reservations\ReservationsFacility;
 <script type="text/javascript">
     /** 登録ボタン押下 */
     function submit_booking_store(btn) {
+        // bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。
+        // form.submit() はonsubmitイベントを発火しないため、ここで明示的にtriggerSaveを呼ぶ。
+        if (typeof tinymce !== 'undefined') tinymce.triggerSave();
         btn.disabled = true;
         form_save_booking{{$frame_id}}.submit();
     }
@@ -499,10 +502,13 @@ use App\Models\User\Reservations\ReservationsFacility;
                     @case(ReservationColumnType::wysiwyg)
 
                         {{-- WYSIWYG 呼び出し --}}
-                        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg'])
+                        {{-- bugfix: WYSIWYG項目が複数ある場合に値がPOSTされない不具合の修正。
+                             target_class をカラム固有にして tinymce.init() のセレクタが1対1で対応するようにする。 --}}
+                        @include('plugins.common.wysiwyg', ['target_class' => 'wysiwyg' . $frame_id . '_' . $column->id])
 
                         <div @if ($errors->has("columns_value.$column->id")) class="border border-danger" @endif>
-                            <textarea name="columns_value[{{$column->id}}]" class="form-control wysiwyg">{{old('columns_value.'.$column->id, $column->value)}}</textarea>
+                            {{-- bugfix: target_class に合わせてクラス名をカラム固有にする --}}
+                            <textarea name="columns_value[{{$column->id}}]" class="form-control wysiwyg{{$frame_id}}_{{$column->id}}">{{old('columns_value.'.$column->id, $column->value)}}</textarea>
                         </div>
                         @include('plugins.common.errors_inline_wysiwyg', ['name' => "columns_value.$column->id"])
                         @break

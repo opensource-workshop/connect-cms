@@ -1,4 +1,18 @@
 {
-    "/js/app.js": "/js/app.js?id=335821b00d46bf40895a0cb9466626cd",
-    "/css/app.css": "/css/app.css?id=9cbfd98c74ecf5345fdde288e3d85895"
+    "/js/app.js": "/js/app.js?id=45be7725515df405a8d15f353bbe0b1a",
+    "/js/wysiwyg.js": "/js/wysiwyg.js?id=f569deb3cc4d3022c22b689b766be44c",
+    "/js/codemirror.js": "/js/codemirror.js?id=1648b8c7831f2474820107a74359317f",
+    "/css/app.css": "/css/app.css?id=9cbfd98c74ecf5345fdde288e3d85895",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?2463b90d9a316e4e5294e6706b6a7a72": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?2463b90d9a316e4e5294e6706b6a7a72?id=109ad919b74a62a8a223361da1651bbc",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?2582b0e4bcf85eceead0de3fd9035c90": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?2582b0e4bcf85eceead0de3fd9035c90?id=8218477819a31609afa351933eebcdb4",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?89999bdf5d835c0120257222e5568fec": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?89999bdf5d835c0120257222e5568fec?id=25bde24dc00e5dce8f1bfa8164b3b7b1",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.ttf?914997e1bdfc990d0897cdaba877a0b3": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.ttf?914997e1bdfc990d0897cdaba877a0b3?id=96c3064e8868339b4aa6473968bdd464",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.woff2?c210719e60948b211a1260f79812efe5": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.woff2?c210719e60948b211a1260f79812efe5?id=552e767fb6056f7f34a4783c2933556e",
+    "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.ttf?1815e00441357e01619e5793e1caa78a": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-brands-400.ttf?1815e00441357e01619e5793e1caa78a?id=7c8d1eaa468e8de72642d3fc43ee5ed2",
+    "/images/acc_exclamation.png?337f20c894645de99ffc0ea9f1cfea67": "/images/acc_exclamation.png?337f20c894645de99ffc0ea9f1cfea67?id=e17441c9d8b6500164ef0ef14725a78f",
+    "/images/acc_note.png?991226f05685a2d9d7f75a5348359153": "/images/acc_note.png?991226f05685a2d9d7f75a5348359153?id=5de1ac1839bdf982cd9df168d00434c3",
+    "/images/icon_pdf.png?7cfbb334a509ddf1dc22044fa7557f4d": "/images/icon_pdf.png?7cfbb334a509ddf1dc22044fa7557f4d?id=b70d14855eef47d36bd52376b69260be",
+    "/images/icon_excel.png?37ecf7f67956f42395945014cddae393": "/images/icon_excel.png?37ecf7f67956f42395945014cddae393?id=db4fedb0094eb7b4fb7f1225ed0383cd",
+    "/images/icon_word.png?623f8b7fc1b3e9c8ff69f33176f28133": "/images/icon_word.png?623f8b7fc1b3e9c8ff69f33176f28133?id=9befd8317071fa5eb760c66bf0a77309",
+    "/images/icon_external.png?a6c57082171ba4ca205358df7ddda13f": "/images/icon_external.png?a6c57082171ba4ca205358df7ddda13f?id=dde79ce4a4294dd2569891515c7d4b3d"
 }

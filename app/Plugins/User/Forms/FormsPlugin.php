@@ -1036,8 +1036,8 @@ class FormsPlugin extends UserPluginBase
         // 入力値をトリム
         // bugfix: 【データベース】（Laravel6テスト）ファイル型項目にファイルをアップするとシステムエラーと同じ対応 https://github.com/opensource-workshop/connect-cms/issues/732
         foreach ($forms_columns as $forms_column) {
-            // ファイルタイプ以外の入力値をトリム
-            if (! FormsColumns::isFileColumnType($forms_column->column_type)) {
+            // ファイルタイプ, 選択肢タイプ以外の入力値をトリム
+            if (!FormsColumns::isFileColumnType($forms_column->column_type) && !FormsColumns::isSelectColumnType($forms_column->column_type)) {
                 if (isset($request->forms_columns_value[$forms_column->id])) {
                     // 一度配列にして、trim後、また文字列に戻す。
                     $tmp_columns_value = StringUtils::trimInput($request->forms_columns_value[$forms_column->id]);
@@ -3648,7 +3648,7 @@ ORDER BY forms_inputs_id, forms_columns_id
      *
      * @method_title スパムフィルタリング
      * @method_desc スパムフィルタリングの設定ができます。
-     * @method_detail スパムリストの管理や、ブロック時のメッセージを設定できます。
+     * @method_detail ブロックリストの管理や、ブロック時のメッセージを設定できます。
      */
     public function editSpamFilter($request, $page_id, $frame_id)
     {
@@ -3742,7 +3742,7 @@ ORDER BY forms_inputs_id, forms_columns_id
 
         // リダイレクト
         return redirect("/plugin/forms/editSpamFilter/{$page_id}/{$frame_id}#frame-{$frame_id}")
-            ->with('flash_message', 'スパムリストに追加しました。');
+            ->with('flash_message', 'ブロックリストに追加しました。');
     }
 
     /**
@@ -3760,7 +3760,7 @@ ORDER BY forms_inputs_id, forms_columns_id
 
         // リダイレクト
         return redirect("/plugin/forms/editSpamFilter/{$page_id}/{$frame_id}#frame-{$frame_id}")
-            ->with('flash_message', 'スパムリストから削除しました。');
+            ->with('flash_message', 'ブロックリストから削除しました。');
     }
 
     /**
@@ -3894,7 +3894,7 @@ ORDER BY forms_inputs_id, forms_columns_id
         // メッセージの組み立て
         $messages = [];
         if ($added_count > 0) {
-            $messages[] = "{$added_count}件をスパムリストに追加しました。";
+            $messages[] = "{$added_count}件をブロックリストに追加しました。";
         }
         if ($skipped_duplicate_count > 0) {
             $messages[] = "{$skipped_duplicate_count}件は既に登録済みのためスキップしました。";
@@ -3903,7 +3903,7 @@ ORDER BY forms_inputs_id, forms_columns_id
             $messages[] = "{$skipped_no_data_count}件は該当データがないためスキップしました。";
         }
         if (empty($messages)) {
-            $messages[] = 'スパムリストへの追加はありませんでした。';
+            $messages[] = 'ブロックリストへの追加はありませんでした。';
         }
 
         // リダイレクト
