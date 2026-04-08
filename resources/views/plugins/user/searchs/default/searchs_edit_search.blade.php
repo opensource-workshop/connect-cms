@@ -5,6 +5,9 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
 --}}
+@php
+use App\Enums\SearchsPageSelect;
+@endphp
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -150,22 +153,16 @@
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">ページの選択</label><br />
                 <div class="{{$frame->getSettingInputClass(true)}}">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if(old('page_select', $searchs->page_select) == 0)
-                            <input type="radio" value="0" id="page_select_0" name="page_select" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0" id="page_select_0" name="page_select" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="page_select_0">全て表示する</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if(old('page_select', $searchs->page_select) == 1)
-                            <input type="radio" value="1" id="page_select_1" name="page_select" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="page_select_1" name="page_select" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="page_select_1">ページ管理のメニュー表示条件に従う</label>
-                    </div>
+                    @foreach (SearchsPageSelect::enum as $key => $item)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if(old('page_select', $searchs->page_select) == $key)
+                                <input type="radio" value="{{$key}}" id="page_select_{{$key}}" name="page_select" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$key}}" id="page_select_{{$key}}" name="page_select" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label" for="page_select_{{$key}}">{{ SearchsPageSelect::getDescription($key) }}</label>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 

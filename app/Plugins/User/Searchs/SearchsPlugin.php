@@ -14,6 +14,7 @@ use App\Models\User\Searchs\Searchs;
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\SearchsPageSelect;
 use App\Enums\SearchsTargetPlugin;
 
 /**
@@ -480,7 +481,7 @@ class SearchsPlugin extends UserPluginBase
         $pages = Page::get();
 
         // ページの選択「ページ管理のメニュー表示条件に従う」
-        if ($searchs_frame->page_select == 1) {
+        if ($searchs_frame->page_select == SearchsPageSelect::MENU_VISIBLE_ONLY) {
 
             // 表示ページのみに絞る
             $pages = $pages->filter(function ($page) {
