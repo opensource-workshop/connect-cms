@@ -491,7 +491,7 @@ class SearchsPlugin extends UserPluginBase
                     $query->select('page_id')
                         ->from('frames')
                         ->whereIn('id', explode(',', $searchs_frame->target_frame_ids));
-                })->get();  
+                })->get();
 
                 $pages = $pages->merge($pages_frame)->unique('id');
             }
