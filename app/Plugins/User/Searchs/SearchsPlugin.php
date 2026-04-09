@@ -478,15 +478,10 @@ class SearchsPlugin extends UserPluginBase
      */
     private function fetchSearchablePageIds($request, $searchs_frame)
     {
-        $pages = Page::get();
-
         // ページの選択「ページ管理のメニュー表示条件に従う」
         if ($searchs_frame->page_select == SearchsPageSelect::MENU_VISIBLE_ONLY) {
-
-            // 表示ページのみに絞る
-            $pages = $pages->filter(function ($page) {
-                return $page->base_display_flag == 1;
-            });
+            // 表示ページのみをDBレベルで絞り込む
+            $pages = Page::where('base_display_flag', 1)->get();
 
             // フレームの選択「選択したものだけ表示する」
             if ($searchs_frame->frame_select == 1) {
@@ -499,6 +494,9 @@ class SearchsPlugin extends UserPluginBase
 
                 $pages = $pages->merge($pages_frame)->unique('id');
             }
+        } else {
+            // 全ページを検索対象とする
+            $pages = Page::get();
         }
 
         // 見れないページ除外
