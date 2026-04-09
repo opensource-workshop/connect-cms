@@ -14,6 +14,7 @@ use App\Models\User\Searchs\Searchs;
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\SearchsFrameSelect;
 use App\Enums\SearchsPageSelect;
 use App\Enums\SearchsTargetPlugin;
 
@@ -170,7 +171,7 @@ class SearchsPlugin extends UserPluginBase
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             // 選択したものだけ表示する
-            if ($searchs_frame->frame_select == 1) {
+            if ($searchs_frame->frame_select == SearchsFrameSelect::SELECTED_ONLY) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
 
@@ -484,7 +485,7 @@ class SearchsPlugin extends UserPluginBase
             $pages = Page::where('base_display_flag', 1)->get();
 
             // フレームの選択「選択したものだけ表示する」
-            if ($searchs_frame->frame_select == 1) {
+            if ($searchs_frame->frame_select == SearchsFrameSelect::SELECTED_ONLY) {
                 // 選択したフレームに紐づくページ を追加取得してマージ
                 $pages_frame = Page::whereIn('id', function ($query) use ($searchs_frame) {
                     $query->select('page_id')
