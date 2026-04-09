@@ -491,8 +491,11 @@ class SearchsPlugin extends UserPluginBase
             // フレームの選択「選択したものだけ表示する」
             if ($searchs_frame->frame_select == 1) {
                 // 選択したフレームに紐づくページ を追加取得してマージ
-                $frame_page_ids = Frame::whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids))->get()->pluck('page_id')->toArray();
-                $pages_frame = Page::whereIn('pages.id', $frame_page_ids)->get();
+                $pages_frame = Page::whereIn('id', function ($query) use ($searchs_frame) {
+                    $query->select('page_id')
+                        ->from('frames')
+                        ->whereIn('id', explode(',', $searchs_frame->target_frame_ids));
+                })->get();  
 
                 $pages = $pages->merge($pages_frame)->unique('id');
             }
