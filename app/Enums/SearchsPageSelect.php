@@ -5,7 +5,7 @@ namespace App\Enums;
 use App\Enums\EnumsBase;
 
 /**
- * 通知の埋め込みタグ
+ * ページの選択
  *
  * @author 牟田口 満 <akagane99@gmail.com>
  * @category サイト内検索
