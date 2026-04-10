@@ -2380,8 +2380,8 @@ class LearningtasksPlugin extends UserPluginBase
 
         Categories::savePluginCategories($request, $this->frame->plugin_name, $learningtask->id);
 
-        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
-        // saveCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // saveCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
+        session()->flash('flash_message_for_frame' . $frame_id, '変更しました。');
     }
 
     /**
@@ -2389,10 +2389,14 @@ class LearningtasksPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
+        // 削除メッセージ用にカテゴリ名を事前取得
+        $category = Categories::find($id);
+        $category_name = $category ? $category->category : '';
+
         Categories::deleteCategories($this->frame->plugin_name, $id);
 
-        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
-        // deleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // deleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
+        session()->flash('flash_message_for_frame' . $frame_id, '【 '. $category_name .' 】を削除しました。');
     }
 
     /**

@@ -14,6 +14,9 @@
 {{-- エラーメッセージ --}}
 @include('plugins.common.errors_all')
 
+{{-- 登録後メッセージ表示 --}}
+@include('plugins.common.flash_message_for_frame')
+
 {{-- 削除ボタンのアクション --}}
 <script type="text/javascript">
     function form_delete(id) {
