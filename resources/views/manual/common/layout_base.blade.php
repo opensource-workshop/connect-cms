@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{$base_path}}css/bootstrap.min.css" type="text/css">
-    <link rel="stylesheet" href="{{$base_path}}css/manual.css" type="text/css">
-    <link rel="stylesheet" href="{{$base_path}}font/css/all.min.css" type="text/css">
-    <script src="{{$base_path}}js/jquery-3.6.0.min.js"></script>
-    <script src="{{$base_path}}js/popper.min.js"></script>
-    <script src="{{$base_path}}js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="{{$base_path}}css/bootstrap.min.css?version={{ config('version.cc_version') }}" type="text/css">
+    <link rel="stylesheet" href="{{$base_path}}css/manual.css?version={{ config('version.cc_version') }}" type="text/css">
+    <link rel="stylesheet" href="{{$base_path}}font/css/all.min.css?version={{ config('version.cc_version') }}" type="text/css">
+    <script src="{{$base_path}}js/jquery-3.6.0.min.js?version={{ config('version.cc_version') }}"></script>
+    <script src="{{$base_path}}js/popper.min.js?version={{ config('version.cc_version') }}"></script>
+    <script src="{{$base_path}}js/bootstrap.min.js?version={{ config('version.cc_version') }}"></script>
     <title>Connect-CMSマニュアル (v{{config('version.cc_version')}})</title>
 </head>
 <body class=" ">
