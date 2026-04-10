@@ -1509,11 +1509,7 @@ WHERE status = 0
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        // 削除メッセージ用にカテゴリ名を事前取得
-        $category = Categories::find($id);
-        $category_name = $category ? $category->category : '';
-
-        Categories::deleteCategories($this->frame->plugin_name, $id);
+        $category_name = Categories::deletePluginCategoryWithName($this->frame->plugin_name, $id);
 
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
         session()->flash('flash_message_for_frame' . $frame_id, '【 '. e($category_name) .' 】を削除しました。');
