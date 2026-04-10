@@ -568,7 +568,7 @@ class SiteManage extends ManagePluginBase
         Categories::destroy($id);
 
         // return $this->categories($request, $id, null, true);
-        return redirect()->back()->with('flash_message', '【 '. $category_name .' 】を削除しました。');
+        return redirect()->back()->with('flash_message', '【 '. e($category_name) .' 】を削除しました。');
     }
 
     /**

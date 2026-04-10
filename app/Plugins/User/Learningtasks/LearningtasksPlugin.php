@@ -2396,7 +2396,7 @@ class LearningtasksPlugin extends UserPluginBase
         Categories::deleteCategories($this->frame->plugin_name, $id);
 
         // deleteCategoriesはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
-        session()->flash('flash_message_for_frame' . $frame_id, '【 '. $category_name .' 】を削除しました。');
+        session()->flash('flash_message_for_frame' . $frame_id, '【 '. e($category_name) .' 】を削除しました。');
     }
 
     /**
