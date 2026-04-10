@@ -548,8 +548,7 @@ class SiteManage extends ManagePluginBase
             }
         }
 
-        // return $this->categories($request, $id, null, true);
-        return redirect()->back();
+        return redirect()->back()->with('flash_message', '変更しました。');
     }
 
     /**
@@ -557,14 +556,20 @@ class SiteManage extends ManagePluginBase
      */
     public function deleteCategories($request, $id)
     {
+        // 削除メッセージ用にカテゴリ名を事前取得（対象が存在しない場合は削除せず通知）
+        $category = Categories::find($id);
+        if (!$category) {
+            return redirect()->back()->with('flash_message', 'カテゴリが見つかりませんでした。');
+        }
+        $category_name = $category->category;
+
         // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
         //
         // カテゴリ削除
         // Categories::where('id', $id)->delete();
         Categories::destroy($id);
 
-        // return $this->categories($request, $id, null, true);
-        return redirect()->back();
+        return redirect()->back()->with('flash_message', '【 '. e($category_name) .' 】を削除しました。');
     }
 
     /**
