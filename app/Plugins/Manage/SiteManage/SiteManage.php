@@ -548,7 +548,6 @@ class SiteManage extends ManagePluginBase
             }
         }
 
-        // return $this->categories($request, $id, null, true);
         return redirect()->back()->with('flash_message', '変更しました。');
     }
 
@@ -570,7 +569,6 @@ class SiteManage extends ManagePluginBase
         // Categories::where('id', $id)->delete();
         Categories::destroy($id);
 
-        // return $this->categories($request, $id, null, true);
         return redirect()->back()->with('flash_message', '【 '. e($category_name) .' 】を削除しました。');
     }
 
