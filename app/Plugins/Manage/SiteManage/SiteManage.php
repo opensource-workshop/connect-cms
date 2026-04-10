@@ -557,9 +557,12 @@ class SiteManage extends ManagePluginBase
      */
     public function deleteCategories($request, $id)
     {
-        // 削除メッセージ用にカテゴリ名を事前取得
+        // 削除メッセージ用にカテゴリ名を事前取得（対象が存在しない場合は削除せず通知）
         $category = Categories::find($id);
-        $category_name = $category ? $category->category : '';
+        if (!$category) {
+            return redirect()->back()->with('flash_message', 'カテゴリが見つかりませんでした。');
+        }
+        $category_name = $category->category;
 
         // deleted_id, deleted_nameを自動セットするため、複数件削除する時はdestroy()を利用する。
         //

@@ -1512,6 +1512,10 @@ WHERE status = 0
         $category_name = Categories::deletePluginCategoryWithName($this->frame->plugin_name, $id);
 
         // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
+        if ($category_name === null) {
+            session()->flash('flash_message_for_frame' . $frame_id, 'カテゴリが見つかりませんでした。');
+            return;
+        }
         session()->flash('flash_message_for_frame' . $frame_id, '【 '. e($category_name) .' 】を削除しました。');
     }
 
