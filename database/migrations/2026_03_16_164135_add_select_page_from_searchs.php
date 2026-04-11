@@ -15,7 +15,7 @@ class AddSelectPageFromSearchs extends Migration
     public function up()
     {
         Schema::table('searchs', function (Blueprint $table) {
-            $table->integer('page_select')->default(SearchsPageSelect::ALL_PAGES)->comment('ページの選択フラグ')->after('recieve_keyword');
+            $table->integer('page_select')->default(SearchsPageSelect::all_pages)->comment('ページの選択フラグ')->after('recieve_keyword');
         });
     }
 

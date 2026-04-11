@@ -171,7 +171,7 @@ class SearchsPlugin extends UserPluginBase
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             // 選択したものだけ表示する
-            if ($searchs_frame->frame_select == SearchsFrameSelect::SELECTED_ONLY) {
+            if ($searchs_frame->frame_select == SearchsFrameSelect::selected_only) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
 
@@ -480,12 +480,12 @@ class SearchsPlugin extends UserPluginBase
     private function fetchSearchablePageIds($request, $searchs_frame)
     {
         // ページの選択「ページ管理のメニュー表示条件に従う」
-        if ($searchs_frame->page_select == SearchsPageSelect::MENU_VISIBLE_ONLY) {
+        if ($searchs_frame->page_select == SearchsPageSelect::menu_visible_only) {
             // 表示ページのみをDBレベルで絞り込む
             $pages = Page::where('base_display_flag', 1)->get();
 
             // フレームの選択「選択したものだけ表示する」
-            if ($searchs_frame->frame_select == SearchsFrameSelect::SELECTED_ONLY) {
+            if ($searchs_frame->frame_select == SearchsFrameSelect::selected_only) {
                 // 選択したフレームに紐づくページ を追加取得してマージ
                 $pages_frame = Page::whereIn('id', function ($query) use ($searchs_frame) {
                     $query->select('page_id')

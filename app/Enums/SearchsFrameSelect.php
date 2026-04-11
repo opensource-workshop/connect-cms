@@ -11,17 +11,17 @@ use App\Enums\EnumsBase;
  * @category サイト内検索
  * @package Enums
  */
-class SearchsFrameSelect extends EnumsBase
+final class SearchsFrameSelect extends EnumsBase
 {
     // 定数メンバ
     /** 全て表示する */
-    const ALL_FRAMES = 0;
+    const all_frames = 0;
     /** 選択したものだけ表示する */
-    const SELECTED_ONLY = 1;
+    const selected_only = 1;
 
     /** key/valueの連想配列 */
     const enum = [
-        self::ALL_FRAMES => '全て表示する',
-        self::SELECTED_ONLY => '選択したものだけ表示する',
+        self::all_frames => '全て表示する',
+        self::selected_only => '選択したものだけ表示する',
     ];
 }

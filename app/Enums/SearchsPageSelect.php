@@ -11,17 +11,17 @@ use App\Enums\EnumsBase;
  * @category サイト内検索
  * @package Enums
  */
-class SearchsPageSelect extends EnumsBase
+final class SearchsPageSelect extends EnumsBase
 {
     // 定数メンバ
     /** 全て表示する */
-    const ALL_PAGES = 0;
+    const all_pages = 0;
     /** ページ管理のメニュー表示条件に従う */
-    const MENU_VISIBLE_ONLY = 1;
+    const menu_visible_only = 1;
 
     /** key/valueの連想配列 */
     const enum = [
-        self::ALL_PAGES => '全て表示する',
-        self::MENU_VISIBLE_ONLY => 'ページ管理のメニュー表示条件に従う',
+        self::all_pages => '全て表示する',
+        self::menu_visible_only => 'ページ管理のメニュー表示条件に従う',
     ];
 }
