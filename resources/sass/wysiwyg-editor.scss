@@ -1,0 +1,4 @@
+// WYSIWYGエディタ使用ページ専用のスタイル。
+// 一般閲覧ページでは読み込まず、編集画面でのみ wysiwyg.blade.php から読み込む。
+@import 'toast-ui-image-editor/ui';
+@import 'wysiwyg/editor';

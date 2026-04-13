@@ -248,10 +248,15 @@
      同一ページ内で複数回 include された場合に備え、予防的プログラミングとして static 変数で重複読み込みを防止する。 --}}
 @php
     static $wysiwyg_js_loaded = false;
+    static $wysiwyg_css_loaded = false;
 
     // bugfix: ファイル入力要素の重複出力を防止（IDがフレーム単位のため、同一フレーム内で1回のみ出力）
     static $wysiwyg_frame_loaded = [];
 @endphp
+@if (!$wysiwyg_css_loaded)
+    @php($wysiwyg_css_loaded = true)
+    <link href="{{ url('/') }}{{ mix('/css/wysiwyg-editor.css') }}" rel="stylesheet">
+@endif
 @if (!$wysiwyg_js_loaded)
     @php($wysiwyg_js_loaded = true)
     <script src="{{ url('/') }}{{ mix('/js/wysiwyg.js') }}"></script>
