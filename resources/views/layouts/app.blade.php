@@ -106,8 +106,39 @@ if (! isset($cc_configs)) {
     @endforeach
 @endif
 
-    {{-- FontAwesome solid フォントの preload（最も使用頻度が高いアイコンフォント） --}}
-    <link rel="preload" href="{{ url('/') }}/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+    @php
+        // FontAwesome の solid フォント（最も使用頻度が高いアイコンフォント）を preload することで、
+        // HTML 解析と並行してフォント取得を開始させ、LCP / 体感速度を改善する。
+        //
+        // ただし、ビルド時に webpack（laravel-mix）が生成する app.css 内のフォント参照 URL には
+        // 「webfa-solid-900.woff2?<コンテンツハッシュ>」のようにクエリ文字列でハッシュが付与される。
+        // preload 側でハッシュ無しの URL を書くと、ブラウザは CSS 内の URL と別リソースと判定し、
+        // preload したフォントが CSS から再利用されず二重取得 + コンソール警告が発生する。
+        //
+        // そのため、CSS と同じハッシュ付き URL を mix-manifest.json から動的に取得する。
+        // mix-manifest.json にはフォントごとに下記のようなキーが登録されている:
+        //   "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?<ハッシュ>": "..."
+        // このキー部分を URL として流用することで、CSS の @font-face と URL が一致し、
+        // preload→CSS 参照の単一取得で成立する。
+        //
+        // FontAwesome のバージョンアップ等でハッシュが変わっても自動追従し、
+        // manifest が見つからない場合は安全側に倒して preload タグを出力しない。
+        $fa_solid_preload_url = null;
+        $fa_manifest_path = public_path('mix-manifest.json');
+        if (file_exists($fa_manifest_path)) {
+            $fa_manifest = json_decode(file_get_contents($fa_manifest_path), true) ?? [];
+            foreach (array_keys($fa_manifest) as $fa_key) {
+                if (str_starts_with($fa_key, '/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2')) {
+                    $fa_solid_preload_url = $fa_key;
+                    break;
+                }
+            }
+        }
+    @endphp
+    @if ($fa_solid_preload_url)
+        {{-- FontAwesome solid フォントの preload（CSS 内の @font-face と同一 URL で取得させる） --}}
+        <link rel="preload" href="{{ url('/') }}{{ $fa_solid_preload_url }}" as="font" type="font/woff2" crossorigin>
+    @endif
 
     <!-- Styles -->
     <link href="{{ url('/') }}{{ mix('css/app.css') }}" rel="stylesheet">
