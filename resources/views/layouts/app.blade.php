@@ -106,6 +106,9 @@ if (! isset($cc_configs)) {
     @endforeach
 @endif
 
+    {{-- FontAwesome solid フォントの preload（最も使用頻度が高いアイコンフォント） --}}
+    <link rel="preload" href="{{ url('/') }}/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
     <!-- Styles -->
     <link href="{{ url('/') }}{{ mix('css/app.css') }}" rel="stylesheet">
 
