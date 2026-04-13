@@ -5,6 +5,10 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category 検索プラグイン
 --}}
+@php
+use App\Enums\SearchsFrameSelect;
+use App\Enums\SearchsPageSelect;
+@endphp
 @extends('core.cms_frame_base_setting')
 
 @section("core.cms_frame_edit_tab_$frame->id")
@@ -147,32 +151,45 @@
                 </div>
             </div>
 
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">ページの選択</label><br />
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    @foreach (SearchsPageSelect::enum as $key => $item)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if(old('page_select', $searchs->page_select) == $key)
+                                <input type="radio" value="{{$key}}" id="page_select_{{$key}}" name="page_select" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$key}}" id="page_select_{{$key}}" name="page_select" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label" for="page_select_{{$key}}">{{ SearchsPageSelect::getDescription($key) }}</label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
             <div class="form-group row mb-0">
                 <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if(old('frame_select', $searchs->frame_select) == 0)
-                            <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0" id="frame_select_0" name="frame_select" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="frame_select_0">全て表示する</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        @if(old('frame_select', $searchs->frame_select) == 1)
-                            <input type="radio" value="1" id="frame_select_1" name="frame_select" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1" id="frame_select_1" name="frame_select" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="frame_select_1">選択したものだけ表示する</label>
-                    </div>
+                    @foreach (SearchsFrameSelect::enum as $key => $item)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if(old('frame_select', $searchs->frame_select) == $key)
+                                <input type="radio" value="{{$key}}" id="frame_select_{{$key}}" name="frame_select" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$key}}" id="frame_select_{{$key}}" name="frame_select" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label" for="frame_select_{{$key}}">{{ SearchsFrameSelect::getDescription($key) }}</label>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
             <div class="form-group row">
                 <div class="{{$frame->getSettingLabelClass()}}"></div>
                 <div class="{{$frame->getSettingInputClass()}}">
-                    <small class="text-muted">※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。</small><br>
+                    <small class="text-muted">
+                        ※ 「選択したものだけ表示する」を選択した場合、「固定記事」は検索対象外になります。<br>
+                        　　また、メニュー非表示ページでも、選択したフレームは検索対象になります。<br>
+                    </small>
                 </div>
             </div>
 

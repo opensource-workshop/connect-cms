@@ -14,6 +14,8 @@ use App\Models\User\Searchs\Searchs;
 use App\Plugins\User\UserPluginBase;
 use App\Traits\ConnectCommonTrait;
 
+use App\Enums\SearchsFrameSelect;
+use App\Enums\SearchsPageSelect;
 use App\Enums\SearchsTargetPlugin;
 
 /**
@@ -163,13 +165,13 @@ class SearchsPlugin extends UserPluginBase
 
         // 各プラグインのSQL をUNION
         // 公開されているページ、フレームを検索対象とする
-        $searchable_page_ids = $this->fetchSearchablePageIds($request);
+        $searchable_page_ids = $this->fetchSearchablePageIds($request, $searchs_frame);
         $searchable_frame_ids = Frame::visible()->get()->pluck('id');
 
         foreach ($union_sqls as $union_sql) {
             // フレームの選択が行われる場合
             // 選択したものだけ表示する
-            if ($searchs_frame->frame_select == 1) {
+            if ($searchs_frame->frame_select == SearchsFrameSelect::selected_only) {
                 $union_sql->whereIn('frames.id', explode(',', $searchs_frame->target_frame_ids));
             }
 
@@ -427,6 +429,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs->frame_select      = intval($request->frame_select);
         $searchs->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
         $searchs->recieve_keyword   = intval($request->recieve_keyword);
+        $searchs->page_select       = intval($request->page_select);
 
         // データ保存
         $searchs->save();
@@ -474,9 +477,29 @@ class SearchsPlugin extends UserPluginBase
     /**
      * 検索対象のページIDを取得する
      */
-    private function fetchSearchablePageIds($request)
+    private function fetchSearchablePageIds($request, $searchs_frame)
     {
-        $pages = Page::get();
+        // ページの選択「ページ管理のメニュー表示条件に従う」
+        if ($searchs_frame->page_select == SearchsPageSelect::menu_visible_only) {
+            // 表示ページのみをDBレベルで絞り込む
+            $pages = Page::where('base_display_flag', 1)->get();
+
+            // フレームの選択「選択したものだけ表示する」
+            if ($searchs_frame->frame_select == SearchsFrameSelect::selected_only) {
+                // 選択したフレームに紐づくページ を追加取得してマージ
+                $pages_frame = Page::whereIn('id', function ($query) use ($searchs_frame) {
+                    $query->select('page_id')
+                        ->from('frames')
+                        ->whereIn('id', explode(',', $searchs_frame->target_frame_ids));
+                })->get();
+
+                $pages = $pages->merge($pages_frame)->unique('id');
+            }
+        } else {
+            // 全ページを検索対象とする
+            $pages = Page::get();
+        }
+
         // 見れないページ除外
         $visible_page_ids = [];
         foreach ($pages as $page) {
