@@ -1,8 +1,9 @@
 {
-    "/js/app.js": "/js/app.js?id=45be7725515df405a8d15f353bbe0b1a",
+    "/js/app.js": "/js/app.js?id=c8d2d691ebac4dcad449ab31f1627636",
     "/js/wysiwyg.js": "/js/wysiwyg.js?id=f569deb3cc4d3022c22b689b766be44c",
     "/js/codemirror.js": "/js/codemirror.js?id=1648b8c7831f2474820107a74359317f",
-    "/css/app.css": "/css/app.css?id=ec77d72350eb92cc0fcc4835c7239663",
+    "/js/manage/page/index.js": "/js/manage/page/index.js?id=0baec4e0bdc17faa6677a2d9c0bed29b",
+    "/css/app.css": "/css/app.css?id=1d1b5dd28223d82e3e4049fafbfaabef",
     "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?2463b90d9a316e4e5294e6706b6a7a72": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.woff2?2463b90d9a316e4e5294e6706b6a7a72?id=109ad919b74a62a8a223361da1651bbc",
     "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?2582b0e4bcf85eceead0de3fd9035c90": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-solid-900.ttf?2582b0e4bcf85eceead0de3fd9035c90?id=8218477819a31609afa351933eebcdb4",
     "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?89999bdf5d835c0120257222e5568fec": "/fonts/vendor/@fortawesome/fontawesome-free/webfa-regular-400.woff2?89999bdf5d835c0120257222e5568fec?id=25bde24dc00e5dce8f1bfa8164b3b7b1",

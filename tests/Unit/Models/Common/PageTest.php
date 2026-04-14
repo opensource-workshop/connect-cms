@@ -52,4 +52,20 @@ class PageTest extends TestCase
         $grand_child_page->refresh();
         $this->assertEquals($grand_child_page->id, $grand_child_page->getInheritMembershipPage()->id);
     }
+
+    /**
+     * 多ルート構成でページ管理用の祖先列挙を行う場合は、無関係なトップページを含めない。
+     */
+    public function testGetPageTreeByGoingBackParentCanSkipAppendingTopPage()
+    {
+        $top_page = Page::factory()->create();
+        $other_root_page = Page::factory()->create();
+        $child_page = Page::factory()->create();
+
+        $page_tree_with_top = $child_page->getPageTreeByGoingBackParent(collect([$child_page, $other_root_page]));
+        $page_tree_without_top = $child_page->getPageTreeByGoingBackParent(collect([$child_page, $other_root_page]), false);
+
+        $this->assertSame([$child_page->id, $other_root_page->id, $top_page->id], $page_tree_with_top->pluck('id')->all());
+        $this->assertSame([$child_page->id, $other_root_page->id], $page_tree_without_top->pluck('id')->all());
+    }
 }
