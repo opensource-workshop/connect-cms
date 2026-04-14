@@ -122,6 +122,10 @@
      * @returns {void}
      */
     function saveState() {
+        if (!initialized) {
+            return;
+        }
+
         const container = getContainer();
         const rows = getTreeRows(container);
         if (!rows.length) {

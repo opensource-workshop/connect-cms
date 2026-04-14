@@ -242,7 +242,7 @@ $base_layout_page->layout = $base_layout;
                 @php
                     $direct_children = $page_children->get($page_item->id, collect());
                     $has_children = $direct_children->isNotEmpty();
-                    $page_tree = $page_item->getPageTreeByGoingBackParent(null);
+                    $page_tree = $page_item->getPageTreeByGoingBackParent(null, false);
                     $ancestor_ids = $page_tree->pluck('id')
                         ->reject(function ($id) use ($page_item) {
                             return (int) $id === (int) $page_item->id;
