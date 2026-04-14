@@ -24,6 +24,6 @@ final class WhatsnewFrameConfig extends EnumsBase
         self::border => '記事間の罫線',
         self::post_detail => '記事本文',
         self::post_detail_length => '記事本文の文字数',
-        self::async => '非同期表示',
+        self::async => '初回表示時の読込方法',
     ];
 }
