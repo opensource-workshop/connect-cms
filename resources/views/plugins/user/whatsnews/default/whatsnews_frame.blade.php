@@ -120,13 +120,13 @@
         </div>
     </div>
 
-    {{-- 非同期表示 --}}
-    <h5><span class="badge badge-secondary">非同期表示</span></h5>
+    {{-- 初回表示時の読込方法 --}}
+    <h5><span class="badge badge-secondary">初回表示時の読込方法</span></h5>
 
     <div class="form-group row">
-        <label class="{{$frame->getSettingLabelClass(true)}}">非同期表示</label>
-        <div class="{{$frame->getSettingInputClass(true)}}">
-            @foreach (UseType::enum as $key => $value)
+        <label class="{{$frame->getSettingLabelClass(true)}}">初回表示時の読込方法</label>
+        <div class="{{$frame->getSettingInputClass()}}">
+            @foreach ([UseType::not_use => '開いたときに表示する', UseType::use => '開いたあとに表示する'] as $key => $value)
                 <div class="custom-control custom-radio custom-control-inline">
                     <input
                         type="radio"
@@ -141,6 +141,9 @@
                     </label>
                 </div>
             @endforeach
+            <small class="text-muted d-block">新着情報の読み込み方法を選ぶ設定です。</small>
+            <small class="text-muted d-block">通常は、「開いたときに表示する」の設定でご利用いただけます。</small>
+            <small class="text-muted d-block">新着情報プラグインを多数配置して表示が遅いと感じる場合は、「開いたあとに表示する」を選びます。ページの読み込みが早くなることがあります。</small>
         </div>
     </div>
 
