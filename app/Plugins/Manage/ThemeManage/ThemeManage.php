@@ -547,10 +547,10 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
-     * テーマ名編集画面
+     * 名称変更・削除画面
      *
-     * @method_title 名前の編集
-     * @method_desc ユーザ・テーマ毎の名前を編集できます。
+     * @method_title 名称変更・削除
+     * @method_desc ユーザ・テーマ毎の名称変更や削除ができます。
      * @method_detail
      */
     public function editName($request, $id, $errors = array())
