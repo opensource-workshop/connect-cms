@@ -49,7 +49,7 @@
                 @endif
                 @if ($function == "editName")
                     <li role="presentation" class="nav-item">
-                        <span class="nav-link"><span class="active">テーマ名編集</span></span>
+                        <span class="nav-link"><span class="active">名称変更・削除</span></span>
                     </li>
                 @endif
             </ul>
