@@ -693,9 +693,10 @@ class ThemeManage extends ManagePluginBase
             $extension            = $request->file('image')->getClientOriginalExtension();
 
             // 拡張子チェック
-            if (mb_strtolower($extension) != 'jpg' && mb_strtolower($extension) != 'png' && mb_strtolower($extension) != 'gif') {
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (!in_array(mb_strtolower($extension), $allowed_extensions, true)) {
                 $validator = Validator::make($request->all(), []);
-                $validator->errors()->add('not_extension', 'jpg, png, gif 以外はアップロードできません。');
+                $validator->errors()->add('not_extension', implode(', ', $allowed_extensions) . ' 以外はアップロードできません。');
                 return $this->listImages($request, $id)->withErrors($validator);
             }
 
