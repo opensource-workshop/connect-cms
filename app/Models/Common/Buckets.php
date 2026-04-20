@@ -97,7 +97,7 @@ class Buckets extends Model
      */
     public function canPostUser($user, $frame = null)
     {
-        // ユーザーの持つBASE権限を全て確認し、ひとつでも投稿権限があれば、投稿可能となる。
+        // ユーザーの BASE 権限（ページ権限で昇格した場合も含む）を全て確認し、ひとつでも投稿権限があれば、投稿可能となる。
         if (empty($user)) {
             return false;
         }
