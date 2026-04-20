@@ -206,7 +206,7 @@ class ContentsPlugin extends UserPluginBase
             //
             $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
 
-        } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
+        } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user(), $this->frame)) {
             //
             // モデレータ or 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             //
@@ -218,24 +218,8 @@ class ContentsPlugin extends UserPluginBase
             });
 
         } else {
-            // その他（ゲスト、およびページ権限でのみモデレータ/編集者に昇格したユーザ）
-            // bugfix: Buckets::canPostUser() は BASE 権限のみ走査するため、ページ権限で
-            //         role_reporter/role_article 等に昇格したユーザは上の elseif に入らず
-            //         ここへ落ちる。自分が一時保存・承認待ちした記事すら見えなくなるため、
-            //         「他人の未公開は見せない」設計は維持しつつ、自分の作成分のみ閲覧許可。
-            $query->where(function ($tmp_query) use ($table_name) {
-                $tmp_query->where($table_name . '.status', StatusType::active);
-                if (Auth::check()) {
-                    $tmp_query->orWhere(function ($own_query) use ($table_name) {
-                        $own_query->where($table_name . '.created_id', '=', Auth::user()->id)
-                            ->whereIn($table_name . '.status', [
-                                StatusType::active,
-                                StatusType::temporary,
-                                StatusType::approval_pending,
-                            ]);
-                    });
-                }
-            });
+            // その他（ゲスト）
+            $query->where($table_name . '.status', StatusType::active);
         }
 
         return $query;

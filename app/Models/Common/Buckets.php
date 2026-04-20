@@ -95,18 +95,30 @@ class Buckets extends Model
     /**
      * ユーザーの投稿権限の有無確認
      */
-    public function canPostUser($user)
+    public function canPostUser($user, $frame = null)
     {
         // ユーザーの持つBASE権限を全て確認し、ひとつでも投稿権限があれば、投稿可能となる。
         if (empty($user)) {
             return false;
         }
 
-        if (!array_key_exists('base', (array)$user->user_roles)) {
+        $request = app(Request::class);
+
+        // app\Http\Middleware\ConnectPage.php でセットした値
+        $page = $request->attributes->get('page');
+        $page_tree = $request->attributes->get('page_tree');
+
+        // フレームがあれば、フレームを配置したページから親を遡ってページロールを取得
+        $page_roles = $this->choicePageRolesByGoingBackParentPageOrFramePage($page, $page_tree, $frame);
+
+        // ユーザロール取得。所属グループのページ権限あったら、そっちからとる
+        $user_roles = $this->choiceUserRolesOrPageRoles($user, $page_roles);
+
+        if (!array_key_exists('base', (array)$user_roles)) {
             return false;
         }
 
-        $user_roles_base = $user->user_roles['base'];
+        $user_roles_base = $user_roles['base'];
         if (empty($user_roles_base)) {
             return false;
         }
