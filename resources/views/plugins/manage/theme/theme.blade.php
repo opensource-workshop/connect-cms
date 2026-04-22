@@ -62,7 +62,7 @@
         form_js.dir_name.value = dir_name;
         form_js.submit();
     }
-    // テーマ名編集画面へ
+    // 名称変更・削除画面へ
     function view_name_edit(dir_name)
     {
         form_name.dir_name.value = dir_name;
@@ -85,7 +85,7 @@
                <a href="javascript:view_js_edit('{{$dir['dir']}}');" id="js_edit_{{$loop->iteration}}">［JavaScript編集］</a>
                <a href="javascript:view_list_images('{{$dir['dir']}}');" id="image_edit_{{$loop->iteration}}">［画像管理］</a>
                <a href="javascript:view_template_edit('{{$dir['dir']}}');" id="template_edit_{{$loop->iteration}}">［テンプレート編集］</a>
-               <a href="javascript:view_name_edit('{{$dir['dir']}}');" id="name_edit_{{$loop->iteration}}">［テーマ編集］</a>
+               <a href="javascript:view_name_edit('{{$dir['dir']}}');" id="name_edit_{{$loop->iteration}}">［名称変更・削除］</a>
         </li>
     @endforeach
 </ul>

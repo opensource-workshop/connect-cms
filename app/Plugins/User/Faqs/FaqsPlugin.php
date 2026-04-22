@@ -1110,8 +1110,8 @@ class FaqsPlugin extends UserPluginBase
 
         Categories::savePluginCategories($request, $this->frame->plugin_name, $faq_frame->faqs_id);
 
-        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
-        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
+        session()->flash('flash_message_for_frame' . $frame_id, '変更しました。');
     }
 
     /**
@@ -1119,10 +1119,14 @@ class FaqsPlugin extends UserPluginBase
      */
     public function deleteCategories($request, $page_id, $frame_id, $id = null)
     {
-        Categories::deleteCategories($this->frame->plugin_name, $id);
+        $category_name = Categories::deletePluginCategoryWithName($this->frame->plugin_name, $id);
 
-        // return $this->listCategories($request, $page_id, $frame_id, $id, null, true);
-        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
+        // このメソッドはredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここではフラッシュメッセージのみセットする。
+        if ($category_name === null) {
+            session()->flash('flash_message_for_frame' . $frame_id, 'カテゴリが見つかりませんでした。');
+            return;
+        }
+        session()->flash('flash_message_for_frame' . $frame_id, '【 '. e($category_name) .' 】を削除しました。');
     }
 
     /**

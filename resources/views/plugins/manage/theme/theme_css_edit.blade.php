@@ -22,6 +22,11 @@
         <form action="{{url('/')}}/manage/theme/saveCss" method="post">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
+
+            <div class="alert alert-info">
+                編集中のテーマ: <strong>{{$theme_name}}</strong>（ディレクトリ名: <code>{{$dir_name}}</code>）
+            </div>
+
             <textarea name="css" id="css" class="form-control" rows=20
                 placeholder="（例）&#13;
 .navbar-dark .navbar-brand {&#13;

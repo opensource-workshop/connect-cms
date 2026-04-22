@@ -699,9 +699,12 @@ class Page extends Model
     }
 
     /**
-     * 自分のページから親を遡ってページツリーを取得（＋トップページ）
+     * 自分のページから親を遡ってページツリーを取得する。
+     *
+     * @param Collection|null $page_tree 既に解決済みのページツリー
+     * @param bool $append_top_page 末尾にトップページを補う場合は true
      */
-    public function getPageTreeByGoingBackParent(?Collection $page_tree): Collection
+    public function getPageTreeByGoingBackParent(?Collection $page_tree, bool $append_top_page = true): Collection
     {
         // 自分のページから親を遡って取得
         if (empty($page_tree)) {
@@ -716,6 +719,10 @@ class Page extends Model
 
         if ($page_tree->isEmpty()) {
             // $page_tree=null & $this->id=null の場合、$page_tree が空コレクションになる事に対応
+            return $page_tree;
+        }
+
+        if (! $append_top_page) {
             return $page_tree;
         }
 

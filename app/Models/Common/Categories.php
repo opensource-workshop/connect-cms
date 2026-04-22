@@ -381,6 +381,25 @@ class Categories extends Model
     }
 
     /**
+     * カテゴリ１件削除（削除したカテゴリ名を返却）
+     *
+     * プラグイン側カテゴリ管理で削除後のフラッシュメッセージにカテゴリ名を含めるために使用する。
+     * 対象プラグインに属するカテゴリのみを削除対象とし、見つからない場合は削除せず null を返す。
+     */
+    public static function deletePluginCategoryWithName(string $plugin_name, int $id): ?string
+    {
+        // 削除前に対象プラグインのカテゴリ名を取得（target で絞り込み、別プラグインの ID を誤って表示しないようにする）
+        $category = Categories::where('id', $id)->where('target', $plugin_name)->first();
+        if (!$category) {
+            return null;
+        }
+
+        self::deleteCategories($plugin_name, $id);
+
+        return $category->category;
+    }
+
+    /**
      * バケツ削除時のカテゴリ削除
      */
     public static function destroyBucketsCategories(string $plugin_name, int $target_id)

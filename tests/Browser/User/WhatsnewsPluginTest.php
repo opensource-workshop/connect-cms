@@ -174,7 +174,7 @@ class WhatsnewsPluginTest extends DuskTestCase
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "user/whatsnews/editView/images/editView",
-             "comment": "<ul class=\"mb-0\"><li>本文・サムネイル・罫線の表示・非表示を設定できます。</li></ul>"
+             "comment": "<ul class=\"mb-0\"><li>本文・サムネイル・罫線に加え、新着情報を開いたときに表示するか、開いたあとに表示するかを選ぶ「初回表示時の読込方法」を設定できます。</li></ul>"
             }
         ]', null, 4, 'basic');
     }

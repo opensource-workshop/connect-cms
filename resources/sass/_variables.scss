@@ -32,3 +32,7 @@ $line-height-base: 1.6;
 
 // モーダルウィンドウの外をクリックしたときに、ぼよよんとなるのを止める
 $modal-scale-transform: scale(1.0);
+
+// FontAwesome
+// font-display: swap でフォント読込中もフォールバックフォントでテキストを表示（FOIT解消）
+$fa-font-display: swap;

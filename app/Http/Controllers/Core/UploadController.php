@@ -67,7 +67,7 @@ class UploadController extends ConnectController
                 $no_image_path = public_path("/uploads/no_image/{$no_image}");
             } else {
                 // 標準no_image
-                $no_image_path = storage_path(config('connect.no_image_path'));
+                $no_image_path = public_path(config('connect.no_image_path'));
             }
             return response()->download($no_image_path, null, $headers)->setEtag(md5_file($no_image_path));
         }

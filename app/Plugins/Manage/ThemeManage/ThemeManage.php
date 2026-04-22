@@ -346,6 +346,7 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリ名
         $dir_name = basename($request->dir_name);
+        $theme_name = $this->getUserThemeName($dir_name);
 
         // CSS ファイル取得
         $css = File::get(public_path() . '/themes/Users/' . $dir_name . '/themes.css');
@@ -354,6 +355,7 @@ class ThemeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
+            "theme_name"  => $theme_name,
             "css"         => $css,
         ]);
     }
@@ -370,6 +372,7 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリ名
         $dir_name = basename($request->dir_name);
+        $theme_name = $this->getUserThemeName($dir_name);
 
         // CSS
         $css = $request->css;
@@ -381,6 +384,7 @@ class ThemeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
+            "theme_name"  => $theme_name,
             "css"         => $css,
         ]);
     }
@@ -401,6 +405,7 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリ名
         $dir_name = basename($request->dir_name);
+        $theme_name = $this->getUserThemeName($dir_name);
 
         // ディレクトリの存在チェック
         if (!File::isDirectory(public_path() . '/themes/Users/' . basename($request->dir_name) . '/wysiwyg')) {
@@ -422,7 +427,8 @@ class ThemeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
-            "template"         => $template,
+            "theme_name"  => $theme_name,
+            "template"    => $template,
         ]);
     }
 
@@ -438,6 +444,7 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリ名
         $dir_name = basename($request->dir_name);
+        $theme_name = $this->getUserThemeName($dir_name);
 
         // テンプレート
         $template = $request->template;
@@ -449,7 +456,8 @@ class ThemeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
-            "template"         => $template,
+            "theme_name"  => $theme_name,
+            "template"    => $template,
         ]);
     }
 
@@ -469,6 +477,7 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリ名
         $dir_name = basename($request->dir_name);
+        $theme_name = $this->getUserThemeName($dir_name);
 
         // ファイル名
         $js_path = public_path() . '/themes/Users/' . $dir_name . '/themes.js';
@@ -485,6 +494,7 @@ class ThemeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
+            "theme_name"  => $theme_name,
             "js"          => $js,
         ]);
     }
@@ -501,6 +511,7 @@ class ThemeManage extends ManagePluginBase
 
         // ディレクトリ名
         $dir_name = basename($request->dir_name);
+        $theme_name = $this->getUserThemeName($dir_name);
 
         // JavaScript
         $js = $request->js;
@@ -512,15 +523,34 @@ class ThemeManage extends ManagePluginBase
             "function"    => __FUNCTION__,
             "plugin_name" => "theme",
             "dir_name"    => $dir_name,
+            "theme_name"  => $theme_name,
             "js"          => $js,
         ]);
     }
 
     /**
-     * テーマ名編集画面
+     * ユーザ・テーマ名の取得
+     */
+    private function getUserThemeName($dir_name)
+    {
+        $theme_ini_path = public_path() . '/themes/Users/' . $dir_name . '/themes.ini';
+        if (!File::exists($theme_ini_path)) {
+            return '';
+        }
+
+        $theme_inis = parse_ini_file($theme_ini_path);
+        if (empty($theme_inis) || !array_key_exists('theme_name', $theme_inis)) {
+            return '';
+        }
+
+        return $theme_inis['theme_name'];
+    }
+
+    /**
+     * 名称変更・削除画面
      *
-     * @method_title 名前の編集
-     * @method_desc ユーザ・テーマ毎の名前を編集できます。
+     * @method_title 名称変更・削除
+     * @method_desc ユーザ・テーマ毎の名称変更や削除ができます。
      * @method_detail
      */
     public function editName($request, $id, $errors = array())
@@ -534,11 +564,7 @@ class ThemeManage extends ManagePluginBase
         $dir_name = basename($request->dir_name);
 
         // テーマ設定ファイル取得
-        $theme_inis = parse_ini_file(public_path() . '/themes/Users/' . $dir_name . '/themes.ini');
-        $theme_name = '';
-        if (!empty($theme_inis) && array_key_exists('theme_name', $theme_inis)) {
-            $theme_name = $theme_inis['theme_name'];
-        }
+        $theme_name = $this->getUserThemeName($dir_name);
 
         return view('plugins.manage.theme.theme_name_edit', [
             "function"    => __FUNCTION__,
@@ -667,9 +693,10 @@ class ThemeManage extends ManagePluginBase
             $extension            = $request->file('image')->getClientOriginalExtension();
 
             // 拡張子チェック
-            if (mb_strtolower($extension) != 'jpg' && mb_strtolower($extension) != 'png' && mb_strtolower($extension) != 'gif') {
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (!in_array(mb_strtolower($extension), $allowed_extensions, true)) {
                 $validator = Validator::make($request->all(), []);
-                $validator->errors()->add('not_extension', 'jpg, png, gif 以外はアップロードできません。');
+                $validator->errors()->add('not_extension', implode(', ', $allowed_extensions) . ' 以外はアップロードできません。');
                 return $this->listImages($request, $id)->withErrors($validator);
             }
 
