@@ -306,6 +306,7 @@
             'dailymotion.com',
             'embed.music.apple.com',
             'google.com',
+            'calendar.google.com',
             'open.spotify.com',
             'giphy.com',
             'dai.ly',
