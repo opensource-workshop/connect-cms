@@ -14,6 +14,7 @@ const mix = require('laravel-mix');
 mix.js('resources/js/app.js', 'public/js').vue()
     .js('resources/js/wysiwyg.js', 'public/js')
     .js('resources/js/codemirror.js', 'public/js')
+    .js('resources/js/manage/page/index.js', 'public/js/manage/page')
     .sass('resources/sass/app.scss', 'public/css');
 
 // fortawesomeのディレクトリインストール対応で、相対パスを指定

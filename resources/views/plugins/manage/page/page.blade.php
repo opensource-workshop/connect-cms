@@ -31,27 +31,38 @@ $base_layout_page->layout = $base_layout;
 
     <!-- Pages list -->
     @if (count($pages) > 0)
+        <script src="{{ url('/') }}{{ mix('/js/manage/page/index.js') }}"></script>
         <script type="text/javascript">
+            function save_page_manage_tree_state() {
+                if (window.connectPageManageTree) {
+                    window.connectPageManageTree.saveState();
+                }
+            }
+
             /** ページの上移動 */
             function submit_sequence_up(id) {
+                save_page_manage_tree_state();
                 form_sequence.action = "{{url('/manage/page/sequenceUp')}}/" + id;
                 form_sequence.submit();
             }
 
             /** ページの下移動 */
             function submit_sequence_down(id) {
+                save_page_manage_tree_state();
                 form_sequence.action = "{{url('/manage/page/sequenceDown')}}/" + id;
                 form_sequence.submit();
             }
 
             /** ページを一番上へ移動 */
             function submit_sequence_top(id) {
+                save_page_manage_tree_state();
                 form_sequence.action = "{{url('/manage/page/sequenceTop')}}/" + id;
                 form_sequence.submit();
             }
 
             /** ページを一番下へ移動 */
             function submit_sequence_bottom(id) {
+                save_page_manage_tree_state();
                 form_sequence.action = "{{url('/manage/page/sequenceBottom')}}/" + id;
                 form_sequence.submit();
             }
@@ -64,6 +75,7 @@ $base_layout_page->layout = $base_layout;
                 index = obj.select_page.selectedIndex;
                 if (index != 0){
                     //form_move_page.source_id.value = source_id;
+                    save_page_manage_tree_state();
                     form_move_page.destination_id.value = obj.select_page.options[index].value;
                     form_move_page.submit();
                 }
@@ -71,16 +83,21 @@ $base_layout_page->layout = $base_layout;
 
             {{-- 表示切り替え用フォームのsubmit JavaScript --}}
             function submit_toggle_display( source_id ) {
+                save_page_manage_tree_state();
                 form_toggle_display.action = form_toggle_display.action + "/" + source_id;
                 form_toggle_display.submit();
             }
 
             {{-- ページ階層移動モーダル画面でのjavascript --}}
             $(function(){
+                if (window.connectPageManageTree) {
+                    window.connectPageManageTree.init();
+                }
                 {{-- 移動先決定ボタン --}}
                 $('#moveLevelDoneBtn').on('click', function() {
                     let destination_id = $('input:radio[name="level_move_modal_page_id"]:checked').val();
                     if (destination_id) {
+                        save_page_manage_tree_state();
                         form_move_page.destination_id.value = destination_id;
                         form_move_page.submit();
                     }
@@ -184,7 +201,11 @@ $base_layout_page->layout = $base_layout;
             </div>
         </div>
 
-        <div class="cc-table-scroll js-cc-table-scroll">
+        @php
+            $page_children = $pages->groupBy('parent_id');
+        @endphp
+
+        <div class="cc-table-scroll js-cc-table-scroll" data-page-manage-tree>
             <div class="cc-table-scroll__sticky">
                 <div class="cc-table-scroll__top" aria-hidden="true">
                     <div class="cc-table-scroll__top-inner"></div>
@@ -218,11 +239,22 @@ $base_layout_page->layout = $base_layout;
             </thead>
             <tbody>
                 @foreach($pages as $page_item)
-                <tr id="{{$page_item->id}}">
-                    @php
-                    // 自分のページから親を遡って取得（＋トップページ）
-                    $page_tree = $page_item->getPageTreeByGoingBackParent(null);
-                    @endphp
+                @php
+                    $direct_children = $page_children->get($page_item->id, collect());
+                    $has_children = $direct_children->isNotEmpty();
+                    $page_tree = $page_item->getPageTreeByGoingBackParent(null, false);
+                    $ancestor_ids = $page_tree->pluck('id')
+                        ->reject(function ($id) use ($page_item) {
+                            return (int) $id === (int) $page_item->id;
+                        })
+                        ->implode(' ');
+                @endphp
+                <tr id="{{$page_item->id}}"
+                    data-page-id="{{$page_item->id}}"
+                    data-parent-id="{{$page_item->parent_id ?? ''}}"
+                    data-depth="{{$page_item->depth}}"
+                    data-ancestor-ids="{{$ancestor_ids}}"
+                    data-has-children="{{$has_children ? 1 : 0}}">
                     <td class="table-text p-1" nowrap>
                         <div class="btn-group">
                             <a href="{{url('/manage/page/edit')}}/{{$page_item->id}}" class="btn btn-success btn-sm"><i class="far fa-edit"></i> <span>編集</span></a>
@@ -264,11 +296,22 @@ $base_layout_page->layout = $base_layout;
                         <a class="btn p-1 btn-primary btn-sm" id="move_level_{{$page_item->id}}" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick="select_page({{$page_item->id}} , '{{$page_item->page_name}}' );" ><i class="fas fa-sitemap"></i></a>
                     </td>
                     <td class="table-text p-1 manage-page-pagename">
-                        {{-- 各ページの深さをもとにインデントの表現 --}}
-                        @for ($i = 0; $i < $page_item->depth; $i++)
-                            @if ($i+1==$page_item->depth) <i class="fas fa-chevron-right"></i> @else <span class="px-2"></span>@endif
-                        @endfor
-                        {{$page_item->page_name}}{{-- ページ名 --}}
+                        <div class="manage-page-tree" style="--cc-page-tree-depth: {{$page_item->depth}};">
+                            <span class="manage-page-tree__indent" aria-hidden="true"></span>
+                            @if ($has_children)
+                                <button type="button"
+                                    class="manage-page-tree__toggle"
+                                    data-page-tree-toggle
+                                    aria-expanded="true"
+                                    aria-label="子ページを折り畳む"
+                                    title="子ページを折り畳む">
+                                    <i class="fas fa-chevron-down manage-page-tree__toggle-icon" aria-hidden="true"></i>
+                                </button>
+                            @else
+                                <span class="manage-page-tree__toggle-placeholder" aria-hidden="true"></span>
+                            @endif
+                            <span class="manage-page-tree__label @if ($has_children) manage-page-tree__label--parent @endif">{{$page_item->page_name}}</span>
+                        </div>
                     </td>
                     <td class="table-text p-1">
                         @if ($page_item->base_display_flag == 1)

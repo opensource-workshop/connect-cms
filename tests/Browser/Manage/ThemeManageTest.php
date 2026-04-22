@@ -135,7 +135,7 @@ class ThemeManageTest extends DuskTestCase
     }
 
     /**
-     * ユーザ・テーマの名前管理
+     * ユーザ・テーマの名称変更・削除
      */
     private function editName()
     {
@@ -151,8 +151,8 @@ class ThemeManageTest extends DuskTestCase
         // マニュアル用データ出力
         $this->putManualData('[
             {"path": "manage/theme/editName/images/editName",
-             "name": "ユーザ・テーマの名前の編集",
-             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマの名前を変更できます。</li></ul>"
+             "name": "ユーザ・テーマの名称変更・削除",
+             "comment": "<ul class=\"mb-0\"><li>ユーザ・テーマの名称変更や削除ができます。</li></ul>"
             }
         ]', null, 3);
     }

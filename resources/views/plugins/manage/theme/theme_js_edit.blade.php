@@ -22,6 +22,11 @@
         <form action="{{url('/')}}/manage/theme/saveJs" method="post">
             {{csrf_field()}}
             <input name="dir_name" type="hidden" value="{{$dir_name}}" />
+
+            <div class="alert alert-info">
+                編集中のテーマ: <strong>{{$theme_name}}</strong>（ディレクトリ名: <code>{{$dir_name}}</code>）
+            </div>
+
             <textarea name="js" id="js" class="form-control" rows=20>{{$js}}</textarea>
             @include('plugins.common.codemirror', ['element_id' => 'js', 'mode' => 'javascript()', 'height' => '500px'])
 

@@ -3,7 +3,7 @@
 return [
 
     // 画像がなかった場合の「no image」
-    'no_image_path' => 'app/public/no_image.png',
+    'no_image_path' => 'images/core/no_image/no_image3.png',
 
     // 画像に権限がなかった場合の「forbidden」
     'forbidden_image_path' => 'app/public/forbidden.png',

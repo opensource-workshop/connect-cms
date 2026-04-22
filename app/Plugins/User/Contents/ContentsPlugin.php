@@ -206,7 +206,7 @@ class ContentsPlugin extends UserPluginBase
             //
             $query->WhereIn($table_name . '.status', [StatusType::active, StatusType::approval_pending]);
 
-        } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user())) {
+        } elseif ($this->buckets && $this->buckets->canPostUser(Auth::user(), $this->frame)) {
             //
             // モデレータ or 編集者権限の場合、Active ＋ 自分の全ステータス記事の取得
             //
