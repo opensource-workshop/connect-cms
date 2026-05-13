@@ -598,7 +598,7 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // バケツの取得。なければ登録。
-        $bucket = Buckets::updateOrCreate(
+        $bucket = Buckets::updateOrCreateWithDefaultPostRoles(
             ['id' => $bucket_id],
             ['bucket_name' => $request->name, 'plugin_name' => 'calendars'],
         );

@@ -550,7 +550,7 @@ class ContentsPlugin extends UserPluginBase
 
         // バケツがまだ登録されていなかったら登録する。
         if (empty($this->buckets)) {
-            $bucket = Buckets::create([
+            $bucket = Buckets::createWithDefaultPostRoles([
                 'bucket_name' => $request->bucket_name ?? '無題',
                 'plugin_name' => 'contents'
             ]);

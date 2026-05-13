@@ -1333,7 +1333,7 @@ WHERE status = 0
         // 画面から渡ってくるblogs_id が空ならバケツとブログを新規登録
         if (empty($request->blogs_id)) {
             // バケツの登録
-            $bucket = Buckets::create([
+            $bucket = Buckets::createWithDefaultPostRoles([
                 'bucket_name' => $request->blog_name,
                 'plugin_name' => 'blogs'
             ]);
