@@ -1611,7 +1611,7 @@ class ReservationsPlugin extends UserPluginBase
         if (empty($request->reservations_id)) {
             // 画面から渡ってくるid が空ならバケツと施設を新規登録
             // バケツの登録
-            $bucket = Buckets::create([
+            $bucket = Buckets::createWithDefaultPostRoles([
                 'bucket_name' => $request->reservation_name,
                 'plugin_name' => 'reservations'
             ]);
@@ -1701,7 +1701,7 @@ class ReservationsPlugin extends UserPluginBase
             Frame::where('bucket_id', $reservation->bucket_id)->update(['bucket_id' => null]);
 
             // backetsの削除
-            Buckets::where('id', $reservation->bucket_id)->delete();
+            Buckets::destroy($reservation->bucket_id);
 
             // 施設予約を削除する。
             $reservation->delete();

@@ -242,10 +242,10 @@ class SlideshowsPlugin extends UserPluginBase
             /**
              * 新規登録用の処理
              */
-            $bucket = new Buckets();
-            $bucket->bucket_name = '無題';
-            $bucket->plugin_name = 'slideshows';
-            $bucket->save();
+            $bucket = Buckets::createWithDefaultPostRoles([
+                'bucket_name' => '無題',
+                'plugin_name' => 'slideshows',
+            ]);
 
             // スライドショーデータ新規オブジェクト
             $slideshows = new Slideshows();
@@ -325,7 +325,7 @@ class SlideshowsPlugin extends UserPluginBase
             $slideshows = Slideshows::find($slideshows_id);
 
             // backetsの削除
-            Buckets::where('id', $slideshows->bucket_id)->delete();
+            Buckets::destroy($slideshows->bucket_id);
 
             // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)
             $frame = Frame::where('id', $frame_id)->first();

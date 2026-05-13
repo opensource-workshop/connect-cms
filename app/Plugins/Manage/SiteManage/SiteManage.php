@@ -331,6 +331,20 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->additional_theme]
         );
 
+        // 新規バケツ作成時のモデレータ投稿権限
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'new_bucket_role_article_post_flag'],
+            ['category' => 'general',
+             'value'    => (isset($request->new_bucket_role_article_post_flag) ? $request->new_bucket_role_article_post_flag : 0)]
+        );
+
+        // 新規バケツ作成時の編集者投稿権限
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'new_bucket_role_reporter_post_flag'],
+            ['category' => 'general',
+             'value'    => (isset($request->new_bucket_role_reporter_post_flag) ? $request->new_bucket_role_reporter_post_flag : 0)]
+        );
+
         // 画面の基本の背景色
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_background_color'],

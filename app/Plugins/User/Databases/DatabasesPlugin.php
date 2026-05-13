@@ -2136,10 +2136,10 @@ class DatabasesPlugin extends UserPluginBase
         // 画面から渡ってくるdatabases_id が空ならバケツとブログを新規登録
         if (empty($databases_id)) {
             // バケツの登録
-            $bucket = new Buckets();
-            $bucket->bucket_name = $request->databases_name;
-            $bucket->plugin_name = 'databases';
-            $bucket->save();
+            $bucket = Buckets::createWithDefaultPostRoles([
+                'bucket_name' => $request->databases_name,
+                'plugin_name' => 'databases',
+            ]);
 
             if (empty($request->copy_databases_id)) {
                 // 登録
@@ -2359,7 +2359,7 @@ class DatabasesPlugin extends UserPluginBase
             BucketsRoles::where('buckets_id', $databases->bucket_id)->delete();
 
             // backetsの削除
-            Buckets::where('id', $databases->bucket_id)->delete();
+            Buckets::destroy($databases->bucket_id);
 
             // change: このバケツを表示している全ページのフレームのバケツIDを消す
             // // バケツIDの取得のためにFrame を取得(Frame を更新する前に取得しておく)

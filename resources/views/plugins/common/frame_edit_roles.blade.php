@@ -18,6 +18,12 @@
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message_for_frame')
 
+@php
+    $default_post_role_flags = $default_post_role_flags ?? [];
+    $role_article_post_checked = $buckets ? $buckets->canPost("role_article") : !empty($default_post_role_flags['role_article']);
+    $role_reporter_post_checked = $buckets ? $buckets->canPost("role_reporter") : !empty($default_post_role_flags['role_reporter']);
+@endphp
+
 <form action="{{ url("/redirect/plugin/$frame->plugin_name/saveBucketsRoles/$page->id/$frame_id#frame-$frame_id") }}" name="{{$frame->plugin_name}}_buckets_form" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="{{ url("/plugin/$frame->plugin_name/editBucketsRoles/$page->id/$frame_id#frame-$frame_id") }}">
@@ -38,7 +44,7 @@
                     <th>モデレータ</th>
                     <td>
                         <div class="custom-control custom-checkbox custom-control-inline">
-                            @if($buckets && $buckets->canPost("role_article"))
+                            @if($role_article_post_checked)
                                 <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post" checked="checked">
                             @else
                                 <input name="role_article[post]" value="1" type="checkbox" class="custom-control-input" id="role_article_post">
@@ -64,7 +70,7 @@
                     <th>編集者</th>
                     <td>
                         <div class="custom-control custom-checkbox custom-control-inline">
-                            @if($buckets && $buckets->canPost("role_reporter"))
+                            @if($role_reporter_post_checked)
                                 <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post" checked="checked">
                             @else
                                 <input name="role_reporter[post]" value="1" type="checkbox" class="custom-control-input" id="role_reporter_post">

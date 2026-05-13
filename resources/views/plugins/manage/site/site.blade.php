@@ -551,6 +551,34 @@
                 </select>
             </div>
 
+            {{-- プラグイン新規作成時の投稿権限 --}}
+            <div class="form-group">
+                <label class="col-form-label">プラグイン新規作成時の投稿権限</label>
+                <p class="mb-2 text-muted">
+                    掲示板やブログなどを新しく作成したとき、投稿を許可する権限の初期値です。
+                    既存のプラグイン設定は変更されません。
+                </p>
+                <div class="border rounded bg-light p-3">
+                    <div class="custom-control custom-checkbox">
+                        @if(Configs::getConfigsValueAndOld($configs, "new_bucket_role_article_post_flag", 0) == 1)
+                            <input type="checkbox" name="new_bucket_role_article_post_flag" value="1" id="new_bucket_role_article_post_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="checkbox" name="new_bucket_role_article_post_flag" value="1" id="new_bucket_role_article_post_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="new_bucket_role_article_post_flag">モデレータにも投稿を許可する</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mt-2">
+                        @if(Configs::getConfigsValueAndOld($configs, "new_bucket_role_reporter_post_flag", 0) == 1)
+                            <input type="checkbox" name="new_bucket_role_reporter_post_flag" value="1" id="new_bucket_role_reporter_post_flag" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="checkbox" name="new_bucket_role_reporter_post_flag" value="1" id="new_bucket_role_reporter_post_flag" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="new_bucket_role_reporter_post_flag">編集者にも投稿を許可する</label>
+                    </div>
+                </div>
+                <small class="form-text text-muted">作成後は、各プラグインの権限設定で個別に変更できます。</small>
+            </div>
+
             {{-- Submitボタン --}}
             <div class="form-group text-center">
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
