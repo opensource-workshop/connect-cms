@@ -44,7 +44,8 @@ class SiteManageNewBucketDefaultRolesTest extends TestCase
         $response = $this->actingAs($admin)->get('/manage/site');
 
         $response->assertOk();
-        $response->assertSee('プラグイン新規作成時の投稿権限');
+        $response->assertSee('プラグインの権限設定');
+        $response->assertSee('新規作成時の投稿権限');
         $response->assertDontSee('id="new_bucket_role_article_post_flag" class="custom-control-input" checked="checked"', false);
         $response->assertDontSee('id="new_bucket_role_reporter_post_flag" class="custom-control-input" checked="checked"', false);
     }

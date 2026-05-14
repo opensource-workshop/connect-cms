@@ -25,194 +25,233 @@
         <form action="{{url('/')}}/manage/site/update" method="POST">
             {{csrf_field()}}
 
-            {{-- サイト名 --}}
-            <div class="form-group">
-                <label class="col-form-label">サイト名</label>
-                <input type="text" name="base_site_name" value="{{Configs::getConfigsValueAndOld($configs, "base_site_name")}}" class="form-control">
-                <small class="form-text text-muted">サイト名（各ページで上書き可能）</small>
-            </div>
-
-            {{-- 基本テーマ --}}
-            <div class="form-group">
-                <label class="col-form-label">基本テーマ</label>
-                <select name="base_theme" class="form-control">
-                    <option value="">テーマなし</option>
-                    @foreach($themes as $theme)
-                        @isset($theme['themes'])
-                            <optgroup label="{{$theme['name']}}">
-                            @foreach($theme['themes'] as $sub_theme)
-                                <option value="{{$sub_theme['dir']}}"@if(old('base_theme', $current_base_theme) == $sub_theme['dir']) selected @endif>{{$sub_theme['name']}}</option>
-                            @endforeach
-                            </optgroup>
-                        @else
-                            <option value="{{$theme['dir']}}"@if(old('base_theme', $current_base_theme) == $theme['dir']) selected @endif>{{$theme['name']}}</option>
-                        @endisset
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- 追加テーマ --}}
-            <div class="form-group">
-                <label class="col-form-label">追加テーマ</label>
-                <select name="additional_theme" class="form-control">
-                    <option value="">テーマなし</option>
-                    @foreach($themes as $theme)
-                        @isset($theme['themes'])
-                            <optgroup label="{{$theme['name']}}">
-                            @foreach($theme['themes'] as $sub_theme)
-                                <option value="{{$sub_theme['dir']}}"@if(old('additional_theme', $current_additional_theme) == $sub_theme['dir']) selected @endif>{{$sub_theme['name']}}</option>
-                            @endforeach
-                            </optgroup>
-                        @else
-                            <option value="{{$theme['dir']}}"@if(old('additional_theme', $current_additional_theme) == $theme['dir']) selected @endif>{{$theme['name']}}</option>
-                        @endisset
-                    @endforeach
-                </select>
-                <small class="form-text text-muted">基本テーマとは別のテーマを追加で読み込みます。スタイルの読み込み順は追加テーマの方が後になる為、スタイル競合時は追加テーマのものが優先されます。</small>
-            </div>
-
             @php
-                $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
-                $base_layout_value = Configs::getConfigsValue($configs, 'base_layout', $layout_default);
-                $base_layout_value = $base_layout_value ?: $layout_default;
+                $site_setting_sections = [
+                    ['id' => 'site-settings-common', 'label' => 'よく使う設定'],
+                    ['id' => 'site-settings-design', 'label' => '外観・ヘッダー'],
+                    ['id' => 'site-settings-login', 'label' => 'ログイン'],
+                    ['id' => 'site-settings-mypage', 'label' => 'マイページ'],
+                    ['id' => 'site-settings-display-limit', 'label' => '表示・操作制限'],
+                    ['id' => 'site-settings-plugin-permission', 'label' => 'プラグインの権限設定'],
+                ];
             @endphp
-            {{-- 基本レイアウト --}}
-            <div class="form-group">
-                <label class="col-form-label">基本レイアウト</label>
-                <div class="d-flex flex-wrap">
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|0|0|0')
-                            <input type="radio" value="0|0|0|0" id="base_layout_0000" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|0|0|0" id="base_layout_0000" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0000"><img src="{{asset('/images/core/layout/0000.png')}}" title="メインのみ" alt="メインのみ"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|0|0|1')
-                            <input type="radio" value="0|0|0|1" id="base_layout_0001" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|0|0|1" id="base_layout_0001" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0001"><img src="{{asset('/images/core/layout/0001.png')}}" title="フッター" alt="フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|0|1|0')
-                            <input type="radio" value="0|0|1|0" id="base_layout_0010" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|0|1|0" id="base_layout_0010" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0010"><img src="{{asset('/images/core/layout/0010.png')}}" title="右" alt="右"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|0|1|1')
-                            <input type="radio" value="0|0|1|1" id="base_layout_0011" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|0|1|1" id="base_layout_0011" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0011"><img src="{{asset('/images/core/layout/0011.png')}}" title="右、フッター" alt="右、フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|1|0|0')
-                            <input type="radio" value="0|1|0|0" id="base_layout_0100" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|1|0|0" id="base_layout_0100" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0100"><img src="{{asset('/images/core/layout/0100.png')}}" title="左" alt="左"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|1|0|1')
-                            <input type="radio" value="0|1|0|1" id="base_layout_0101" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|1|0|1" id="base_layout_0101" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0101"><img src="{{asset('/images/core/layout/0101.png')}}" title="左、フッター" alt="左、フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|1|1|0')
-                            <input type="radio" value="0|1|1|0" id="base_layout_0110" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|1|1|0" id="base_layout_0110" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0110"><img src="{{asset('/images/core/layout/0110.png')}}" title="左、右" alt="左、右"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '0|1|1|1')
-                            <input type="radio" value="0|1|1|1" id="base_layout_0111" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="0|1|1|1" id="base_layout_0111" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_0111"><img src="{{asset('/images/core/layout/0111.png')}}" title="左、右、フッター" alt="左、右、フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|0|0|0')
-                            <input type="radio" value="1|0|0|0" id="base_layout_1000" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|0|0|0" id="base_layout_1000" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1000"><img src="{{asset('/images/core/layout/1000.png')}}" title="ヘッダー" alt="ヘッダー"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|0|0|1')
-                            <input type="radio" value="1|0|0|1" id="base_layout_1001" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|0|0|1" id="base_layout_1001" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1001"><img src="{{asset('/images/core/layout/1001.png')}}" title="ヘッダー、フッター" alt="ヘッダー、フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|0|1|0')
-                            <input type="radio" value="1|0|1|0" id="base_layout_1010" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|0|1|0" id="base_layout_1010" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1010"><img src="{{asset('/images/core/layout/1010.png')}}" title="ヘッダー、右" alt="ヘッダー、右"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|0|1|1')
-                            <input type="radio" value="1|0|1|1" id="base_layout_1011" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|0|1|1" id="base_layout_1011" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1011"><img src="{{asset('/images/core/layout/1011.png')}}" title="ヘッダー、右、フッター" alt="ヘッダー、右、フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|1|0|0')
-                            <input type="radio" value="1|1|0|0" id="base_layout_1100" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|1|0|0" id="base_layout_1100" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1100"><img src="{{asset('/images/core/layout/1100.png')}}" title="ヘッダー、左" alt="ヘッダー、左"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|1|0|1')
-                            <input type="radio" value="1|1|0|1" id="base_layout_1101" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|1|0|1" id="base_layout_1101" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1101"><img src="{{asset('/images/core/layout/1101.png')}}" title="ヘッダー、左、フッター" alt="ヘッダー、左、フッター"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|1|1|0')
-                            <input type="radio" value="1|1|1|0" id="base_layout_1110" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|1|1|0" id="base_layout_1110" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1110"><img src="{{asset('/images/core/layout/1110.png')}}" title="ヘッダー、左、右" alt="ヘッダー、左、右"></label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline mb-2">
-                        @if (old('base_layout', $base_layout_value) == '1|1|1|1')
-                            <input type="radio" value="1|1|1|1" id="base_layout_1111" name="base_layout" class="custom-control-input" checked="checked">
-                        @else
-                            <input type="radio" value="1|1|1|1" id="base_layout_1111" name="base_layout" class="custom-control-input">
-                        @endif
-                        <label class="custom-control-label" for="base_layout_1111"><img src="{{asset('/images/core/layout/1111.png')}}" title="ヘッダー、左、右、フッター" alt="ヘッダー、左、右、フッター"></label>
-                    </div>
-                </div>
-                <small class="form-text text-muted">全ページに適用する基本レイアウトです。各ページのレイアウト設定で上書きできます。</small>
-            </div>
 
-            <div id="app">
+            <div class="row">
+                <aside class="col-lg-3 order-1 order-lg-2 mb-4 mb-lg-0">
+                    <nav class="d-lg-none" aria-label="サイト基本設定の目次">
+                        <div class="list-group">
+                            <div class="list-group-item bg-light font-weight-bold">設定項目</div>
+                            @foreach ($site_setting_sections as $site_setting_section)
+                                <a href="#{{$site_setting_section['id']}}" class="list-group-item list-group-item-action site-settings-anchor" data-target-section="{{$site_setting_section['id']}}">{{$site_setting_section['label']}}</a>
+                            @endforeach
+                        </div>
+                    </nav>
+                    <nav class="d-none d-lg-block sticky-top" style="top: 1rem;" aria-label="サイト基本設定の目次">
+                        <div class="list-group">
+                            <div class="list-group-item bg-light font-weight-bold">設定項目</div>
+                            @foreach ($site_setting_sections as $site_setting_section)
+                                <a href="#{{$site_setting_section['id']}}" class="list-group-item list-group-item-action site-settings-anchor" data-target-section="{{$site_setting_section['id']}}">{{$site_setting_section['label']}}</a>
+                            @endforeach
+                        </div>
+                    </nav>
+                </aside>
+
+                <div class="col-lg-9 order-2 order-lg-1">
+                    <section id="site-settings-common" class="site-settings-section mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">よく使う設定</h5>
+
+                        {{-- サイト名 --}}
+                        <div class="form-group">
+                            <label class="col-form-label">サイト名</label>
+                            <input type="text" name="base_site_name" value="{{Configs::getConfigsValueAndOld($configs, "base_site_name")}}" class="form-control">
+                            <small class="form-text text-muted">サイト名（各ページで上書き可能）</small>
+                        </div>
+
+                        {{-- 基本テーマ --}}
+                        <div class="form-group">
+                            <label class="col-form-label">基本テーマ</label>
+                            <select name="base_theme" class="form-control">
+                                <option value="">テーマなし</option>
+                                @foreach($themes as $theme)
+                                    @isset($theme['themes'])
+                                        <optgroup label="{{$theme['name']}}">
+                                        @foreach($theme['themes'] as $sub_theme)
+                                            <option value="{{$sub_theme['dir']}}"@if(old('base_theme', $current_base_theme) == $sub_theme['dir']) selected @endif>{{$sub_theme['name']}}</option>
+                                        @endforeach
+                                        </optgroup>
+                                    @else
+                                        <option value="{{$theme['dir']}}"@if(old('base_theme', $current_base_theme) == $theme['dir']) selected @endif>{{$theme['name']}}</option>
+                                    @endisset
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- 追加テーマ --}}
+                        <div class="form-group">
+                            <label class="col-form-label">追加テーマ</label>
+                            <select name="additional_theme" class="form-control">
+                                <option value="">テーマなし</option>
+                                @foreach($themes as $theme)
+                                    @isset($theme['themes'])
+                                        <optgroup label="{{$theme['name']}}">
+                                        @foreach($theme['themes'] as $sub_theme)
+                                            <option value="{{$sub_theme['dir']}}"@if(old('additional_theme', $current_additional_theme) == $sub_theme['dir']) selected @endif>{{$sub_theme['name']}}</option>
+                                        @endforeach
+                                        </optgroup>
+                                    @else
+                                        <option value="{{$theme['dir']}}"@if(old('additional_theme', $current_additional_theme) == $theme['dir']) selected @endif>{{$theme['name']}}</option>
+                                    @endisset
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">基本テーマとは別のテーマを追加で読み込みます。スタイルの読み込み順は追加テーマの方が後になる為、スタイル競合時は追加テーマのものが優先されます。</small>
+                        </div>
+
+                        @php
+                            $layout_default = config('connect.BASE_LAYOUT_DEFAULT');
+                            $base_layout_value = Configs::getConfigsValue($configs, 'base_layout', $layout_default);
+                            $base_layout_value = $base_layout_value ?: $layout_default;
+                        @endphp
+                        {{-- 基本レイアウト --}}
+                        <div class="form-group mb-0">
+                            <label class="col-form-label">基本レイアウト</label>
+                            <div class="d-flex flex-wrap">
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|0|0|0')
+                                        <input type="radio" value="0|0|0|0" id="base_layout_0000" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|0|0|0" id="base_layout_0000" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0000"><img src="{{asset('/images/core/layout/0000.png')}}" title="メインのみ" alt="メインのみ"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|0|0|1')
+                                        <input type="radio" value="0|0|0|1" id="base_layout_0001" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|0|0|1" id="base_layout_0001" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0001"><img src="{{asset('/images/core/layout/0001.png')}}" title="フッター" alt="フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|0|1|0')
+                                        <input type="radio" value="0|0|1|0" id="base_layout_0010" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|0|1|0" id="base_layout_0010" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0010"><img src="{{asset('/images/core/layout/0010.png')}}" title="右" alt="右"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|0|1|1')
+                                        <input type="radio" value="0|0|1|1" id="base_layout_0011" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|0|1|1" id="base_layout_0011" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0011"><img src="{{asset('/images/core/layout/0011.png')}}" title="右、フッター" alt="右、フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|1|0|0')
+                                        <input type="radio" value="0|1|0|0" id="base_layout_0100" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|1|0|0" id="base_layout_0100" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0100"><img src="{{asset('/images/core/layout/0100.png')}}" title="左" alt="左"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|1|0|1')
+                                        <input type="radio" value="0|1|0|1" id="base_layout_0101" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|1|0|1" id="base_layout_0101" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0101"><img src="{{asset('/images/core/layout/0101.png')}}" title="左、フッター" alt="左、フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|1|1|0')
+                                        <input type="radio" value="0|1|1|0" id="base_layout_0110" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|1|1|0" id="base_layout_0110" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0110"><img src="{{asset('/images/core/layout/0110.png')}}" title="左、右" alt="左、右"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '0|1|1|1')
+                                        <input type="radio" value="0|1|1|1" id="base_layout_0111" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="0|1|1|1" id="base_layout_0111" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_0111"><img src="{{asset('/images/core/layout/0111.png')}}" title="左、右、フッター" alt="左、右、フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|0|0|0')
+                                        <input type="radio" value="1|0|0|0" id="base_layout_1000" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|0|0|0" id="base_layout_1000" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1000"><img src="{{asset('/images/core/layout/1000.png')}}" title="ヘッダー" alt="ヘッダー"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|0|0|1')
+                                        <input type="radio" value="1|0|0|1" id="base_layout_1001" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|0|0|1" id="base_layout_1001" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1001"><img src="{{asset('/images/core/layout/1001.png')}}" title="ヘッダー、フッター" alt="ヘッダー、フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|0|1|0')
+                                        <input type="radio" value="1|0|1|0" id="base_layout_1010" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|0|1|0" id="base_layout_1010" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1010"><img src="{{asset('/images/core/layout/1010.png')}}" title="ヘッダー、右" alt="ヘッダー、右"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|0|1|1')
+                                        <input type="radio" value="1|0|1|1" id="base_layout_1011" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|0|1|1" id="base_layout_1011" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1011"><img src="{{asset('/images/core/layout/1011.png')}}" title="ヘッダー、右、フッター" alt="ヘッダー、右、フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|1|0|0')
+                                        <input type="radio" value="1|1|0|0" id="base_layout_1100" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|1|0|0" id="base_layout_1100" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1100"><img src="{{asset('/images/core/layout/1100.png')}}" title="ヘッダー、左" alt="ヘッダー、左"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|1|0|1')
+                                        <input type="radio" value="1|1|0|1" id="base_layout_1101" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|1|0|1" id="base_layout_1101" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1101"><img src="{{asset('/images/core/layout/1101.png')}}" title="ヘッダー、左、フッター" alt="ヘッダー、左、フッター"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|1|1|0')
+                                        <input type="radio" value="1|1|1|0" id="base_layout_1110" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|1|1|0" id="base_layout_1110" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1110"><img src="{{asset('/images/core/layout/1110.png')}}" title="ヘッダー、左、右" alt="ヘッダー、左、右"></label>
+                                </div>
+                                <div class="custom-control custom-radio custom-control-inline mb-2">
+                                    @if (old('base_layout', $base_layout_value) == '1|1|1|1')
+                                        <input type="radio" value="1|1|1|1" id="base_layout_1111" name="base_layout" class="custom-control-input" checked="checked">
+                                    @else
+                                        <input type="radio" value="1|1|1|1" id="base_layout_1111" name="base_layout" class="custom-control-input">
+                                    @endif
+                                    <label class="custom-control-label" for="base_layout_1111"><img src="{{asset('/images/core/layout/1111.png')}}" title="ヘッダー、左、右、フッター" alt="ヘッダー、左、右、フッター"></label>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">全ページに適用する基本レイアウトです。各ページのレイアウト設定で上書きできます。</small>
+                        </div>
+                    </section>
+
+                    <section id="site-settings-design" class="site-settings-section mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">外観・ヘッダー</h5>
+
+                        <div id="app">
                 @php
                     $placeholder_message = 'HTMLカラーコードを入力';
                 @endphp
@@ -356,6 +395,10 @@
                     スマートフォンでヘッダーバーのメニューを表示する時、スマートフォン画面の高さ以上にメニューが増えると、ヘッダーバーが固定される関係でメニューがスクロールしないため、画面外のメニューが押せなくなります。<br />
                 </small>
             </div>
+                    </section>
+
+                    <section id="site-settings-login" class="site-settings-section mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">ログイン</h5>
 
             {{-- ログインリンクの表示 --}}
             <div class="form-group">
@@ -455,6 +498,10 @@
                 </select>
                 @include('plugins.common.errors_inline', ['name' => 'base_login_redirect_select_page'])
             </div>
+                    </section>
+
+                    <section id="site-settings-mypage" class="site-settings-section mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">マイページ</h5>
 
             {{-- マイページ --}}
             <div class="form-group">
@@ -497,6 +544,10 @@
                 <textarea name="mypage_bottom_notice" class="form-control" rows=5>{!! Configs::getConfigsValueAndOld($configs, 'mypage_bottom_notice', null) !!}</textarea>
                 <small class="form-text text-muted">マイページ（/mypage）の下部に表示するお知らせ（HTML可）</small>
             </div>
+                    </section>
+
+                    <section id="site-settings-display-limit" class="site-settings-section mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">表示・操作制限</h5>
 
             {{-- 画像の保存機能の無効化 --}}
             <div class="form-group">
@@ -550,14 +601,18 @@
                     @endforeach
                 </select>
             </div>
+                    </section>
 
-            {{-- プラグイン新規作成時の投稿権限 --}}
+                    <section id="site-settings-plugin-permission" class="site-settings-section mb-4">
+                        <h5 class="border-bottom pb-2 mb-3">プラグインの権限設定</h5>
+
+            {{-- 新規作成時の投稿権限 --}}
             <div class="form-group">
-                <label class="col-form-label">プラグイン新規作成時の投稿権限</label>
-                <p class="mb-2 text-muted">
+                <label class="col-form-label">新規作成時の投稿権限</label>
+                <small class="form-text text-muted mb-2">
                     掲示板やブログなどを新しく作成したとき、投稿を許可する権限の初期値です。
                     既存のプラグイン設定は変更されません。
-                </p>
+                </small>
                 <div class="border rounded bg-light p-3">
                     <div class="custom-control custom-checkbox">
                         @if(Configs::getConfigsValueAndOld($configs, "new_bucket_role_article_post_flag", 0) == 1)
@@ -578,10 +633,13 @@
                 </div>
                 <small class="form-text text-muted">作成後は、各プラグインの権限設定で個別に変更できます。</small>
             </div>
+                    </section>
 
             {{-- Submitボタン --}}
-            <div class="form-group text-center">
+            <div class="form-group text-center mb-0">
                 <button type="submit" class="btn btn-primary form-horizontal"><i class="fas fa-check"></i> 更新</button>
+            </div>
+                </div>
             </div>
         </form>
     </div><!-- /card-body -->
@@ -595,6 +653,67 @@
             }
         },
     }).mount('#app');
+
+    (function() {
+        const sections = Array.from(document.querySelectorAll('.site-settings-section'));
+        const anchors = Array.from(document.querySelectorAll('.site-settings-anchor'));
+
+        if (!sections.length || !anchors.length) {
+            return;
+        }
+
+        // 現在位置に対応する目次リンクだけを選択状態にする。
+        const activate = function(section_id) {
+            anchors.forEach(function(anchor) {
+                const is_active = anchor.dataset.targetSection === section_id;
+                anchor.classList.toggle('active', is_active);
+
+                if (is_active) {
+                    anchor.setAttribute('aria-current', 'true');
+                } else {
+                    anchor.removeAttribute('aria-current');
+                }
+            });
+        };
+
+        // 画面上部から一定距離を過ぎた最後のセクションを現在位置として扱う。
+        const getCurrentSectionId = function() {
+            const scroll_offset = 120;
+            let current_section_id = sections[0].id;
+
+            sections.forEach(function(section) {
+                if (section.getBoundingClientRect().top <= scroll_offset) {
+                    current_section_id = section.id;
+                }
+            });
+
+            return current_section_id;
+        };
+
+        // スクロールイベントが連続しても、描画更新は1フレームに1回に抑える。
+        let ticking = false;
+        const updateActiveAnchor = function() {
+            activate(getCurrentSectionId());
+            ticking = false;
+        };
+
+        const requestUpdate = function() {
+            if (!ticking) {
+                window.requestAnimationFrame(updateActiveAnchor);
+                ticking = true;
+            }
+        };
+
+        anchors.forEach(function(anchor) {
+            anchor.addEventListener('click', function() {
+                activate(anchor.dataset.targetSection);
+            });
+        });
+
+        window.addEventListener('scroll', requestUpdate, { passive: true });
+        window.addEventListener('resize', requestUpdate);
+        updateActiveAnchor();
+    })();
 </script>
 
 @endsection
