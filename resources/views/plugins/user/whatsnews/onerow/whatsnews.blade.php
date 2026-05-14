@@ -90,12 +90,7 @@
             {{-- 本文 --}}
             @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail))
             <div>
-                @if (FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length) == 0 ||
-                     mb_strlen(strip_tags($whatsnew->post_detail)) <= FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length))
-                    {{ strip_tags($whatsnew->post_detail) }}
-                @else
-                    {{ mb_substr(strip_tags($whatsnew->post_detail), 0, FrameConfig::getConfigValueAndOld($frame_configs, WhatsnewFrameConfig::post_detail_length)) }}...
-                @endif
+                {{ $whatsnew->post_detail_strip_tags }}
             </div>
             @endif
         </div>
