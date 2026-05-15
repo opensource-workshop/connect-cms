@@ -336,10 +336,22 @@ class UploadfileManage extends ManagePluginBase
     private function isSearchConditionSet(array $search_condition)
     {
         foreach ($this->search_condition_keys as $key) {
-            if ($key == 'sort') {
+            if ($key == 'sort' || $key == 'size_unit') {
                 continue;
             }
-            if (isset($search_condition[$key]) && $search_condition[$key] !== '') {
+            if (!isset($search_condition[$key])) {
+                continue;
+            }
+            if (is_array($search_condition[$key])) {
+                $search_condition_values = array_filter($search_condition[$key], function ($value) {
+                    return $value !== null && $value !== '';
+                });
+                if (!empty($search_condition_values)) {
+                    return true;
+                }
+                continue;
+            }
+            if ($search_condition[$key] !== '') {
                 return true;
             }
         }
