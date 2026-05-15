@@ -1222,6 +1222,8 @@ WHERE status = 0
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
+        $keyword = trim((string)$request->keyword);
+
         // Frame データ
         $blog_frame = Frame::select('frames.*', 'blogs.id as blogs_id')
             ->leftJoin('blogs', 'blogs.bucket_id', '=', 'frames.bucket_id')
@@ -1245,7 +1247,13 @@ WHERE status = 0
             ->leftJoin('frames', function ($leftJoin) use ($frame_id) {
                 $leftJoin->on('blogs.bucket_id', '=', 'frames.bucket_id')
                     ->where('frames.id', $frame_id);
-            })
+            });
+
+        if (!empty($keyword)) {
+            $blogs->where('blogs.blog_name', 'like', '%' . $keyword . '%');
+        }
+
+        $blogs = $blogs
             ->groupBy(
                 'blogs.id',
                 'blogs.bucket_id',
@@ -1261,6 +1269,7 @@ WHERE status = 0
         return $this->view('blogs_list_buckets', [
             'blog_frame' => $blog_frame,
             'blogs'      => $blogs,
+            'keyword'    => $keyword,
         ]);
     }
 

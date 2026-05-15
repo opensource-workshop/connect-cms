@@ -762,6 +762,8 @@ class ContentsPlugin extends UserPluginBase
      */
     public function listBuckets($request, $page_id, $frame_id, $id = null)
     {
+        $keyword = trim((string)$request->keyword);
+
         // ソート設定に初期設定値をセット
         $sort_inits = [
             "contents_updated_at" => ["desc", "asc"],
@@ -807,6 +809,15 @@ class ContentsPlugin extends UserPluginBase
                            ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
                            ->where('buckets.plugin_name', 'contents');
 
+        if (!empty($keyword)) {
+            $buckets_query->where(function ($query) use ($keyword) {
+                $query->where('frames.frame_title', 'like', '%' . $keyword . '%')
+                    ->orWhere('buckets.bucket_name', 'like', '%' . $keyword . '%')
+                    ->orWhere('contents.content_text', 'like', '%' . $keyword . '%')
+                    ->orWhere('contents.content2_text', 'like', '%' . $keyword . '%');
+            });
+        }
+
         // buckets を作っていない状態で、設定の表示コンテンツ選択を開くこともあるので、バケツがあるかの判定
         if (!empty($this->buckets)) {
             // buckets がある場合は、該当buckets を一覧の最初に持ってくる。
@@ -819,7 +830,8 @@ class ContentsPlugin extends UserPluginBase
         return $this->view('contents_list_buckets', [
             'buckets_list'      => $buckets_list,
             'order_link'        => $order_link,
-            'request_order_str' => implode('|', $request_order_by)
+            'request_order_str' => implode('|', $request_order_by),
+            'keyword'           => $keyword,
         ]);
     }
 

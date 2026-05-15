@@ -14,6 +14,13 @@
 
 @section("plugin_setting_$frame->id")
 
+@include('plugins.common.list_buckets_keyword_search', [
+    'action_url' => url('/')."/plugin/blogs/listBuckets/{$page->id}/{$frame_id}#frame-{$frame->id}",
+    'clear_url' => url('/')."/plugin/blogs/listBuckets/{$page->id}/{$frame_id}#frame-{$frame->id}",
+    'frame' => $frame,
+    'keyword' => $keyword,
+])
+
 <form action="{{url('/')}}/redirect/plugin/blogs/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST">
     {{ csrf_field() }}
     <input type="hidden" name="redirect_path" value="{{url('/')}}/plugin/blogs/listBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}">
@@ -51,7 +58,7 @@
     </table>
 
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $blogs, 'frame' => $frame, 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
+    @include('plugins.common.user_paginate', ['posts' => $blogs, 'frame' => $frame, 'appends' => ['keyword' => $keyword], 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
     <div class="text-center">
         <a class="btn btn-secondary mr-2" href="{{URL::to($page->permanent_link)}}">
