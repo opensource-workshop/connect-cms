@@ -52,6 +52,26 @@ class BlogsBucketSearchFeatureTest extends TestCase
     }
 
     /**
+     * ブログ名検索では、数値の0も有効な検索語として扱われ、未指定と同じ全件表示にならないこと。
+     */
+    public function testListBucketsCanSearchByZeroKeyword(): void
+    {
+        $admin = $this->createContentAdminUser();
+        [$page, $frame] = $this->createPluginFrame('blogs');
+
+        $this->createBlogBucket('2026年度ブログ', '通常の記事本文');
+        $this->createBlogBucket('通常ブログ', '対象外の記事本文');
+
+        $response = $this->actingAs($admin)->get("/plugin/blogs/listBuckets/{$page->id}/{$frame->id}?keyword=0");
+
+        $response->assertOk();
+        $response->assertSee('2026年度ブログ');
+        $response->assertDontSee('通常ブログ');
+        $response->assertSee('value="0"', false);
+        $response->assertSee('クリア');
+    }
+
+    /**
      * ブログ検索確認に必要なバケツ・ブログ・記事をまとめて作成する。
      */
     private function createBlogBucket(string $blog_name, string $post_text): void

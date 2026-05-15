@@ -1249,7 +1249,7 @@ WHERE status = 0
                     ->where('frames.id', $frame_id);
             });
 
-        if (!empty($keyword)) {
+        if ($keyword !== '') {
             $blogs->where('blogs.blog_name', 'like', '%' . $keyword . '%');
         }
 

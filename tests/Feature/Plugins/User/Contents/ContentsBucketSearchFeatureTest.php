@@ -58,6 +58,28 @@ class ContentsBucketSearchFeatureTest extends TestCase
     }
 
     /**
+     * 固定記事検索では、数値の0も有効な検索語として扱われ、ソートやページングでも条件を維持すること。
+     */
+    public function testListBucketsCanSearchByZeroKeyword(): void
+    {
+        $admin = $this->createContentAdminUser();
+        [$page, $frame] = $this->createPluginFrame('contents');
+        $bucket_page = Page::factory()->create();
+
+        $this->createContentBucket($bucket_page, '2026年度固定記事', '通常本文', '通常フレーム');
+        $this->createContentBucket($bucket_page, '通常固定記事', '対象外本文', '対象外フレーム');
+
+        $response = $this->actingAs($admin)->get("/plugin/contents/listBuckets/{$page->id}/{$frame->id}?keyword=0");
+
+        $response->assertOk();
+        $response->assertSee('2026年度固定記事');
+        $response->assertDontSee('通常固定記事');
+        $response->assertSee('value="0"', false);
+        $response->assertSee('keyword=0', false);
+        $response->assertSee('クリア');
+    }
+
+    /**
      * 固定記事の検索確認に必要なバケツ・本文・利用フレームをまとめて作成する。
      */
     private function createContentBucket(

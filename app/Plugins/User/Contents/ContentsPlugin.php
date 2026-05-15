@@ -809,7 +809,7 @@ class ContentsPlugin extends UserPluginBase
                            ->leftJoin('pages', 'pages.id', '=', 'frames.page_id')
                            ->where('buckets.plugin_name', 'contents');
 
-        if (!empty($keyword)) {
+        if ($keyword !== '') {
             $buckets_query->where(function ($query) use ($keyword) {
                 $query->where('frames.frame_title', 'like', '%' . $keyword . '%')
                     ->orWhere('buckets.bucket_name', 'like', '%' . $keyword . '%')

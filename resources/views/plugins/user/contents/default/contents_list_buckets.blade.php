@@ -15,7 +15,7 @@
 @section("plugin_setting_$frame->id")
 @php
     $base_list_url = url('/')."/plugin/contents/listBuckets/{$page->id}/{$frame_id}";
-    $keyword_query = empty($keyword) ? '' : '&' . http_build_query(['keyword' => $keyword]);
+    $keyword_query = $keyword === '' ? '' : '&' . http_build_query(['keyword' => $keyword]);
 @endphp
 
 @include('plugins.common.list_buckets_keyword_search', [

@@ -24,7 +24,7 @@
     <label class="sr-only" for="{{$keyword_id}}">キーワード</label>
     <input type="text" name="keyword" id="{{$keyword_id}}" value="{{$keyword}}" class="form-control mr-sm-2 mb-2 mb-sm-0" placeholder="{{$placeholder}}">
     <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-search"></i> 検索</button>
-    @if (!empty($keyword))
+    @if ($keyword !== '')
         <a class="btn btn-secondary" href="{{$clear_url}}">
             <i class="fas fa-times"></i> クリア
         </a>
