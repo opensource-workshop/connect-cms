@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Uploads;
 use App\Models\Core\Configs;
+use App\Models\Core\Plugins;
 use App\Utilities\Storage\StorageUsageCalculator;
 
 use App\Plugins\Manage\ManagePluginBase;
@@ -35,6 +36,51 @@ class UploadfileManage extends ManagePluginBase
      * 表示件数の許可された値
      */
     private $allowed_per_page = [10, 50, 100];
+
+    /**
+     * 検索条件として扱う項目
+     */
+    private $search_condition_keys = [
+        'client_original_name',
+        'id',
+        'size_from',
+        'size_to',
+        'size_unit',
+        'page_name',
+        'created_at_from',
+        'created_at_to',
+        'plugin_names',
+        'sort',
+    ];
+
+    /**
+     * 並べ替えの許可された値
+     */
+    private $allowed_sorts = [
+        'id_asc',
+        'id_desc',
+        'client_original_name_asc',
+        'client_original_name_desc',
+        'size_asc',
+        'size_desc',
+        'created_at_asc',
+        'created_at_desc',
+        'plugin_name_asc',
+        'plugin_name_desc',
+        'page_name_asc',
+        'page_name_desc',
+        'download_count_desc',
+        'play_count_desc',
+    ];
+
+    /**
+     * ファイルサイズ検索で許可する単位
+     */
+    private $allowed_size_units = [
+        'byte',
+        'KB',
+        'MB',
+    ];
 
     /**
      *  権限定義
@@ -83,34 +129,11 @@ class UploadfileManage extends ManagePluginBase
                                 ->leftJoin('plugins', 'plugins.plugin_name', '=', 'uploads.plugin_name')
                                 ->leftJoin('pages', 'pages.id', '=', 'uploads.page_id');
 
-        if ($request->session()->has('search_condition.client_original_name')) {
-            $uploads_query->where('client_original_name', 'like', '%' . $request->session()->get('search_condition.client_original_name') . '%');
-        }
+        $search_condition = $request->session()->get('search_condition', []);
+        $this->applySearchConditions($uploads_query, $search_condition);
 
         // 表示順
-        $sort = 'id_desc';
-        if ($request->session()->has('search_condition.sort')) {
-            $sort = session('search_condition.sort');
-        }
-        if ($sort == 'id_asc') {
-            $uploads_query->orderBy('id', 'asc');
-        } elseif ($sort == 'id_desc') {
-            $uploads_query->orderBy('id', 'desc');
-        } elseif ($sort == 'client_original_name_asc') {
-            $uploads_query->orderBy('client_original_name', 'asc');
-        } elseif ($sort == 'client_original_name_desc') {
-            $uploads_query->orderBy('client_original_name', 'desc');
-        } elseif ($sort == 'size_asc') {
-            $uploads_query->orderBy('size', 'asc');
-        } elseif ($sort == 'size_desc') {
-            $uploads_query->orderBy('size', 'desc');
-        } elseif ($sort == 'created_at_asc') {
-            $uploads_query->orderBy('created_at', 'asc');
-        } elseif ($sort == 'created_at_desc') {
-            $uploads_query->orderBy('created_at', 'desc');
-        } elseif ($sort == 'download_count_desc') {
-            $uploads_query->orderBy('download_count', 'desc');
-        }
+        $this->applySort($uploads_query, $this->getSort($search_condition));
 
         // 表示件数の取得 ※デフォルトは10件
         $per_page = $this->allowed_per_page[0];
@@ -128,6 +151,11 @@ class UploadfileManage extends ManagePluginBase
         // データ使用量の計算
         $storage_usage = StorageUsageCalculator::getDataUsage();
 
+        // プラグイン絞り込み用の一覧
+        $uploadfile_plugins = Plugins::orderBy('display_sequence')
+                                     ->orderBy('plugin_name')
+                                     ->get();
+
         // 入力値をsessionへ保存（検索用）
         $request->flash();
 
@@ -138,6 +166,9 @@ class UploadfileManage extends ManagePluginBase
             "uploads"     => $uploads,
             "allowed_per_page" => $this->allowed_per_page,
             "storage_usage" => $storage_usage,
+            "search_condition_keys" => $this->search_condition_keys,
+            "is_search_condition_set" => $this->isSearchConditionSet($search_condition),
+            "uploadfile_plugins" => $uploadfile_plugins,
         ]);
     }
 
@@ -147,10 +178,7 @@ class UploadfileManage extends ManagePluginBase
     public function search($request)
     {
         // 検索ボタンが押されたときはここが実行される。検索条件を設定してindex を呼ぶ。
-        $search_condition = [
-            "client_original_name" => $request->input('search_condition.client_original_name'),
-            "sort"                 => $request->input('search_condition.sort'),
-        ];
+        $search_condition = $this->getSearchConditionFromRequest($request);
 
         session(["search_condition" => $search_condition]);
 
@@ -160,6 +188,163 @@ class UploadfileManage extends ManagePluginBase
         }
 
         return redirect("/manage/uploadfile");
+    }
+
+    /**
+     * リクエストから検索条件を取得する
+     */
+    private function getSearchConditionFromRequest($request)
+    {
+        $search_condition = [];
+        foreach ($this->search_condition_keys as $key) {
+            $value = $request->input('search_condition.' . $key);
+            $search_condition[$key] = is_string($value) ? trim($value) : $value;
+        }
+
+        if (!in_array($search_condition['sort'], $this->allowed_sorts)) {
+            $search_condition['sort'] = 'id_desc';
+        }
+        if (!in_array($search_condition['size_unit'], $this->allowed_size_units)) {
+            $search_condition['size_unit'] = 'MB';
+        }
+
+        return $search_condition;
+    }
+
+    /**
+     * 検索条件をクエリに適用する
+     */
+    private function applySearchConditions($uploads_query, array $search_condition)
+    {
+        if (!empty($search_condition['client_original_name'])) {
+            $uploads_query->where('uploads.client_original_name', 'like', '%' . $search_condition['client_original_name'] . '%');
+        }
+
+        if (!empty($search_condition['id']) && is_numeric($search_condition['id'])) {
+            $uploads_query->where('uploads.id', intval($search_condition['id']));
+        }
+
+        if (isset($search_condition['size_from']) && is_numeric($search_condition['size_from'])) {
+            $uploads_query->where('uploads.size', '>=', $this->convertSizeToBytes($search_condition['size_from'], $search_condition['size_unit'] ?? 'MB'));
+        }
+
+        if (isset($search_condition['size_to']) && is_numeric($search_condition['size_to'])) {
+            $uploads_query->where('uploads.size', '<=', $this->convertSizeToBytes($search_condition['size_to'], $search_condition['size_unit'] ?? 'MB'));
+        }
+
+        if (!empty($search_condition['page_name'])) {
+            $uploads_query->where('pages.page_name', 'like', '%' . $search_condition['page_name'] . '%');
+        }
+
+        if (!empty($search_condition['created_at_from'])) {
+            $uploads_query->whereDate('uploads.created_at', '>=', $search_condition['created_at_from']);
+        }
+
+        if (!empty($search_condition['created_at_to'])) {
+            $uploads_query->whereDate('uploads.created_at', '<=', $search_condition['created_at_to']);
+        }
+
+        $plugin_names = $this->getSelectedPluginNames($search_condition);
+        if (!empty($plugin_names)) {
+            $uploads_query->whereIn('uploads.plugin_name', $plugin_names);
+        }
+    }
+
+    /**
+     * 入力されたファイルサイズをbyteに変換する
+     */
+    private function convertSizeToBytes($size, $unit)
+    {
+        if ($unit == 'MB') {
+            return intval($size * 1024 * 1024);
+        } elseif ($unit == 'KB') {
+            return intval($size * 1024);
+        }
+
+        return intval($size);
+    }
+
+    /**
+     * 選択されたプラグイン名を配列で取得する
+     */
+    private function getSelectedPluginNames(array $search_condition)
+    {
+        if (empty($search_condition['plugin_names'])) {
+            return [];
+        }
+
+        $plugin_names = is_array($search_condition['plugin_names'])
+            ? $search_condition['plugin_names']
+            : [$search_condition['plugin_names']];
+
+        return array_values(array_filter($plugin_names, function ($plugin_name) {
+            return $plugin_name !== '';
+        }));
+    }
+
+    /**
+     * 並べ替え条件を取得する
+     */
+    private function getSort(array $search_condition)
+    {
+        if (!empty($search_condition['sort']) && in_array($search_condition['sort'], $this->allowed_sorts)) {
+            return $search_condition['sort'];
+        }
+
+        return 'id_desc';
+    }
+
+    /**
+     * 並べ替え条件をクエリに適用する
+     */
+    private function applySort($uploads_query, $sort)
+    {
+        if ($sort == 'id_asc') {
+            $uploads_query->orderBy('uploads.id', 'asc');
+        } elseif ($sort == 'id_desc') {
+            $uploads_query->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'client_original_name_asc') {
+            $uploads_query->orderBy('uploads.client_original_name', 'asc')->orderBy('uploads.id', 'asc');
+        } elseif ($sort == 'client_original_name_desc') {
+            $uploads_query->orderBy('uploads.client_original_name', 'desc')->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'size_asc') {
+            $uploads_query->orderBy('uploads.size', 'asc')->orderBy('uploads.id', 'asc');
+        } elseif ($sort == 'size_desc') {
+            $uploads_query->orderBy('uploads.size', 'desc')->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'created_at_asc') {
+            $uploads_query->orderBy('uploads.created_at', 'asc')->orderBy('uploads.id', 'asc');
+        } elseif ($sort == 'created_at_desc') {
+            $uploads_query->orderBy('uploads.created_at', 'desc')->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'plugin_name_asc') {
+            $uploads_query->orderBy('plugins.display_sequence', 'asc')->orderBy('uploads.plugin_name', 'asc')->orderBy('uploads.id', 'asc');
+        } elseif ($sort == 'plugin_name_desc') {
+            $uploads_query->orderBy('plugins.display_sequence', 'desc')->orderBy('uploads.plugin_name', 'desc')->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'page_name_asc') {
+            $uploads_query->orderBy('pages.page_name', 'asc')->orderBy('uploads.id', 'asc');
+        } elseif ($sort == 'page_name_desc') {
+            $uploads_query->orderBy('pages.page_name', 'desc')->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'download_count_desc') {
+            $uploads_query->orderBy('uploads.download_count', 'desc')->orderBy('uploads.id', 'desc');
+        } elseif ($sort == 'play_count_desc') {
+            $uploads_query->orderBy('uploads.play_count', 'desc')->orderBy('uploads.id', 'desc');
+        }
+    }
+
+    /**
+     * 検索条件が指定されているか判定する
+     */
+    private function isSearchConditionSet(array $search_condition)
+    {
+        foreach ($this->search_condition_keys as $key) {
+            if ($key == 'sort') {
+                continue;
+            }
+            if (isset($search_condition[$key]) && $search_condition[$key] !== '') {
+                return true;
+            }
+        }
+
+        return !empty($search_condition['sort']) && $search_condition['sort'] != 'id_desc';
     }
 
     /**

@@ -97,10 +97,10 @@
             <div class="card">
                 <button class="btn btn-link p-0 text-left collapsed" type="button" data-toggle="collapse" data-target="#search_collapse" aria-expanded="false" aria-controls="search_collapse">
                     <div class="card-header" id="search_condition">
-                        絞り込み条件 <i class="fas fa-angle-down"></i>@if (Session::has('search_condition.client_original_name') || Session::has('search_condition.sort'))<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
+                        絞り込み条件 <i class="fas fa-angle-down"></i>@if ($is_search_condition_set)<span class="badge badge-pill badge-primary ml-2">条件設定中</span>@endif
                    </div>
                 </button>
-                @if (Session::has('search_condition.client_original_name') || Session::has('search_condition.sort'))
+                @if ($is_search_condition_set)
                 <div id="search_collapse" class="collapse show" aria-labelledby="search_condition" data-parent="#search_accordion">
                 @else
                 <div id="search_collapse" class="collapse" aria-labelledby="search_condition" data-parent="#search_accordion">
@@ -118,6 +118,86 @@
                                 </div>
                             </div>
 
+                            {{-- ID --}}
+                            <div class="form-group row">
+                                <label for="search_condition_id" class="col-md-3 col-form-label text-md-right">ID</label>
+                                <div class="col-md-9">
+                                    <input type="number" name="search_condition[id]" id="search_condition_id" value="{{Session::get('search_condition.id')}}" class="form-control" min="1">
+                                </div>
+                            </div>
+
+                            {{-- ファイルサイズ --}}
+                            <div class="form-group row">
+                                <label for="search_condition_size_from" class="col-md-3 col-form-label text-md-right">ファイルサイズ</label>
+                                <div class="col-md-9">
+                                    <div class="form-row align-items-center">
+                                        <div class="col-md-4">
+                                            <input type="number" name="search_condition[size_from]" id="search_condition_size_from" value="{{Session::get('search_condition.size_from')}}" class="form-control" min="0" step="1" placeholder="以上">
+                                        </div>
+                                        <div class="col-md-1 text-center">〜</div>
+                                        <div class="col-md-4">
+                                            <input type="number" name="search_condition[size_to]" id="search_condition_size_to" value="{{Session::get('search_condition.size_to')}}" class="form-control" min="0" step="1" placeholder="以下">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <select name="search_condition[size_unit]" id="search_condition_size_unit" class="form-control">
+                                                @foreach(['byte', 'KB', 'MB'] as $size_unit)
+                                                    <option value="{{$size_unit}}"@if(Session::get('search_condition.size_unit', 'MB') == $size_unit) selected @endif>{{$size_unit}}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ページ名 --}}
+                            <div class="form-group row">
+                                <label for="search_condition_page_name" class="col-md-3 col-form-label text-md-right">ページ名</label>
+                                <div class="col-md-9">
+                                    <input type="text" name="search_condition[page_name]" id="search_condition_page_name" value="{{Session::get('search_condition.page_name')}}" class="form-control">
+                                </div>
+                            </div>
+
+                            {{-- アップロード日付 --}}
+                            <div class="form-group row">
+                                <label for="search_condition_created_at_from" class="col-md-3 col-form-label text-md-right">アップロード日付</label>
+                                <div class="col-md-9">
+                                    <div class="form-row align-items-center">
+                                        <div class="col-md-5">
+                                            <input type="date" name="search_condition[created_at_from]" id="search_condition_created_at_from" value="{{Session::get('search_condition.created_at_from')}}" class="form-control">
+                                        </div>
+                                        <div class="col-md-1 text-center">〜</div>
+                                        <div class="col-md-5">
+                                            <input type="date" name="search_condition[created_at_to]" id="search_condition_created_at_to" value="{{Session::get('search_condition.created_at_to')}}" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- プラグイン --}}
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label text-md-right">プラグイン</label>
+                                <div class="col-md-9">
+                                    @php
+                                        $selected_plugin_names = Session::get('search_condition.plugin_names', []);
+                                        if (!is_array($selected_plugin_names)) {
+                                            $selected_plugin_names = [$selected_plugin_names];
+                                        }
+                                    @endphp
+                                    <div class="form-row">
+                                        @foreach($uploadfile_plugins as $uploadfile_plugin)
+                                            <div class="col-md-4 col-sm-6">
+                                                <div class="custom-control custom-checkbox">
+                                                    <input type="checkbox" name="search_condition[plugin_names][]" value="{{$uploadfile_plugin->plugin_name}}" id="search_condition_plugin_names_{{$loop->iteration}}" class="custom-control-input"@if(in_array($uploadfile_plugin->plugin_name, $selected_plugin_names)) checked="checked" @endif>
+                                                    <label class="custom-control-label" for="search_condition_plugin_names_{{$loop->iteration}}">
+                                                        {{$uploadfile_plugin->plugin_name_full}}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- 並べ替え --}}
                             <div class="form-group row">
                                 <label for="sort" class="col-md-3 col-form-label text-md-right">並べ替え</label>
@@ -131,7 +211,12 @@
                                         <option value="size_desc"@if(Session::get('search_condition.sort') == "size_desc") selected @endif>サイズ 降順</option>
                                         <option value="created_at_asc"@if(Session::get('search_condition.sort') == "created_at_asc") selected @endif>アップロード日時 昇順</option>
                                         <option value="created_at_desc"@if(Session::get('search_condition.sort') == "created_at_desc") selected @endif>アップロード日時 降順</option>
+                                        <option value="plugin_name_asc"@if(Session::get('search_condition.sort') == "plugin_name_asc") selected @endif>プラグイン 昇順</option>
+                                        <option value="plugin_name_desc"@if(Session::get('search_condition.sort') == "plugin_name_desc") selected @endif>プラグイン 降順</option>
+                                        <option value="page_name_asc"@if(Session::get('search_condition.sort') == "page_name_asc") selected @endif>ページ名 昇順</option>
+                                        <option value="page_name_desc"@if(Session::get('search_condition.sort') == "page_name_desc") selected @endif>ページ名 降順</option>
                                         <option value="download_count_desc"@if(Session::get('search_condition.sort') == "download_count_desc") selected @endif>ダウンロード数 降順</option>
+                                        <option value="play_count_desc"@if(Session::get('search_condition.sort') == "play_count_desc") selected @endif>再生回数 降順</option>
                                     </select>
                                 </div>
                             </div>
@@ -170,8 +255,18 @@
             {{-- (右側)表示件数選択 --}}
             <form method="post" action="{{url('/')}}/manage/uploadfile/search" class="form-inline">
                 {{ csrf_field() }}
-                <input type="hidden" name="search_condition[client_original_name]" value="{{Session::get('search_condition.client_original_name')}}">
-                <input type="hidden" name="search_condition[sort]" value="{{Session::get('search_condition.sort')}}">
+                @foreach($search_condition_keys as $search_condition_key)
+                    @php
+                        $search_condition_value = Session::get('search_condition.' . $search_condition_key);
+                    @endphp
+                    @if(is_array($search_condition_value))
+                        @foreach($search_condition_value as $value)
+                            <input type="hidden" name="search_condition[{{$search_condition_key}}][]" value="{{$value}}">
+                        @endforeach
+                    @else
+                        <input type="hidden" name="search_condition[{{$search_condition_key}}]" value="{{$search_condition_value}}">
+                    @endif
+                @endforeach
                 <label for="per_page_quick" class="mr-2 mb-0">表示件数:</label>
                 <select name="uploadfile_per_page" id="per_page_quick" class="form-control form-control-sm" onchange="this.form.submit()">
                     @foreach($allowed_per_page as $per_page_option)
