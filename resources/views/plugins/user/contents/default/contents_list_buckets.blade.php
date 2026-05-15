@@ -13,6 +13,19 @@
 @endsection
 
 @section("plugin_setting_$frame->id")
+@php
+    $base_list_url = url('/')."/plugin/contents/listBuckets/{$page->id}/{$frame_id}";
+    $keyword_query = $keyword === '' ? '' : '&' . http_build_query(['keyword' => $keyword]);
+@endphp
+
+@include('plugins.common.list_buckets_keyword_search', [
+    'action_url' => "{$base_list_url}#frame-{$frame->id}",
+    'clear_url' => "{$base_list_url}?" . http_build_query(['sort' => $request_order_str]) . "#frame-{$frame->id}",
+    'frame' => $frame,
+    'keyword' => $keyword,
+    'hidden_inputs' => ['sort' => $request_order_str],
+])
+
 <form action="{{url('/')}}/redirect/plugin/contents/changeBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
     {{ csrf_field() }}
     <table class="table table-hover table-responsive">
@@ -20,7 +33,7 @@
         <tr>
             <th nowrap>選択</th>
             <th nowrap>
-                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}#frame-{{$frame->id}}">更新日</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=contents_updated_at|{{$order_link["contents_updated_at"][0]}}{{$keyword_query}}#frame-{{$frame->id}}">更新日</a>
                 @if ($request_order_str == "contents_updated_at|asc")
                     <i class="fas fa-sort-numeric-down"></i>
                 @elseif ($request_order_str == "contents_updated_at|desc")
@@ -28,7 +41,7 @@
                 @endif
             </th>
             <th nowrap>
-                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}#frame-{{$frame->id}}">使用ページ</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=page_name|{{$order_link["page_name"][0]}}{{$keyword_query}}#frame-{{$frame->id}}">使用ページ</a>
                 @if ($request_order_str == "page_name|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "page_name|desc")
@@ -36,7 +49,7 @@
                 @endif
             </th>
             <th nowrap>
-                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}#frame-{{$frame->id}}">データ名</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=bucket_name|{{$order_link["bucket_name"][0]}}{{$keyword_query}}#frame-{{$frame->id}}">データ名</a>
                 @if ($request_order_str == "bucket_name|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "bucket_name|desc")
@@ -44,7 +57,7 @@
                 @endif
             </th>
             <th nowrap>
-                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}#frame-{{$frame->id}}">フレームタイトル</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=frame_title|{{$order_link["frame_title"][0]}}{{$keyword_query}}#frame-{{$frame->id}}">フレームタイトル</a>
                 @if ($request_order_str == "frame_title|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "frame_title|desc")
@@ -52,7 +65,7 @@
                 @endif
             </th>
             <th nowrap>
-                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}#frame-{{$frame->id}}">内容</a>
+                <a href="{{url('/')}}/plugin/contents/listBuckets/{{$page->id}}/{{$frame_id}}?sort=content_text|{{$order_link["content_text"][0]}}{{$keyword_query}}#frame-{{$frame->id}}">内容</a>
                 @if ($request_order_str == "content_text|asc")
                     <i class="fas fa-sort-alpha-down"></i>
                 @elseif ($request_order_str == "content_text|desc")
@@ -78,7 +91,7 @@
     </table>
 
     {{-- ページング処理 --}}
-    @include('plugins.common.user_paginate', ['posts' => $buckets_list, 'frame' => $frame, 'appends' => ['sort' => $request_order_str], 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
+    @include('plugins.common.user_paginate', ['posts' => $buckets_list, 'frame' => $frame, 'appends' => ['sort' => $request_order_str, 'keyword' => $keyword], 'aria_label_name' => $frame->plugin_name_full . '選択', 'class' => 'form-group'])
 
     <div class="text-center">
         <button type="button" class="btn btn-secondary mr-2" style="margin-left: 10px;" onclick="location.href='{{URL::to($page->permanent_link)}}#frame-{{$frame->id}}'"><i class="fas fa-times"></i><span class="{{$frame->getSettingButtonCaptionClass()}}"> キャンセル</span></button>
