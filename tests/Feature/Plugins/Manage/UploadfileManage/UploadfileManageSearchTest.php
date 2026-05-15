@@ -116,6 +116,24 @@ class UploadfileManageSearchTest extends TestCase
     }
 
     /**
+     * 検索条件を指定せずに検索や表示件数変更をしても、既定の単位や並べ替えだけで条件設定中扱いにならないこと。
+     */
+    public function testIndexDoesNotTreatDefaultSizeUnitAsSearchCondition(): void
+    {
+        $plugin = new UploadfileManage();
+        $plugin->search($this->makeRequest('POST', '/manage/uploadfile/search', [
+            'search_condition' => [
+                'sort' => 'id_desc',
+            ],
+            'uploadfile_per_page' => 50,
+        ]));
+
+        $view = $plugin->index($this->makeRequest('GET', '/manage/uploadfile'));
+
+        $this->assertFalse($view->getData()['is_search_condition_set']);
+    }
+
+    /**
      * プラグインはチェックボックスで複数選択でき、選択したプラグインのファイルだけをまとめて表示できること。
      */
     public function testIndexCanFilterByMultiplePlugins(): void
@@ -200,21 +218,21 @@ class UploadfileManageSearchTest extends TestCase
         $page_beta = Page::factory()->create(['page_name' => 'Beta page', 'permanent_link' => '/beta']);
         $page_gamma = Page::factory()->create(['page_name' => 'Gamma page', 'permanent_link' => '/gamma']);
         $page_alpha = Page::factory()->create(['page_name' => 'Alpha page', 'permanent_link' => '/alpha']);
-        $this->savePlugin('zeta', 'Zeta plugin', 30);
-        $this->savePlugin('alpha', 'Alpha plugin', 10);
+        $this->savePlugin('alpha', 'Alpha plugin', 30);
+        $this->savePlugin('zeta', 'Zeta plugin', 10);
         $this->savePlugin('middle', 'Middle plugin', 20);
 
         Uploads::factory()->create([
             'client_original_name' => 'sort-one.txt',
             'size' => 200,
-            'plugin_name' => 'zeta',
+            'plugin_name' => 'alpha',
             'page_id' => $page_beta->id,
             'created_at' => '2024-02-01 00:00:00',
         ]);
         Uploads::factory()->create([
             'client_original_name' => 'sort-two.txt',
             'size' => 100,
-            'plugin_name' => 'alpha',
+            'plugin_name' => 'zeta',
             'page_id' => $page_gamma->id,
             'created_at' => '2024-01-01 00:00:00',
         ]);
@@ -251,10 +269,12 @@ class UploadfileManageSearchTest extends TestCase
      */
     private function savePlugin(string $plugin_name, string $plugin_name_full, int $display_sequence = 0): void
     {
-        Plugins::updateOrCreate(
+        $plugin = Plugins::updateOrCreate(
             ['plugin_name' => $plugin_name],
-            ['plugin_name_full' => $plugin_name_full, 'display_sequence' => $display_sequence, 'display_flag' => 1]
+            ['plugin_name_full' => $plugin_name_full, 'display_flag' => 1]
         );
+        $plugin->display_sequence = $display_sequence;
+        $plugin->save();
     }
 
     /**
