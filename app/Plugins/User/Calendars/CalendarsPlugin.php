@@ -40,6 +40,11 @@ class CalendarsPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
+    /**
      * 変更時のPOSTデータ
      */
     public $post = null;
@@ -154,23 +159,25 @@ class CalendarsPlugin extends UserPluginBase
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('calendars_posts')
+        $return[] = DB::table('calendar_posts')
                       ->select(
-                          'frames.page_id           as page_id',
-                          'frames.id                as frame_id',
-                          'calendars_posts.id           as post_id',
-                          'calendars_posts.title        as post_title',
-                          DB::raw("null             as important"),
-                          'calendars_posts.created_at   as posted_at',
-                          'calendars_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category"),
+                          'frames.page_id              as page_id',
+                          'frames.id                   as frame_id',
+                          'calendar_posts.id           as post_id',
+                          'calendar_posts.title        as post_title',
+                          'calendar_posts.body         as post_detail',
+                          DB::raw("null                as important"),
+                          'calendar_posts.created_at   as posted_at',
+                          'calendar_posts.created_name as posted_name',
+                          DB::raw("null                as classname"),
+                          DB::raw("null                as category"),
                           DB::raw('"calendars"          as plugin_name')
                       )
-                      ->join('calendars', 'calendars.id', '=', 'calendars_posts.calendars_id')
+                      ->join('calendars', 'calendars.id', '=', 'calendar_posts.calendar_id')
                       ->join('frames', 'frames.bucket_id', '=', 'calendars.bucket_id')
                       ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('calendars_posts.deleted_at');
+                      ->where('calendar_posts.status', StatusType::active)
+                      ->whereNull('calendar_posts.deleted_at');
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/calendars/show';

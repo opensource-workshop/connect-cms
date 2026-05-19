@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -50,6 +51,11 @@ class PhotoalbumsPlugin extends UserPluginBase
     */
 
     /* オブジェクト変数 */
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
     // ファイルダウンロードURL
     private $download_url = '';
 
@@ -67,7 +73,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail', 'moreContents'];
+        $functions['get']  = ['index', 'show', 'download', 'changeDirectory', 'embed', 'detail', 'moreContents'];
         $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence', 'updateHiddenFolders'];
         return $functions;
     }
@@ -103,6 +109,40 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // プラグインのメインデータを取得する。
         return Photoalbum::firstOrNew(['bucket_id' => $bucket_id]);
+    }
+
+    /* スタティック関数 */
+
+    /**
+     * 新着情報用メソッド
+     */
+    public static function getWhatsnewArgs()
+    {
+        $return[] = DB::table('photoalbum_contents')
+                      ->select(
+                          'frames.page_id                  as page_id',
+                          'frames.id                       as frame_id',
+                          'photoalbum_contents.id          as post_id',
+                          DB::raw("COALESCE(NULLIF(photoalbum_contents.name, ''), uploads.client_original_name) as post_title"),
+                          'photoalbum_contents.description as post_detail',
+                          DB::raw("null                    as important"),
+                          DB::raw('COALESCE(photoalbum_contents.updated_at, photoalbum_contents.created_at) as posted_at'),
+                          'photoalbum_contents.created_name as posted_name',
+                          DB::raw("null                    as classname"),
+                          DB::raw("null                    as category"),
+                          DB::raw('"photoalbums"           as plugin_name')
+                      )
+                      ->join('photoalbums', 'photoalbums.id', '=', 'photoalbum_contents.photoalbum_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'photoalbums.bucket_id')
+                      ->leftJoin('uploads', 'uploads.id', '=', 'photoalbum_contents.upload_id')
+                      ->where('frames.disable_whatsnews', 0)
+                      ->whereNotNull('photoalbum_contents.parent_id')
+                      ->whereNull('photoalbum_contents.deleted_at');
+
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/photoalbums/show';
+
+        return $return;
     }
 
     /* 画面アクション関数 */
@@ -159,6 +199,44 @@ class PhotoalbumsPlugin extends UserPluginBase
             'parent_id' =>  $parent->id,
             'covers' => $covers,
         ], $index_display_items));
+    }
+
+    /**
+     * 新着情報からフォトアルバムコンテンツへ遷移する
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id フォトアルバムコンテンツID
+     */
+    public function show($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $photoalbum_content = PhotoalbumContent::where('id', $photoalbum_content_id)
+            ->where('photoalbum_id', $photoalbum->id)
+            ->first();
+
+        if (empty($photoalbum_content)) {
+            abort(404, 'コンテンツがありません。');
+        }
+
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if (!empty($hidden_folder_ids)) {
+            $ancestors = PhotoalbumContent::ancestorsAndSelf($photoalbum_content->id);
+            if ($this->isHiddenPhotoalbumContent($photoalbum_content, $hidden_folder_ids, $ancestors->keyBy('id'))) {
+                abort(404, 'コンテンツがありません。');
+            }
+        }
+
+        if ($photoalbum_content->is_folder == PhotoalbumContent::is_folder_on) {
+            return $this->index($request, $page_id, $frame_id, $photoalbum_content->id);
+        }
+
+        if ($photoalbum_content->isVideo($photoalbum_content->mimetype)) {
+            return $this->detail($request, $page_id, $frame_id, $photoalbum_content->id);
+        }
+
+        return $this->index($request, $page_id, $frame_id, $photoalbum_content->parent_id);
     }
 
     /**
