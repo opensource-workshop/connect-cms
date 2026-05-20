@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 use App\Models\Core\Configs;
 use App\Models\Core\FrameConfig;
@@ -27,8 +28,10 @@ use App\Enums\BlogFrameConfig;
 use App\Enums\BlogFrameScope;
 use App\Enums\BlogNarrowingDownTypeForCreatedId;
 use App\Enums\BlogNarrowingDownTypeForPostedMonth;
+use App\Enums\BlogPostedAtFormat;
 use App\Enums\BlogNoticeEmbeddedTag;
 use App\Enums\NoticeEmbeddedTag;
+use App\Enums\ShowType;
 use App\Enums\StatusType;
 
 use App\Rules\CustomValiWysiwygMax;
@@ -1645,11 +1648,15 @@ EOD;
         // 項目のエラーチェック
         $validator_values['scope_value'] = ['nullable', 'digits:4'];
         $validator_values[BlogFrameConfig::blog_view_count] = ['required', 'numeric', 'min:1', 'max:100'];
+        $validator_values[BlogFrameConfig::blog_display_posted_time] = ['required', Rule::in(ShowType::getMemberKeys())];
+        $validator_values[BlogFrameConfig::blog_posted_at_format] = ['required', Rule::in(BlogPostedAtFormat::getMemberKeys())];
         if ($request->scope == BlogFrameScope::year || $request->scope == BlogFrameScope::fiscal) {
             $validator_values['scope_value'][] = ['required'];
         }
         $validator_attributes['scope_value'] = '指定年';
         $validator_attributes[BlogFrameConfig::blog_view_count] = BlogFrameConfig::getDescription('blog_view_count');
+        $validator_attributes[BlogFrameConfig::blog_display_posted_time] = BlogFrameConfig::getDescription(BlogFrameConfig::blog_display_posted_time);
+        $validator_attributes[BlogFrameConfig::blog_posted_at_format] = BlogFrameConfig::getDescription(BlogFrameConfig::blog_posted_at_format);
 
         $validator = Validator::make($request->all(), $validator_values);
         $validator->setAttributeNames($validator_attributes);

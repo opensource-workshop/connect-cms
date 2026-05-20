@@ -57,6 +57,37 @@
                 </div>
             </div>
 
+            {{-- 投稿日時の時刻表示 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription(BlogFrameConfig::blog_display_posted_time)}}</label>
+                <div class="{{$frame->getSettingInputClass(true)}}">
+                    @foreach (ShowType::getMembers() as $enum_value => $enum_label)
+                        <div class="custom-control custom-radio custom-control-inline">
+                            @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_posted_time, ShowType::show) == $enum_value)
+                                <input type="radio" value="{{$enum_value}}" id="{{BlogFrameConfig::blog_display_posted_time}}_{{$enum_value}}" name="{{BlogFrameConfig::blog_display_posted_time}}" class="custom-control-input" checked="checked">
+                            @else
+                                <input type="radio" value="{{$enum_value}}" id="{{BlogFrameConfig::blog_display_posted_time}}_{{$enum_value}}" name="{{BlogFrameConfig::blog_display_posted_time}}" class="custom-control-input">
+                            @endif
+                            <label class="custom-control-label text-nowrap" for="{{BlogFrameConfig::blog_display_posted_time}}_{{$enum_value}}" id="label_{{BlogFrameConfig::blog_display_posted_time}}_{{$enum_value}}">{{$enum_label}}</label>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- 投稿日時表示形式 --}}
+            <div class="form-group row">
+                <label class="{{$frame->getSettingLabelClass()}}">{{BlogFrameConfig::getDescription(BlogFrameConfig::blog_posted_at_format)}}</label>
+                <div class="{{$frame->getSettingInputClass()}}">
+                    <select name="{{BlogFrameConfig::blog_posted_at_format}}" class="form-control col-sm-5 @if ($errors->has(BlogFrameConfig::blog_posted_at_format)) border-danger @endif">
+                        @foreach (BlogPostedAtFormat::getMembers() as $enum_value => $enum_label)
+                            <option value="{{$enum_value}}" @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_posted_at_format, BlogPostedAtFormat::japanese) == $enum_value) selected @endif>{{$enum_label}}</option>
+                        @endforeach
+                    </select>
+                    @include('plugins.common.errors_inline', ['name' => BlogFrameConfig::blog_posted_at_format])
+                    <small class="text-muted">※ 時刻を表示しない場合は、選択した形式の日付部分のみ表示します。</small>
+                </div>
+            </div>
+
             <div class="form-group row">
                 <label class="{{$frame->getSettingLabelClass()}}">表示条件</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">

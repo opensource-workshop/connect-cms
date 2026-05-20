@@ -17,7 +17,7 @@
 
     <header>
         {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        <b>@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at])</b>
 
         {{-- 投稿者名 --}}
         @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
@@ -33,7 +33,7 @@
 
     <header>
         {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        <b>@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at])</b>
 
         {{-- 投稿者名 --}}
         @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
@@ -49,7 +49,7 @@
 
     <header>
         {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        <b>@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at])</b>
 
 
         {{-- 投稿者名 --}}
@@ -69,7 +69,7 @@
         <h2>{{$post->post_title}}</h2>
 
         {{-- 投稿日時 --}}
-        <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+        <b>@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at])</b>
 
         {{-- 投稿者名 --}}
         @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
