@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -50,6 +51,11 @@ class PhotoalbumsPlugin extends UserPluginBase
     */
 
     /* オブジェクト変数 */
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
     // ファイルダウンロードURL
     private $download_url = '';
 
@@ -67,7 +73,7 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory', 'embed', 'detail', 'moreContents'];
+        $functions['get']  = ['index', 'show', 'download', 'changeDirectory', 'embed', 'detail', 'moreContents'];
         $functions['post'] = ['makeFolder', 'editFolder', 'upload', 'uploadVideo', 'editContents', 'editVideo', 'deleteContents', 'updateViewSequence', 'updateHiddenFolders'];
         return $functions;
     }
@@ -103,6 +109,169 @@ class PhotoalbumsPlugin extends UserPluginBase
     {
         // プラグインのメインデータを取得する。
         return Photoalbum::firstOrNew(['bucket_id' => $bucket_id]);
+    }
+
+    /* スタティック関数 */
+
+    /**
+     * 新着情報用メソッド
+     */
+    public static function getWhatsnewArgs()
+    {
+        $query = self::buildWhatsnewQuery();
+        $hidden_folder_ids_by_frame = self::getHiddenFolderIdsByFrame();
+        $hidden_content_ids_by_frame = self::resolveHiddenContentIdsByFrame($hidden_folder_ids_by_frame);
+
+        self::excludeHiddenContentIdsByFrame($query, $hidden_content_ids_by_frame);
+
+        return [
+            $query,
+            'show_page_frame_post',
+            '/plugin/photoalbums/show',
+        ];
+    }
+
+    /**
+     * 新着情報の基本クエリを作成する。
+     */
+    private static function buildWhatsnewQuery()
+    {
+        return DB::table('photoalbum_contents')
+            ->select(
+                'frames.page_id                  as page_id',
+                'frames.id                       as frame_id',
+                'photoalbum_contents.id          as post_id',
+                DB::raw("COALESCE(NULLIF(photoalbum_contents.name, ''), uploads.client_original_name) as post_title"),
+                'photoalbum_contents.description as post_detail',
+                DB::raw("null                    as important"),
+                DB::raw('COALESCE(photoalbum_contents.updated_at, photoalbum_contents.created_at) as posted_at'),
+                'photoalbum_contents.created_name as posted_name',
+                DB::raw("null                    as classname"),
+                DB::raw("null                    as category"),
+                DB::raw('"photoalbums"           as plugin_name')
+            )
+            ->join('photoalbums', 'photoalbums.id', '=', 'photoalbum_contents.photoalbum_id')
+            ->join('frames', 'frames.bucket_id', '=', 'photoalbums.bucket_id')
+            ->leftJoin('uploads', 'uploads.id', '=', 'photoalbum_contents.upload_id')
+            ->where('frames.disable_whatsnews', 0)
+            ->whereNotNull('photoalbum_contents.parent_id')
+            ->whereNull('photoalbum_contents.deleted_at');
+    }
+
+    /**
+     * フレームごとの非表示アルバムIDを取得する。
+     */
+    private static function getHiddenFolderIdsByFrame(): array
+    {
+        $frame_configs = request()->attributes->get('frame_configs');
+        if (empty($frame_configs)) {
+            $frame_configs = FrameConfig::where('name', PhotoalbumFrameConfig::hidden_folder_ids)->get();
+        } else {
+            $frame_configs = $frame_configs->where('name', PhotoalbumFrameConfig::hidden_folder_ids);
+        }
+
+        $hidden_folder_ids_by_frame = [];
+        foreach ($frame_configs as $frame_config) {
+            $hidden_folder_ids = self::parseHiddenFolderIds($frame_config->value);
+            if (empty($hidden_folder_ids)) {
+                continue;
+            }
+
+            $frame_id = (int) $frame_config->frame_id;
+            $hidden_folder_ids_by_frame[$frame_id] = array_values(array_unique(array_merge(
+                $hidden_folder_ids_by_frame[$frame_id] ?? [],
+                $hidden_folder_ids
+            )));
+        }
+
+        return $hidden_folder_ids_by_frame;
+    }
+
+    /**
+     * フレームごとの非表示アルバムIDを、配下コンテンツIDへ展開する。
+     */
+    private static function resolveHiddenContentIdsByFrame(array $hidden_folder_ids_by_frame): array
+    {
+        if (empty($hidden_folder_ids_by_frame)) {
+            return [];
+        }
+
+        $hidden_folder_ids = array_values(array_unique(array_merge(...array_values($hidden_folder_ids_by_frame))));
+        $hidden_folders = PhotoalbumContent::whereIn('id', $hidden_folder_ids)
+            ->where('is_folder', PhotoalbumContent::is_folder_on)
+            ->whereNull('deleted_at')
+            ->get(['id', 'photoalbum_id', '_lft', '_rgt'])
+            ->keyBy('id');
+
+        $hidden_content_ids_by_frame = [];
+        foreach ($hidden_folder_ids_by_frame as $frame_id => $folder_ids) {
+            $content_ids = [];
+            foreach ($folder_ids as $folder_id) {
+                $folder = $hidden_folders->get($folder_id);
+                if (empty($folder)) {
+                    continue;
+                }
+
+                $content_ids = array_merge($content_ids, self::getDescendantPhotoalbumContentIds($folder));
+            }
+
+            if (!empty($content_ids)) {
+                $hidden_content_ids_by_frame[$frame_id] = array_values(array_unique($content_ids));
+            }
+        }
+
+        return $hidden_content_ids_by_frame;
+    }
+
+    /**
+     * パイプ区切りの非表示アルバムIDを配列に変換する。
+     */
+    private static function parseHiddenFolderIds($value): array
+    {
+        $ids = explode(FrameConfig::CHECKBOX_SEPARATOR, (string) $value);
+        $ids = array_map('intval', $ids);
+        $ids = array_filter($ids, static function ($id) {
+            return $id > 0;
+        });
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * 非表示アルバム自身と配下コンテンツのIDを取得する。
+     */
+    private static function getDescendantPhotoalbumContentIds(PhotoalbumContent $folder): array
+    {
+        return PhotoalbumContent::where('photoalbum_id', $folder->photoalbum_id)
+            ->whereNotNull('parent_id')
+            ->whereNull('deleted_at')
+            ->where('_lft', '>=', $folder->_lft)
+            ->where('_rgt', '<=', $folder->_rgt)
+            ->pluck('id')
+            ->all();
+    }
+
+    /**
+     * フレームごとの非表示コンテンツIDを新着取得条件から除外する。
+     */
+    private static function excludeHiddenContentIdsByFrame($query, array $hidden_content_ids_by_frame): void
+    {
+        if (empty($hidden_content_ids_by_frame)) {
+            return;
+        }
+
+        $query->where(function ($query) use ($hidden_content_ids_by_frame) {
+            foreach ($hidden_content_ids_by_frame as $frame_id => $content_ids) {
+                if (empty($content_ids)) {
+                    continue;
+                }
+
+                $query->where(function ($query) use ($frame_id, $content_ids) {
+                    $query->where('frames.id', '!=', $frame_id)
+                          ->orWhereNotIn('photoalbum_contents.id', $content_ids);
+                });
+            }
+        });
     }
 
     /* 画面アクション関数 */
@@ -159,6 +328,44 @@ class PhotoalbumsPlugin extends UserPluginBase
             'parent_id' =>  $parent->id,
             'covers' => $covers,
         ], $index_display_items));
+    }
+
+    /**
+     * 新着情報からフォトアルバムコンテンツへ遷移する
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $photoalbum_content_id フォトアルバムコンテンツID
+     */
+    public function show($request, $page_id, $frame_id, $photoalbum_content_id)
+    {
+        $photoalbum = $this->getPluginBucket($this->frame->bucket_id);
+        $photoalbum_content = PhotoalbumContent::where('id', $photoalbum_content_id)
+            ->where('photoalbum_id', $photoalbum->id)
+            ->first();
+
+        if (empty($photoalbum_content)) {
+            abort(404, 'コンテンツがありません。');
+        }
+
+        $hidden_folder_ids = $this->getHiddenFolderIds($this->frame_configs);
+        if (!empty($hidden_folder_ids)) {
+            $ancestors = PhotoalbumContent::ancestorsAndSelf($photoalbum_content->id);
+            if ($this->isHiddenPhotoalbumContent($photoalbum_content, $hidden_folder_ids, $ancestors->keyBy('id'))) {
+                abort(404, 'コンテンツがありません。');
+            }
+        }
+
+        if ($photoalbum_content->is_folder == PhotoalbumContent::is_folder_on) {
+            return $this->index($request, $page_id, $frame_id, $photoalbum_content->id);
+        }
+
+        if ($photoalbum_content->isVideo($photoalbum_content->mimetype)) {
+            return $this->detail($request, $page_id, $frame_id, $photoalbum_content->id);
+        }
+
+        return $this->index($request, $page_id, $frame_id, $photoalbum_content->parent_id);
     }
 
     /**
