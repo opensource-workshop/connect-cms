@@ -308,14 +308,8 @@
                     </td>
                     <td><a href="{{url('/')}}/manage/uploadfile/edit/{{$upload->id}}" id="edit_{{$loop->iteration}}"><i class="far fa-edit"></i></a></td>
                     <td>{{$upload->id}}</td>
-                    <td>
-                        <a href="{{url('/')}}/file/{{$upload->id}}" target="_blank">
-                            {{$upload->client_original_name}}
-                            @if ($upload->is_image)
-                                {{-- 画像ファイルの場合、サムネイル画像を表示 --}}
-                                <img src="{{url('/')}}/file/{{ $upload->id }}" class="w-10" loading="lazy">
-                            @endif
-                        </a>
+                    <td class="uploadfile-file-cell">
+                        @include('plugins.manage.uploadfile.upload_thumbnail', ['upload' => $upload])
                     </td>
                     <td>{{$upload->getFormatSize()}}</td>
                     <td>{{$upload->created_at}}</td>
@@ -433,6 +427,21 @@
 
         // ツールチップの初期化
         $('[data-toggle="tooltip"]').tooltip();
+
+        $('.uploadfile-thumbnail-link[data-toggle="popover"]').popover({
+            html: true,
+            trigger: 'hover focus',
+            container: 'body',
+            placement: 'auto',
+            template: '<div class="popover uploadfile-image-popover" role="tooltip"><div class="arrow"></div><h3 class="popover-header"></h3><div class="popover-body"></div></div>',
+            content: function() {
+                return $('<img>', {
+                    src: $(this).data('preview-src'),
+                    alt: $(this).data('preview-alt'),
+                    class: 'uploadfile-popover-image',
+                }).prop('outerHTML');
+            },
+        });
     });
 </script>
 @endsection

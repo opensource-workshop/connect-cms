@@ -1,0 +1,63 @@
+.uploadfile-file-cell {
+  min-width: 18rem;
+  white-space: normal;
+}
+
+.uploadfile-file-content {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.uploadfile-file-name {
+  word-break: break-word;
+}
+
+.uploadfile-thumbnail-link {
+  align-items: center;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 80px;
+  justify-content: center;
+  padding: 2px;
+  width: 80px;
+}
+
+.uploadfile-thumbnail-link:hover,
+.uploadfile-thumbnail-link:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: 0;
+}
+
+.uploadfile-thumbnail {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.popover.uploadfile-image-popover {
+  max-width: 340px;
+}
+
+.uploadfile-popover-image {
+  display: block;
+  max-height: 240px;
+  max-width: 320px;
+  object-fit: contain;
+}
+
+@media (max-width: 575.98px) {
+  .uploadfile-file-content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .uploadfile-thumbnail-link {
+    height: 72px;
+    width: 72px;
+  }
+}
