@@ -3,10 +3,12 @@
 namespace Tests\Feature\Plugins\User\Whatsnews;
 
 use App\Enums\ContentOpenType;
+use App\Enums\PhotoalbumFrameConfig;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
+use App\Models\Core\FrameConfig;
 use App\Models\User\Cabinets\Cabinet;
 use App\Models\User\Cabinets\CabinetContent;
 use App\Models\User\Calendars\Calendar;
@@ -121,6 +123,60 @@ class WhatsnewsTargetPluginsFeatureTest extends TestCase
         $this->assertNotInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
         $this->assertSame('plugins.user.photoalbums.default.index', $response->getName());
         $this->assertTrue($response->getData()['photoalbum_image_items']->contains('id', $content->id));
+    }
+
+    /**
+     * フォトアルバムの非表示アルバムと配下の写真が、新着情報に表示されないこと。
+     */
+    public function testPhotoalbumWhatsnewRowsExcludeHiddenFolderContents(): void
+    {
+        [$page, $bucket, $frame] = $this->createPluginFrame('photoalbums');
+
+        $photoalbum = Photoalbum::create([
+            'bucket_id' => $bucket->id,
+            'name' => 'Test Photoalbum',
+            'image_upload_max_size' => 1024,
+            'image_upload_max_px' => 1024,
+            'video_upload_max_size' => 1024,
+        ]);
+
+        $root = PhotoalbumContent::create([
+            'photoalbum_id' => $photoalbum->id,
+            'upload_id' => null,
+            'poster_upload_id' => null,
+            'name' => $photoalbum->name,
+            'is_folder' => PhotoalbumContent::is_folder_on,
+            'parent_id' => null,
+        ]);
+
+        $hidden_folder = $root->children()->create([
+            'photoalbum_id' => $photoalbum->id,
+            'upload_id' => null,
+            'poster_upload_id' => null,
+            'name' => '非表示アルバム',
+            'is_folder' => PhotoalbumContent::is_folder_on,
+            'is_cover' => PhotoalbumContent::is_cover_off,
+        ]);
+
+        $this->createPhotoalbumImageContent($page, $root, '公開写真', '公開写真の説明です。');
+        $this->createPhotoalbumImageContent($page, $hidden_folder, '非表示写真', '非表示写真の説明です。');
+
+        FrameConfig::create([
+            'frame_id' => $frame->id,
+            'name' => PhotoalbumFrameConfig::hidden_folder_ids,
+            'value' => (string) $hidden_folder->id,
+        ]);
+
+        [$photoalbum_query] = PhotoalbumsPlugin::getWhatsnewArgs();
+
+        $post_titles = $photoalbum_query
+            ->where('frames.id', $frame->id)
+            ->pluck('post_title')
+            ->all();
+
+        $this->assertContains('公開写真', $post_titles);
+        $this->assertNotContains('非表示アルバム', $post_titles);
+        $this->assertNotContains('非表示写真', $post_titles);
     }
 
     /**
@@ -261,6 +317,37 @@ class WhatsnewsTargetPluginsFeatureTest extends TestCase
 
         return $root->children()->create([
             'photoalbum_id' => $photoalbum->id,
+            'upload_id' => $upload->id,
+            'poster_upload_id' => null,
+            'name' => $name,
+            'description' => $description,
+            'is_folder' => PhotoalbumContent::is_folder_off,
+            'is_cover' => PhotoalbumContent::is_cover_off,
+            'mimetype' => 'image/jpeg',
+        ]);
+    }
+
+    /**
+     * 指定したアルバム配下に新着対象の画像を作成する。
+     */
+    private function createPhotoalbumImageContent(
+        Page $page,
+        PhotoalbumContent $parent,
+        string $name,
+        string $description
+    ): PhotoalbumContent {
+        $upload = Uploads::create([
+            'client_original_name' => "{$name}.jpg",
+            'mimetype' => 'image/jpeg',
+            'extension' => 'jpg',
+            'size' => 123,
+            'plugin_name' => 'photoalbums',
+            'page_id' => $page->id,
+            'temporary_flag' => 0,
+        ]);
+
+        return $parent->children()->create([
+            'photoalbum_id' => $parent->photoalbum_id,
             'upload_id' => $upload->id,
             'poster_upload_id' => null,
             'name' => $name,
