@@ -695,4 +695,100 @@ class MicrosoftGraphTransportTest extends TestCase
         // 添付ファイルがない場合はattachmentsキーが存在しない
         $this->assertArrayNotHasKey('attachments', $graph_message);
     }
+
+    /**
+     * 本文取得テスト：HTML添付ファイルは本文として採用されない
+     *
+     * text/html な Swift_Attachment が children に含まれていても、
+     * 本文パート（text/plain の MimePart）が優先されること。
+     */
+    public function testGetBodyIgnoresHtmlAttachment(): void
+    {
+        // 本文パート（text/plain）
+        $text_part = $this->createMock(\Swift_Mime_MimePart::class);
+        $text_part->method('getContentType')->willReturn('text/plain');
+        $text_part->method('getBody')->willReturn('テキスト本文');
+
+        // 添付ファイル（text/html）
+        $html_attachment = $this->createMock(\Swift_Attachment::class);
+        $html_attachment->method('getContentType')->willReturn('text/html');
+        $html_attachment->method('getBody')->willReturn('<html>添付HTMLの中身</html>');
+
+        // メッセージのモック（本文 + HTML添付）
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getBody')->willReturn('デフォルト本文');
+        $message->method('getChildren')->willReturn([$text_part, $html_attachment]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('getBody');
+        $method->setAccessible(true);
+
+        $body = $method->invoke($this->transport, $message);
+
+        // HTML添付の中身ではなく、本文パートのテキストが返ること
+        $this->assertEquals('テキスト本文', $body);
+    }
+
+    /**
+     * 本文取得テスト：テキスト添付ファイルは本文として採用されない
+     *
+     * text/plain な Swift_Attachment が children に含まれていても、
+     * 本文パート（text/html の MimePart）が優先されること。
+     */
+    public function testGetBodyIgnoresTextAttachment(): void
+    {
+        // 本文パート（text/html）
+        $html_part = $this->createMock(\Swift_Mime_MimePart::class);
+        $html_part->method('getContentType')->willReturn('text/html');
+        $html_part->method('getBody')->willReturn('<p>HTML本文</p>');
+
+        // 添付ファイル（text/plain）
+        $text_attachment = $this->createMock(\Swift_Attachment::class);
+        $text_attachment->method('getContentType')->willReturn('text/plain');
+        $text_attachment->method('getBody')->willReturn('添付テキストの中身');
+
+        // メッセージのモック（本文 + テキスト添付）
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getBody')->willReturn('デフォルト本文');
+        $message->method('getChildren')->willReturn([$html_part, $text_attachment]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('getBody');
+        $method->setAccessible(true);
+
+        $body = $method->invoke($this->transport, $message);
+
+        // テキスト添付の中身ではなく、本文パートのHTMLが返ること
+        $this->assertEquals('<p>HTML本文</p>', $body);
+    }
+
+    /**
+     * 本文取得テスト：children が添付ファイルのみの場合はデフォルト本文を返す
+     */
+    public function testGetBodyReturnsDefaultWhenOnlyAttachments(): void
+    {
+        // 添付ファイル1（text/html）
+        $html_attachment = $this->createMock(\Swift_Attachment::class);
+        $html_attachment->method('getContentType')->willReturn('text/html');
+        $html_attachment->method('getBody')->willReturn('<html>添付HTML</html>');
+
+        // 添付ファイル2（text/plain）
+        $text_attachment = $this->createMock(\Swift_Attachment::class);
+        $text_attachment->method('getContentType')->willReturn('text/plain');
+        $text_attachment->method('getBody')->willReturn('添付テキスト');
+
+        // メッセージのモック（本文 MimePart なし、添付のみ）
+        $message = $this->createMock(Swift_Mime_SimpleMessage::class);
+        $message->method('getBody')->willReturn('シングルパート本文');
+        $message->method('getChildren')->willReturn([$html_attachment, $text_attachment]);
+
+        $reflection = new \ReflectionClass($this->transport);
+        $method = $reflection->getMethod('getBody');
+        $method->setAccessible(true);
+
+        $body = $method->invoke($this->transport, $message);
+
+        // 添付の中身ではなく、メッセージ本体（デフォルト本文）が返ること
+        $this->assertEquals('シングルパート本文', $body);
+    }
 }
