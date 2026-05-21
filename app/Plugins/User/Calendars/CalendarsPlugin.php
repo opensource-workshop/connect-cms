@@ -502,8 +502,7 @@ class CalendarsPlugin extends UserPluginBase
             return new Collection([$post]);
         }
 
-        $query = CalendarPost::where('calendar_id', $post->calendar_id)
-            ->where('repeat_group_id', $post->repeat_group_id)
+        $query = $this->getRepeatPostsQuery($post)
             ->orderBy('start_date')
             ->orderBy('id');
 
@@ -520,6 +519,17 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         return $query->get();
+    }
+
+    /**
+     * 権限範囲内の同一繰り返し予定を取得するクエリを返す。
+     */
+    private function getRepeatPostsQuery(CalendarPost $post)
+    {
+        $query = CalendarPost::where('calendar_id', $post->calendar_id)
+            ->where('repeat_group_id', $post->repeat_group_id);
+
+        return $this->appendAuthWhereBase($query, 'calendar_posts');
     }
 
     /**
@@ -722,8 +732,7 @@ class CalendarsPlugin extends UserPluginBase
             return [$post->id];
         }
 
-        $query = CalendarPost::where('calendar_id', $post->calendar_id)
-            ->where('repeat_group_id', $post->repeat_group_id);
+        $query = $this->getRepeatPostsQuery($post);
 
         if ($repeat_delete_type === 'after') {
             $query->where(function ($query) use ($post) {

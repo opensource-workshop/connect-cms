@@ -4,11 +4,14 @@ namespace Tests\Feature\Plugins\User\Calendars;
 
 use App\Enums\StatusType;
 use App\Models\Common\Buckets;
+use App\Models\Common\BucketsRoles;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Core\UsersRoles;
 use App\Models\User\Calendars\Calendar;
 use App\Models\User\Calendars\CalendarFrame;
 use App\Models\User\Calendars\CalendarPost;
+use App\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Feature\Plugins\User\DefaultBucketRolesFeatureTestTrait;
 use Tests\TestCase;
@@ -320,6 +323,81 @@ class CalendarsRepeatPostsFeatureTest extends TestCase
     }
 
     /**
+     * 繰り返し予定の一括編集では、同じグループでも利用者の権限外の予定を更新しないこと。
+     */
+    public function testUpdateRepeatPostsAfterDoesNotUpdateUnauthorizedPosts(): void
+    {
+        $reporter = $this->createReporterUser();
+        [$page, $frame, $calendar] = $this->createCalendarFrame();
+        $this->allowReporterToPost($calendar);
+        $posts = $this->createMixedPermissionRepeatPosts($calendar, $reporter);
+
+        $response = $this->actingAs($reporter)->post(
+            "/redirect/plugin/calendars/save/{$page->id}/{$frame->id}/{$posts['target']->id}",
+            [
+                'redirect_path' => '/',
+                'status' => StatusType::active,
+                'allday_flag' => 0,
+                'title' => '権限内だけ変更',
+                'start_date' => '2026-06-09',
+                'start_time' => '11:00',
+                'end_date' => '2026-06-09',
+                'end_time' => '12:00',
+                'body' => '',
+                'location' => '',
+                'contact' => '',
+                'repeat_edit_type' => 'after',
+            ]
+        );
+
+        $this->assertContains($response->getStatusCode(), [200, 302]);
+        $this->assertDatabaseHas('calendar_posts', [
+            'id' => $posts['target']->id,
+            'title' => '権限内だけ変更',
+            'start_date' => '2026-06-09',
+        ]);
+        $this->assertDatabaseHas('calendar_posts', [
+            'id' => $posts['authorized_future']->id,
+            'title' => '権限内だけ変更',
+            'start_date' => '2026-06-23',
+        ]);
+        $this->assertDatabaseHas('calendar_posts', [
+            'id' => $posts['unauthorized_future']->id,
+            'title' => '権限外の一時保存',
+            'start_date' => '2026-06-15',
+            'status' => StatusType::temporary,
+        ]);
+    }
+
+    /**
+     * 繰り返し予定の一括削除では、同じグループでも利用者の権限外の予定を削除しないこと。
+     */
+    public function testDeleteRepeatPostsAfterDoesNotDeleteUnauthorizedPosts(): void
+    {
+        $reporter = $this->createReporterUser();
+        [$page, $frame, $calendar] = $this->createCalendarFrame();
+        $this->allowReporterToPost($calendar);
+        $posts = $this->createMixedPermissionRepeatPosts($calendar, $reporter);
+
+        $response = $this->actingAs($reporter)->post(
+            "/redirect/plugin/calendars/delete/{$page->id}/{$frame->id}/{$posts['target']->id}",
+            [
+                'redirect_path' => '/',
+                'repeat_delete_type' => 'after',
+            ]
+        );
+
+        $this->assertContains($response->getStatusCode(), [200, 302]);
+        $this->assertSoftDeleted('calendar_posts', ['id' => $posts['target']->id]);
+        $this->assertSoftDeleted('calendar_posts', ['id' => $posts['authorized_future']->id]);
+        $this->assertDatabaseHas('calendar_posts', [
+            'id' => $posts['unauthorized_future']->id,
+            'title' => '権限外の一時保存',
+            'deleted_at' => null,
+        ]);
+    }
+
+    /**
      * 指定フレームに紐づくカレンダーを作成する。
      */
     private function createCalendarFrame(): array
@@ -350,6 +428,36 @@ class CalendarsRepeatPostsFeatureTest extends TestCase
     }
 
     /**
+     * 編集者権限を持つユーザーを作成する。
+     */
+    private function createReporterUser(): User
+    {
+        $user = User::factory()->create();
+
+        UsersRoles::factory()->create([
+            'users_id' => $user->id,
+            'target' => 'base',
+            'role_name' => 'role_reporter',
+            'role_value' => 1,
+        ]);
+
+        return $user;
+    }
+
+    /**
+     * 編集者がカレンダーに投稿できるよう、バケツの投稿権限を付与する。
+     */
+    private function allowReporterToPost(Calendar $calendar): void
+    {
+        BucketsRoles::create([
+            'buckets_id' => $calendar->bucket_id,
+            'role' => 'role_reporter',
+            'post_flag' => 1,
+            'approval_flag' => 0,
+        ]);
+    }
+
+    /**
      * 毎週の繰り返し予定を削除テスト用に作成する。
      */
     private function createWeeklyRepeatPosts($admin, Page $page, Frame $frame): void
@@ -366,6 +474,69 @@ class CalendarsRepeatPostsFeatureTest extends TestCase
                 'repeat_until' => '2026-06-22',
             ])
         );
+    }
+
+    /**
+     * 権限内と権限外の予定が混在する繰り返しグループを作成する。
+     */
+    private function createMixedPermissionRepeatPosts(Calendar $calendar, User $reporter): array
+    {
+        $other_user = User::factory()->create();
+        $repeat_group_id = 'repeat-permission-boundary';
+
+        return [
+            'target' => $this->createCalendarPost($calendar, [
+                'created_id' => $reporter->id,
+                'repeat_group_id' => $repeat_group_id,
+                'title' => '権限内の対象予定',
+                'start_date' => '2026-06-08',
+                'end_date' => '2026-06-08',
+                'status' => StatusType::active,
+            ]),
+            'unauthorized_future' => $this->createCalendarPost($calendar, [
+                'created_id' => $other_user->id,
+                'repeat_group_id' => $repeat_group_id,
+                'title' => '権限外の一時保存',
+                'start_date' => '2026-06-15',
+                'end_date' => '2026-06-15',
+                'status' => StatusType::temporary,
+            ]),
+            'authorized_future' => $this->createCalendarPost($calendar, [
+                'created_id' => $reporter->id,
+                'repeat_group_id' => $repeat_group_id,
+                'title' => '権限内の後続予定',
+                'start_date' => '2026-06-22',
+                'end_date' => '2026-06-22',
+                'status' => StatusType::active,
+            ]),
+        ];
+    }
+
+    /**
+     * 境界条件を検証するため、必要な予定データだけを直接作成する。
+     */
+    private function createCalendarPost(Calendar $calendar, array $overrides): CalendarPost
+    {
+        $post = new CalendarPost();
+        $post->calendar_id = $calendar->id;
+        $post->allday_flag = 0;
+        $post->start_date = '2026-06-01';
+        $post->start_time = '10:00';
+        $post->end_date = '2026-06-01';
+        $post->end_time = '11:00';
+        $post->title = '繰り返し予定';
+        $post->body = '';
+        $post->location = '';
+        $post->contact = '';
+        $post->status = StatusType::active;
+
+        foreach ($overrides as $key => $value) {
+            $post->$key = $value;
+        }
+
+        $post->save();
+
+        return $post;
     }
 
     /**
