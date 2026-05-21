@@ -36,6 +36,7 @@ class CalendarPost extends Model
         'body',
         'location',
         'contact',
+        'repeat_group_id',
     ];
 
     /**
