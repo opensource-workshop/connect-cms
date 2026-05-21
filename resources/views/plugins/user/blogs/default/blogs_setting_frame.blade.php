@@ -21,6 +21,11 @@
     </div>
 @else
 
+    @php
+        $default_display_posted_time = in_array($frame->template, ['titleindex', 'sidetitleindex', 'designbase'], true) ? ShowType::not_show : ShowType::show;
+        $default_posted_at_format = $frame->template == 'designbase' ? BlogPostedAtFormat::slash : BlogPostedAtFormat::japanese;
+    @endphp
+
     {{-- 共通エラーメッセージ 呼び出し --}}
     @include('plugins.common.errors_form_line')
 
@@ -63,7 +68,7 @@
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     @foreach (ShowType::getMembers() as $enum_value => $enum_label)
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_posted_time, ShowType::show) == $enum_value)
+                            @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_display_posted_time, $default_display_posted_time) == $enum_value)
                                 <input type="radio" value="{{$enum_value}}" id="{{BlogFrameConfig::blog_display_posted_time}}_{{$enum_value}}" name="{{BlogFrameConfig::blog_display_posted_time}}" class="custom-control-input" checked="checked">
                             @else
                                 <input type="radio" value="{{$enum_value}}" id="{{BlogFrameConfig::blog_display_posted_time}}_{{$enum_value}}" name="{{BlogFrameConfig::blog_display_posted_time}}" class="custom-control-input">
@@ -80,7 +85,7 @@
                 <div class="{{$frame->getSettingInputClass()}}">
                     <select name="{{BlogFrameConfig::blog_posted_at_format}}" class="form-control col-sm-5 @if ($errors->has(BlogFrameConfig::blog_posted_at_format)) border-danger @endif">
                         @foreach (BlogPostedAtFormat::getMembers() as $enum_value => $enum_label)
-                            <option value="{{$enum_value}}" @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_posted_at_format, BlogPostedAtFormat::japanese) == $enum_value) selected @endif>{{$enum_label}}</option>
+                            <option value="{{$enum_value}}" @if (FrameConfig::getConfigValueAndOld($frame_configs, BlogFrameConfig::blog_posted_at_format, $default_posted_at_format) == $enum_value) selected @endif>{{$enum_label}}</option>
                         @endforeach
                     </select>
                     @include('plugins.common.errors_inline', ['name' => BlogFrameConfig::blog_posted_at_format])

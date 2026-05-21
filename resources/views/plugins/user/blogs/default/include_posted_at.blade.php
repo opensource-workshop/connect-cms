@@ -2,10 +2,11 @@
  * ブログ投稿日時の表示部品。
  *
  * フレーム設定が未保存の場合は、呼び出し元テンプレートの改修前表示に合わせるため、
- * default_display_posted_time で時刻表示の既定値を指定できる。
+ * default_display_posted_time と default_posted_at_format で既定値を指定できる。
 --}}
 @php
-    $posted_at_format = FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_posted_at_format, BlogPostedAtFormat::japanese);
+    $default_posted_at_format = $default_posted_at_format ?? BlogPostedAtFormat::japanese;
+    $posted_at_format = FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_posted_at_format, $default_posted_at_format);
     $default_display_posted_time = $default_display_posted_time ?? ShowType::show;
     $display_posted_time = FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_posted_time, $default_display_posted_time);
 @endphp

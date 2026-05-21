@@ -66,10 +66,24 @@ class BlogPostedAtFormatTest extends TestCase
     public function testPostedAtCanUseTemplateDefaultToHideTime(): void
     {
         $html = $this->renderPostedAt(
-            [
-                BlogFrameConfig::blog_posted_at_format => BlogPostedAtFormat::slash,
-            ],
+            [],
             ShowType::not_show
+        );
+
+        $this->assertStringContainsString('class="blog-posted-at-date">2026年5月20日', $html);
+        $this->assertStringNotContainsString('09:30', strip_tags($html));
+        $this->assertStringNotContainsString('blog-posted-at-time', $html);
+    }
+
+    /**
+     * テンプレート側が日付形式も既定にしている場合は、設定未保存でも既存テンプレートの表示形式を保つこと。
+     */
+    public function testPostedAtCanUseTemplateDefaultFormat(): void
+    {
+        $html = $this->renderPostedAt(
+            [],
+            ShowType::not_show,
+            BlogPostedAtFormat::slash
         );
 
         $this->assertStringContainsString('class="blog-posted-at-date">2026/05/20', $html);
@@ -94,7 +108,7 @@ class BlogPostedAtFormatTest extends TestCase
     /**
      * 表示部品に渡すフレーム設定を組み立てて、投稿日時のHTMLを返す。
      */
-    private function renderPostedAt(array $configs, ?string $default_display_posted_time = null): string
+    private function renderPostedAt(array $configs, ?string $default_display_posted_time = null, ?string $default_posted_at_format = null): string
     {
         $frame_configs = new Collection();
         foreach ($configs as $name => $value) {
@@ -107,6 +121,9 @@ class BlogPostedAtFormatTest extends TestCase
         ];
         if (!is_null($default_display_posted_time)) {
             $view_data['default_display_posted_time'] = $default_display_posted_time;
+        }
+        if (!is_null($default_posted_at_format)) {
+            $view_data['default_posted_at_format'] = $default_posted_at_format;
         }
 
         return view('plugins.user.blogs.default.include_posted_at', $view_data)->render();
