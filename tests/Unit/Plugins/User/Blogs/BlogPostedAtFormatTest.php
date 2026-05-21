@@ -96,6 +96,10 @@ class BlogPostedAtFormatTest extends TestCase
      */
     public function testPostedAtCanBeDisplayedWithJapaneseEraFormat(): void
     {
+        if (!class_exists(\IntlDateFormatter::class)) {
+            $this->markTestSkipped('IntlDateFormatter が利用できない環境では和暦表示を検証しない。');
+        }
+
         $html = $this->renderPostedAt([
             BlogFrameConfig::blog_posted_at_format => BlogPostedAtFormat::japanese_era,
             BlogFrameConfig::blog_display_posted_time => ShowType::show,
