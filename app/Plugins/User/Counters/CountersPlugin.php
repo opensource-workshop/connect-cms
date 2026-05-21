@@ -137,9 +137,12 @@ class CountersPlugin extends UserPluginBase
 
                     if (! in_array($counter->id, $counter_histories_array)) {
                         // カウントアップ
-                        $today_count->day_count++;
-                        $today_count->total_count++;
-                        $today_count->save();
+                        CounterCount::where('id', $today_count->id)->update([
+                            'day_count' => DB::raw('day_count + 1'),
+                            'total_count' => DB::raw('total_count + 1'),
+                            'updated_at' => now(),
+                        ]);
+                        $today_count = CounterCount::getCount($counter->id);
 
                         // session = カウンターid & 区切り文字
                         $counter_histories = $counter_histories . ':' . $counter->id;
