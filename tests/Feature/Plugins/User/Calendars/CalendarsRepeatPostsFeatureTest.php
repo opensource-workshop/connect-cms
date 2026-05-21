@@ -293,6 +293,33 @@ class CalendarsRepeatPostsFeatureTest extends TestCase
     }
 
     /**
+     * 存在しない予定IDを指定した更新では、新しい予定を作らないこと。
+     */
+    public function testUpdateMissingPostIdDoesNotCreatePost(): void
+    {
+        $admin = $this->createContentAdminUser();
+        [$page, $frame, $calendar] = $this->createCalendarFrame();
+
+        $response = $this->actingAs($admin)->post(
+            "/redirect/plugin/calendars/save/{$page->id}/{$frame->id}/999999",
+            $this->makePayload([
+                'title' => '存在しない予定の更新',
+                'start_date' => '2026-06-01',
+                'start_time' => '10:00',
+                'end_date' => '2026-06-01',
+                'end_time' => '11:00',
+            ])
+        );
+
+        $this->assertContains($response->getStatusCode(), [200, 302]);
+        $this->assertSame(0, CalendarPost::where('calendar_id', $calendar->id)->count());
+        $this->assertDatabaseMissing('calendar_posts', [
+            'id' => 999999,
+            'title' => '存在しない予定の更新',
+        ]);
+    }
+
+    /**
      * 指定フレームに紐づくカレンダーを作成する。
      */
     private function createCalendarFrame(): array

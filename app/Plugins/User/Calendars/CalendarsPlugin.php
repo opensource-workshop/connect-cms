@@ -426,7 +426,7 @@ class CalendarsPlugin extends UserPluginBase
         $base_post = null;
         if (!empty($post_id)) {
             $base_post = $this->getPost($post_id);
-            if (empty($base_post->id)) {
+            if (empty($base_post->id) || !$base_post->exists) {
                 return;
             }
         }
@@ -697,7 +697,7 @@ class CalendarsPlugin extends UserPluginBase
         // id がある場合、データを削除
         if ($post_id) {
             $post = $this->getPost($post_id);
-            if (empty($post->id)) {
+            if (empty($post->id) || !$post->exists) {
                 return;
             }
 
