@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\UserableNohistory;
 
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 
 class CounterCount extends Model
 {
@@ -37,15 +38,17 @@ class CounterCount extends Model
      */
     public static function getCount($counter_id, $counted_at = null)
     {
+        $counted_at = (new Carbon($counted_at))->format('Y-m-d');
+        $yesterday_at = (new Carbon($counted_at))->subDay()->format('Y-m-d');
+
         $counter_count = CounterCount::select('counter_counts.*', 'yesterday_counts.day_count as yesterday_count')
                 ->where('counter_counts.counter_id', $counter_id)
-                ->where('counter_counts.counted_at', (new Carbon($counted_at))->format('Y-m-d'))
-                ->leftJoin('counter_counts as yesterday_counts', function ($join) use ($counted_at) {
+                ->where('counter_counts.counted_at', $counted_at)
+                ->leftJoin('counter_counts as yesterday_counts', function ($join) use ($yesterday_at) {
                     $join->on('yesterday_counts.counter_id', '=', 'counter_counts.counter_id')
-                            ->where('yesterday_counts.counted_at', (new Carbon($counted_at))->subDay()->format('Y-m-d'));
+                            ->where('yesterday_counts.counted_at', $yesterday_at)
+                            ->whereNull('yesterday_counts.deleted_at');
                 })
-                // yesterday_counts の updated_at で降順（新しい順）に並び替え
-                ->orderBy('yesterday_counts.updated_at', 'desc')
                 ->first();
 
         return $counter_count;
@@ -56,29 +59,40 @@ class CounterCount extends Model
      */
     public static function getCountOrCreate($counter_id)
     {
+        $counted_at = now()->format('Y-m-d');
+
         // 今日のカウント取得
-        $today_count = CounterCount::getCount($counter_id);
+        $today_count = CounterCount::getCount($counter_id, $counted_at);
 
         // 今日のカウントない
         if (is_null($today_count)) {
             // 昨日以前の最新日データを取得
-            $before_counted_at = CounterCount::where('counter_id', $counter_id)->max('counted_at');
-
             $before_count = CounterCount::where('counter_id', $counter_id)
-                    ->where('counted_at', $before_counted_at)
+                    ->where('counted_at', '<', $counted_at)
+                    ->orderBy('counted_at', 'desc')
                     ->first();
-            $before_count = $before_count ?? new CounterCount();
 
             // 今日カウント作成
-            $today_count = CounterCount::create([
-                'counter_id' => $counter_id,
-                'counted_at' => now()->format('Y-m-d'),
-                'day_count' => 0,
-                'total_count' => $before_count->total_count,
-            ]);
+            try {
+                CounterCount::firstOrCreate(
+                    [
+                        'counter_id' => $counter_id,
+                        'counted_at' => $counted_at,
+                    ],
+                    [
+                        'day_count' => 0,
+                        'total_count' => (int)($before_count->total_count ?? 0),
+                    ]
+                );
+            } catch (QueryException $e) {
+                // 並行アクセスで先に当日行が作られた場合は、作成済みの行を再取得する。
+                if (is_null(CounterCount::getCount($counter_id, $counted_at))) {
+                    throw $e;
+                }
+            }
 
             // 今日のカウント再取得
-            $today_count = CounterCount::getCount($counter_id);
+            $today_count = CounterCount::getCount($counter_id, $counted_at);
         }
 
         return $today_count;
