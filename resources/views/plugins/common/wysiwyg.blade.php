@@ -464,6 +464,7 @@
                     input.value = '';
 
                     input.removeAttribute('accept');
+                    input.removeAttribute('multiple');
 
                     input.onchange = function () {
                         var file = this.files[0];
@@ -520,6 +521,7 @@
                 var input = document.getElementById('cc-file-upload-file-{{$frame_id}}');
                 // 他でも使いまわすため、ここでクリア
                 input.value = '';
+                input.removeAttribute('multiple');
 
                 // console.log(meta.fieldname);
 
@@ -528,6 +530,8 @@
 
                 // image plugin
                 if (meta.fieldname == 'src') {
+                    input.setAttribute('multiple', 'multiple');
+
                     // 画像はimages_upload_handlerが動作するため、サンプル通りにblobCacheに追加する. (blobCacheに入れるとなんでアップロードできるか詳細わからなかった。)
                     /*
                     Note: In modern browsers input[type="file"] is functional without
@@ -537,38 +541,68 @@
                     once you do not need it anymore.
                     */
                     input.onchange = function () {
-                        var file = this.files[0];
+                        var files = Array.prototype.slice.call(this.files);
+                        var editor = tinymce.activeEditor;
 
-                        var reader = new FileReader();
-                        reader.onload = function () {
-                            /*
-                            Note: Now we need to register the blob in TinyMCEs image blob
-                            registry. In the next release this part hopefully won't be
-                            necessary, as we are looking to handle it internally.
-                            */
-                            var id = 'blobid' + (new Date()).getTime();
-                            var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
-                            var base64 = reader.result.split(',')[1];
-                            var blobInfo = blobCache.create(id, file, base64);
-                            blobCache.add(blobInfo);
+                        editor.cc_multiple_image_uploads = [];
+                        editor.cc_multiple_image_first_alt = '';
 
-                            // 拡張子取り除き
-                            var file_name = new String(file.name).substring(file.name.lastIndexOf('/') + 1);
-                            if (file_name.lastIndexOf(".") != -1) {
-                                file_name = file_name.substring(0, file_name.lastIndexOf("."));
-                            }
+                        if (files.length === 0) {
+                            return;
+                        }
+
+                        var image_promises = files.map(function(file, index) {
+                            return new Promise(function(resolve, reject) {
+                                var reader = new FileReader();
+                                reader.onload = function () {
+                                    /*
+                                    Note: Now we need to register the blob in TinyMCEs image blob
+                                    registry. In the next release this part hopefully won't be
+                                    necessary, as we are looking to handle it internally.
+                                    */
+                                    var id = 'blobid' + (new Date()).getTime() + '-' + index;
+                                    var blobCache = editor.editorUpload.blobCache;
+                                    var base64 = reader.result.split(',')[1];
+                                    var blobInfo = blobCache.create(id, file, base64);
+                                    blobCache.add(blobInfo);
+
+                                    // 拡張子取り除き
+                                    var file_name = new String(file.name).substring(file.name.lastIndexOf('/') + 1);
+                                    if (file_name.lastIndexOf(".") != -1) {
+                                        file_name = file_name.substring(0, file_name.lastIndexOf("."));
+                                    }
+
+                                    resolve({
+                                        src: blobInfo.blobUri(),
+                                        alt: file_name
+                                    });
+                                };
+                                reader.onerror = function () {
+                                    reject(reader.error);
+                                };
+                                reader.readAsDataURL(file);
+                            });
+                        });
+
+                        Promise.all(image_promises).then(function(images) {
+                            editor.cc_multiple_image_uploads = images.slice(1);
+                            editor.cc_multiple_image_first_alt = images.length > 1 ? images[0].alt : '';
 
                             /* call the callback and populate the Title field with the file name */
                             // callback(blobInfo.blobUri(), { title: file.name });
                             // callback(blobInfo.blobUri(), { alt: file.name });
-                            callback(blobInfo.blobUri(), { alt: file_name });
+                            callback(images[0].src, { alt: images[0].alt });
                             // callback(file.name);
-                        };
-                        reader.readAsDataURL(file);
+                        }).catch(function(error) {
+                            console.error('Image file read failed:', error);
+                            editor.cc_multiple_image_uploads = [];
+                            editor.cc_multiple_image_first_alt = '';
+                        });
                     };
                 }
                 // media plugin
                 else if (meta.fieldname == 'poster') {
+                    input.removeAttribute('multiple');
                     // console.log('media');
 
                     // 動画のサムネイルはimages_upload_handlerが動作しないため、このタイミングでアップロードする
@@ -627,6 +661,7 @@
                 var input = document.getElementById('cc-file-upload-file-{{$frame_id}}');
                 // 他でも使いまわすため、ここでクリア
                 input.value = '';
+                input.removeAttribute('multiple');
 
                 input.setAttribute('accept', '.mp4, .mp3');
 
@@ -814,9 +849,6 @@
             formData.append('plugin_name', tinymce.activeEditor.options.get('cc_config').plugin_name);
 
             xhr.send(formData);
-
-            // クリア
-            document.getElementById('cc-resized-image-size-' + frame_id).value = '';
         }),
 
         setup: function(editor) {
@@ -866,6 +898,13 @@
                     // リサイズ画像サイズをinput type=textに保持
                     document.getElementById('cc-resized-image-size-' + frame_id).value = event.value.resize;
                 }
+            });
+
+            editor.on('ccImageUploadComplete', function () {
+                var frame_id = editor.options.get('cc_config').frame_id;
+
+                // リサイズ画像サイズをクリア
+                document.getElementById('cc-resized-image-size-' + frame_id).value = '';
             });
 
             // bugfix: IE11でウィジウィグが動作しないバグ修正
