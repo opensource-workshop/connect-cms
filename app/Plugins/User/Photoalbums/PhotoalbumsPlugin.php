@@ -514,6 +514,48 @@ class PhotoalbumsPlugin extends UserPluginBase
     }
 
     /**
+     * カスタム順の初期化に使える並び順を返す。
+     */
+    private function getManualSortInitializeOptions(): array
+    {
+        $sort_options = PhotoalbumSort::getMembers();
+        unset($sort_options[PhotoalbumSort::manual_order]);
+
+        return $sort_options;
+    }
+
+    /**
+     * カスタム順の初期化に使える並び順か判定する。
+     */
+    private function isManualSortInitializeKey(?string $sort_key): bool
+    {
+        return array_key_exists((string) $sort_key, $this->getManualSortInitializeOptions());
+    }
+
+    /**
+     * 指定した並び順でカスタム順の表示順を再採番する。
+     */
+    private function initializeManualSortSequence(Photoalbum $photoalbum, string $target, string $sort_key): void
+    {
+        if (!$this->isManualSortInitializeKey($sort_key)) {
+            return;
+        }
+
+        $items = $this->getSortedPhotoalbumItemsByTarget($photoalbum->id, $target, $sort_key, $sort_key);
+
+        foreach ($items->groupBy('parent_id') as $siblings) {
+            $sequence = 1;
+            foreach ($siblings as $sibling) {
+                if ($sibling->display_sequence != $sequence) {
+                    $sibling->display_sequence = $sequence;
+                    $sibling->save();
+                }
+                $sequence++;
+            }
+        }
+    }
+
+    /**
      * 親配下の表示可能コンテンツ（対象種別）を並び順付きクエリで取得する。
      */
     private function getSortedVisibleItemsQueryByTarget(
@@ -2191,6 +2233,7 @@ class PhotoalbumsPlugin extends UserPluginBase
             'sort_file' => $sort_file,
             'sorted_children_map' => $sorted_children_map,
             'focus_open_ids' => $focus_open_ids,
+            'manual_sort_initialize_options' => $this->getManualSortInitializeOptions(),
         ]);
     }
 
@@ -2237,11 +2280,15 @@ class PhotoalbumsPlugin extends UserPluginBase
             'description_list_length' => ['nullable', 'integer', 'min:1'],
             'load_more_use_flag' => ['required', Rule::in(\App\Enums\UseType::getMemberKeys())],
             'load_more_count' => ['nullable', 'integer', 'min:1', 'max:' . $max_load_more_limit],
+            'manual_sort_initialize_folder' => ['nullable', Rule::in(array_keys($this->getManualSortInitializeOptions()))],
+            'manual_sort_initialize_file' => ['nullable', Rule::in(array_keys($this->getManualSortInitializeOptions()))],
         ]);
         $validator->setAttributeNames([
             'description_list_length' => PhotoalbumFrameConfig::enum['description_list_length'],
             'load_more_use_flag' => PhotoalbumFrameConfig::enum['load_more_use_flag'],
             'load_more_count' => PhotoalbumFrameConfig::enum['load_more_count'],
+            'manual_sort_initialize_folder' => 'アルバムのカスタム順初期化',
+            'manual_sort_initialize_file' => '写真のカスタム順初期化',
         ]);
 
         // エラーがあった場合は入力画面に戻る。
@@ -2249,8 +2296,23 @@ class PhotoalbumsPlugin extends UserPluginBase
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // フレーム設定保存
-        $this->saveFrameConfigs($request, $frame_id, PhotoalbumFrameConfig::getMemberKeys());
+        DB::transaction(function () use ($request, $frame_id) {
+            // フレーム設定保存
+            $this->saveFrameConfigs($request, $frame_id, PhotoalbumFrameConfig::getMemberKeys());
+
+            $photoalbum = $this->getPluginBucket($this->getBucketId());
+            if (empty($photoalbum->id)) {
+                return;
+            }
+
+            if ($request->sort_folder === PhotoalbumSort::manual_order && !empty($request->manual_sort_initialize_folder)) {
+                $this->initializeManualSortSequence($photoalbum, 'folder', $request->manual_sort_initialize_folder);
+            }
+            if ($request->sort_file === PhotoalbumSort::manual_order && !empty($request->manual_sort_initialize_file)) {
+                $this->initializeManualSortSequence($photoalbum, 'image', $request->manual_sort_initialize_file);
+            }
+        });
+
         // 更新したので、frame_configsを設定しなおす
         $this->refreshFrameConfigs();
 
