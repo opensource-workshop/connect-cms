@@ -107,6 +107,7 @@ class FormsPlugin extends UserPluginBase
             'editInput',
             'thanks',
             'editSpamFilter',
+            'indexCount',
         ];
         $functions['post'] = [
             'index',
@@ -127,6 +128,7 @@ class FormsPlugin extends UserPluginBase
             'addSpamList',
             'deleteSpamList',
             'addToSpamListFromInput',
+            'indexCount',
         ];
         return $functions;
     }
@@ -3020,12 +3022,16 @@ ORDER BY forms_inputs_id, forms_columns_id
         // カラムの取得
         $columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence', 'asc')->get();
 
+        $search_condition = $this->getListInputsSearchCondition($request);
+
         $inputs_query = FormsInputs::where('forms_id', $form->id);
+        $this->appendListInputsSearchWhere($inputs_query, $search_condition);
         // $inputs_query->orderBy('forms_inputs.id', 'asc');
         $inputs_query->orderBy('forms_inputs.created_at', 'desc');
 
         // データ取得
-        $get_count = 10;
+        $get_count = session("view_count_spectator_{$frame_id}", $this->getListInputsDefaultPerPage());
+        $get_count = $this->normalizeListInputsPerPage($get_count);
         $inputs = $inputs_query->paginate($get_count, ["*"], "frame_{$frame_id}_page");
 
         // 登録データ詳細の取得
@@ -3060,7 +3066,161 @@ ORDER BY forms_inputs_id, forms_columns_id
             'inputs' => $inputs,
             'input_cols' => $input_cols,
             'has_email_map' => $has_email_map,
+            'search_condition' => $search_condition,
+            'per_page_options' => $this->getListInputsPerPageOptions(),
+            'view_count' => $get_count,
         ]);
+    }
+
+    /**
+     * 登録一覧の件数指定
+     */
+    public function indexCount($request, $page_id, $frame_id)
+    {
+        session(["view_count_spectator_{$frame_id}" => $this->normalizeListInputsPerPage($request->input("view_count_spectator"))]);
+
+        // リダイレクト先を指定しないため、画面から渡されたredirect_pathに飛ぶ
+    }
+
+    /**
+     * 登録一覧の検索条件を画面入力から取得する。
+     */
+    private function getListInputsSearchCondition($request): array
+    {
+        return [
+            'keyword' => trim((string)$request->input('keyword', '')),
+            'status' => $this->normalizeListInputsStatus($request->input('status')),
+            'created_from' => $this->normalizeListInputsDate($request->input('created_from')),
+            'created_to' => $this->normalizeListInputsDate($request->input('created_to')),
+        ];
+    }
+
+    /**
+     * 登録一覧の検索条件をクエリに反映する。
+     */
+    private function appendListInputsSearchWhere($inputs_query, array $search_condition): void
+    {
+        if ($search_condition['keyword'] !== '') {
+            $keyword = $this->escapeLikeValue($search_condition['keyword']);
+            $like_keyword = '%' . $keyword . '%';
+
+            $inputs_query->where(function ($query) use ($like_keyword) {
+                $query->where('forms_inputs.number_with_prefix', 'like', $like_keyword)
+                    ->orWhere('forms_inputs.created_name', 'like', $like_keyword)
+                    ->orWhere('forms_inputs.ip_address', 'like', $like_keyword)
+                    ->orWhereExists(function ($sub_query) use ($like_keyword) {
+                        $sub_query->select(DB::raw(1))
+                            ->from('forms_input_cols')
+                            ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                            ->whereColumn('forms_input_cols.forms_inputs_id', 'forms_inputs.id')
+                            ->where(function ($value_query) use ($like_keyword) {
+                                $value_query->where('forms_input_cols.value', 'like', $like_keyword)
+                                    ->orWhere('uploads.client_original_name', 'like', $like_keyword);
+                            });
+                    });
+            });
+        }
+
+        if ($search_condition['status'] !== '') {
+            $inputs_query->where('forms_inputs.status', (int)$search_condition['status']);
+        }
+
+        if ($search_condition['created_from'] !== '') {
+            $inputs_query->whereDate('forms_inputs.created_at', '>=', $search_condition['created_from']);
+        }
+
+        if ($search_condition['created_to'] !== '') {
+            $inputs_query->whereDate('forms_inputs.created_at', '<=', $search_condition['created_to']);
+        }
+    }
+
+    /**
+     * 登録一覧の状態検索条件を有効な値に丸める。
+     */
+    private function normalizeListInputsStatus($status): string
+    {
+        if (is_null($status) || $status === '') {
+            return '';
+        }
+
+        $allowed_statuses = array_map('strval', array_keys(FormStatusType::enum));
+        $status = (string)$status;
+
+        return in_array($status, $allowed_statuses, true) ? $status : '';
+    }
+
+    /**
+     * 登録一覧の日付検索条件を有効な年月日に丸める。
+     */
+    private function normalizeListInputsDate($date): string
+    {
+        if (!is_string($date) || $date === '') {
+            return '';
+        }
+
+        $date = trim($date);
+        if (!preg_match('/\A[0-9]{4}-[0-9]{2}-[0-9]{2}\z/', $date)) {
+            return '';
+        }
+
+        [$year, $month, $day] = array_map('intval', explode('-', $date));
+
+        return checkdate($month, $day, $year) ? $date : '';
+    }
+
+    /**
+     * 登録一覧の表示件数を許可された値に丸める。
+     */
+    private function normalizeListInputsPerPage($per_page): int
+    {
+        $per_page = (int)$per_page;
+        $per_page_options = $this->getListInputsPerPageOptions();
+
+        return in_array($per_page, $per_page_options, true) ? $per_page : $this->getListInputsDefaultPerPage();
+    }
+
+    /**
+     * 登録一覧の表示件数候補を設定から取得する。
+     */
+    private function getListInputsPerPageOptions(): array
+    {
+        $per_page_options = config('forms.list_inputs.per_page_options', []);
+        if (!is_array($per_page_options)) {
+            return [10];
+        }
+
+        $per_page_options = collect($per_page_options)
+            ->map(function ($per_page) {
+                return (int)$per_page;
+            })
+            ->filter(function ($per_page) {
+                return $per_page > 0;
+            })
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        return $per_page_options ?: [10];
+    }
+
+    /**
+     * 登録一覧の初期表示件数を設定から取得する。
+     */
+    private function getListInputsDefaultPerPage(): int
+    {
+        $default_per_page = (int)config('forms.list_inputs.default_per_page');
+        $per_page_options = $this->getListInputsPerPageOptions();
+
+        return in_array($default_per_page, $per_page_options, true) ? $default_per_page : $per_page_options[0];
+    }
+
+    /**
+     * LIKE 検索用にワイルドカード文字をエスケープする。
+     */
+    private function escapeLikeValue(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $value);
     }
 
     /**
