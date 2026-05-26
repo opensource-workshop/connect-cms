@@ -779,6 +779,73 @@
         });
       }
     };
+    const additionalImagesKey = 'cc_multiple_images';
+    const getAdditionalImages = editor => {
+      const images = editor.cc_multiple_image_uploads;
+      return isArray(images) ? images : [];
+    };
+    const hasAdditionalImages = editor => getAdditionalImages(editor).length > 0;
+    const getSelectedImageCount = editor => hasAdditionalImages(editor) ? getAdditionalImages(editor).length + 1 : 0;
+    const getSelectedImageCountId = editor => `cc-selected-image-count-${ editor.id }`;
+    // 複数選択時は代替説明欄を空にするため、1枚目のファイル名由来altを別に保持する。
+    const getFirstImageAlt = editor => {
+      const alt = editor.cc_multiple_image_first_alt;
+      return isString(alt) ? alt : '';
+    };
+    const getFirstImageSrc = editor => {
+      const src = editor.cc_multiple_image_first_src;
+      return isString(src) ? src : '';
+    };
+    const clearAdditionalImages = editor => {
+      editor.cc_multiple_image_uploads = [];
+      editor.cc_multiple_image_first_alt = '';
+      editor.cc_multiple_image_first_src = '';
+    };
+    // 追加画像はTinyMCEのフォーム値と連動しないため、選択後にSourceが変わると別画像として保存される恐れがある。
+    const shouldInsertAdditionalImages = (editor, src) => hasAdditionalImages(editor) && getFirstImageSrc(editor) === src;
+    const clearAdditionalImagesIfSrcChanged = (editor, src) => {
+      if (hasAdditionalImages(editor) && getFirstImageSrc(editor) !== src) {
+        clearAdditionalImages(editor);
+      }
+    };
+    // TinyMCEの画像ダイアログは1つのsrcしか扱えないため、2枚目以降は保存時に追加挿入する。
+    const insertAdditionalImagesAfterSelection = (editor, images) => {
+      const selectedImage = getSelectedImage(editor);
+      if (!selectedImage || images.length === 0) {
+        return;
+      }
+      const target = isFigure(selectedImage.parentNode) ? selectedImage.parentNode : selectedImage;
+      const marker = '__mceadditionalimage';
+      const html = images.map((imageData, index) => {
+        const data = sanitizeImageData(editor, {
+          ...defaultData(),
+          ...imageData
+        });
+        const elm = create(css => normalizeCss$1(editor, css), data);
+        if (index === images.length - 1) {
+          editor.dom.setAttrib(elm, 'data-mce-id', marker);
+        }
+        return elm.outerHTML;
+      }).join('');
+      if (html.length > 0) {
+        editor.dom.insertAfter(editor.dom.createFragment(html), target);
+        const insertedElm = editor.dom.select(`*[data-mce-id="${ marker }"]`)[0];
+        if (insertedElm) {
+          editor.dom.setAttrib(insertedElm, 'data-mce-id', null);
+          editor.selection.select(insertedElm);
+        }
+        editor.nodeChanged();
+      }
+    };
+    const insertOrUpdateImages = (editor, data) => {
+      const additionalImages = isArray(data[additionalImagesKey]) ? data[additionalImagesKey] : [];
+      const imageData = {
+        ...data
+      };
+      delete imageData[additionalImagesKey];
+      insertOrUpdateImage(editor, imageData);
+      insertAdditionalImagesAfterSelection(editor, additionalImages);
+    };
 
     const deep = (old, nu) => {
       const bothObjects = isPlainObject(old) && isPlainObject(nu);
@@ -1005,6 +1072,10 @@
         type: 'collection',
         label: tinymce.activeEditor.options.get('cc_config').upload_max_filesize_caption,
       };
+      const selectedImageCount = {
+        type: 'htmlpanel',
+        html: `<div id="${ getSelectedImageCountId(tinymce.activeEditor) }" style="display: none; font-size: 14px;"></div>`
+      };
 
       const imageList = info.imageList.map(items => ({
         name: 'images',
@@ -1071,6 +1142,7 @@
       } : { type: 'panel' };
       return flatten([
         [imageUrl],
+        [selectedImageCount],
         // add: アップロード最大サイズ説明
         [uploadMaxFilesizeCaption],
         imageList.toArray(),
@@ -1276,6 +1348,30 @@
       formFillFromMeta(info, api);
       calculateImageSize(helpers, info, state, api);
       updateImagesDropdown(info, state, api);
+      clearAdditionalImagesIfSrcChanged(helpers.editor, api.getData().src.value);
+      updateAltInputState(helpers.editor, info, api);
+      updateSelectedImageCountText(helpers.editor);
+    };
+    // 複数画像選択時だけ、画像ダイアログ内に選択枚数を表示する。
+    const updateSelectedImageCountText = editor => {
+      const countPanel = document.getElementById(getSelectedImageCountId(editor));
+      if (countPanel) {
+        const selectedImageCount = getSelectedImageCount(editor);
+        countPanel.textContent = selectedImageCount > 1 ? `${ selectedImageCount }枚の画像を選択しています。` : '';
+        countPanel.style.display = selectedImageCount > 1 ? 'block' : 'none';
+      }
+    };
+    // 複数画像に1つの説明文を適用しないよう、複数選択時はalt入力を空にして無効化する。
+    const updateAltInputState = (editor, info, api) => {
+      if (info.hasDescription) {
+        const data = api.getData();
+        const hasMultipleImages = hasAdditionalImages(editor);
+        if (hasMultipleImages && data.alt !== '') {
+          api.setData({ alt: '' });
+        }
+        const enabled = !hasMultipleImages && !(info.hasAccessibilityOptions && data.isDecorative);
+        api.setEnabled('alt', enabled);
+      }
     };
     const changeImages = (helpers, info, state, api) => {
       const data = api.getData();
@@ -1353,7 +1449,7 @@
       } else if (evt.name === 'fileinput') {
         changeFileInput(helpers, info, state, api);
       } else if (evt.name === 'isDecorative') {
-        api.setEnabled('alt', !api.getData().isDecorative);
+        updateAltInputState(helpers.editor, info, api);
       }
     };
     const closeHandler = state => () => {
@@ -1386,8 +1482,28 @@
         ...data,
         style: getStyleValue(helpers.normalizeCss, toImageData(data, false))
       };
-      editor.execCommand('mceUpdateImage', false, toImageData(finalData, info.hasAccessibilityOptions));
-      editor.editorUpload.uploadImagesAuto();
+      const imageData = toImageData(finalData, info.hasAccessibilityOptions);
+      const shouldInsertAdditionalImagesForCurrentSrc = shouldInsertAdditionalImages(editor, imageData.src);
+      if (shouldInsertAdditionalImagesForCurrentSrc) {
+        imageData.alt = getFirstImageAlt(editor);
+      }
+      const additionalImages = shouldInsertAdditionalImagesForCurrentSrc ? getAdditionalImages(editor).map(image => ({
+        ...imageData,
+        src: image.src,
+        alt: image.alt,
+        width: '',
+        height: ''
+      })) : [];
+      editor.execCommand('mceUpdateImage', false, {
+        ...imageData,
+        [additionalImagesKey]: additionalImages
+      });
+      clearAdditionalImages(editor);
+      editor.editorUpload.uploadImagesAuto().then(() => {
+        editor.dispatch('ccImageUploadComplete');
+      }, () => {
+        editor.dispatch('ccImageUploadComplete');
+      });
       api.close();
     };
     const imageSize = editor => url => {
@@ -1434,6 +1550,7 @@
     });
     const Dialog = editor => {
       const helpers = {
+        editor,
         imageSize: imageSize(editor),
         addToBlobCache: addToBlobCache(editor),
         createBlobCache: createBlobCache(editor),
@@ -1444,6 +1561,7 @@
         uploadImage: uploadImage(editor)
       };
       const open = () => {
+        clearAdditionalImages(editor);
         collect(editor).then(info => {
           const state = createState(info);
           return {
@@ -1476,7 +1594,7 @@
     const register$1 = editor => {
       editor.addCommand('mceImage', Dialog(editor).open);
       editor.addCommand('mceUpdateImage', (_ui, data) => {
-        editor.undoManager.transact(() => insertOrUpdateImage(editor, data));
+        editor.undoManager.transact(() => insertOrUpdateImages(editor, data));
       });
     };
 
