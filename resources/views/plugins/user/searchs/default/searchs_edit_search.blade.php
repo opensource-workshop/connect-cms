@@ -320,10 +320,6 @@ use App\Enums\SearchsPageSelect;
             const disabled = checkedFrameSelect && checkedFrameSelect.value === allFramesValue;
 
             targetFramesArea.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-
-            targetFramesArea.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
-                checkbox.disabled = disabled;
-            });
         };
 
         frameSelects.forEach(function(frameSelect) {
