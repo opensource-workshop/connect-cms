@@ -3111,12 +3111,19 @@ ORDER BY forms_inputs_id, forms_columns_id
                     ->orWhereExists(function ($sub_query) use ($like_keyword) {
                         $sub_query->select(DB::raw(1))
                             ->from('forms_input_cols')
-                            ->leftJoin('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                            ->join('forms_columns', 'forms_columns.id', '=', 'forms_input_cols.forms_columns_id')
                             ->whereColumn('forms_input_cols.forms_inputs_id', 'forms_inputs.id')
-                            ->where(function ($value_query) use ($like_keyword) {
-                                $value_query->where('forms_input_cols.value', 'like', $like_keyword)
-                                    ->orWhere('uploads.client_original_name', 'like', $like_keyword);
-                            });
+                            ->where('forms_columns.column_type', '<>', FormColumnType::file)
+                            ->where('forms_input_cols.value', 'like', $like_keyword);
+                    })
+                    ->orWhereExists(function ($sub_query) use ($like_keyword) {
+                        $sub_query->select(DB::raw(1))
+                            ->from('forms_input_cols')
+                            ->join('forms_columns', 'forms_columns.id', '=', 'forms_input_cols.forms_columns_id')
+                            ->join('uploads', 'uploads.id', '=', 'forms_input_cols.value')
+                            ->whereColumn('forms_input_cols.forms_inputs_id', 'forms_inputs.id')
+                            ->where('forms_columns.column_type', FormColumnType::file)
+                            ->where('uploads.client_original_name', 'like', $like_keyword);
                     });
             });
         }

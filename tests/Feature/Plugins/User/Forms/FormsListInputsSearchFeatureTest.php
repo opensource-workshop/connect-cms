@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Plugins\User\Forms;
 
+use App\Enums\FormColumnType;
 use App\Enums\FormStatusType;
 use App\Models\Common\Buckets;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
+use App\Models\Common\Uploads;
 use App\Models\User\Forms\Forms;
 use App\Models\User\Forms\FormsColumns;
 use App\Models\User\Forms\FormsInputCols;
@@ -57,6 +59,79 @@ class FormsListInputsSearchFeatureTest extends TestCase
         $response->assertSee('name="keyword"', false);
         $response->assertSee('value="MATCH"', false);
         $response->assertSee('クリア');
+    }
+
+    /**
+     * 登録一覧では、ファイル型項目に添付されたファイル名で登録データを検索できること。
+     */
+    public function testListInputsCanSearchByUploadedFileName(): void
+    {
+        $admin = $this->createContentAdminUser();
+        [$page, $frame, $form] = $this->createFormSetup();
+        $file_column = FormsColumns::factory()->create([
+            'forms_id' => $form->id,
+            'column_type' => FormColumnType::file,
+        ]);
+        $text_column = FormsColumns::factory()->textType()->create(['forms_id' => $form->id]);
+        $target_upload = Uploads::factory()->create(['client_original_name' => 'target-report.pdf']);
+        $other_upload = Uploads::factory()->create(['client_original_name' => 'other-report.pdf']);
+
+        $target_input = $this->createFormInput($form, $file_column, (string)$target_upload->id);
+        $this->createFormInputCol($target_input, $text_column, 'ファイル名検索の対象');
+        $other_input = $this->createFormInput($form, $file_column, (string)$other_upload->id);
+        $this->createFormInputCol($other_input, $text_column, 'ファイル名検索の対象外');
+
+        $response = $this->actingAs($admin)
+            ->get("/plugin/forms/listInputs/{$page->id}/{$frame->id}/{$form->id}?keyword=target-report");
+
+        $response->assertOk();
+        $response->assertSee('ファイル名検索の対象');
+        $response->assertDontSee('ファイル名検索の対象外');
+        $response->assertSee('target-report.pdf');
+        $response->assertDontSee('other-report.pdf');
+    }
+
+    /**
+     * 登録一覧の添付ファイル名検索では、通常入力値がアップロードIDと一致してもファイル名では誤一致しないこと。
+     */
+    public function testListInputsDoesNotMatchUploadFileNameThroughTextValue(): void
+    {
+        $admin = $this->createContentAdminUser();
+        [$page, $frame, $form] = $this->createFormSetup();
+        $text_column = FormsColumns::factory()->textType()->create(['forms_id' => $form->id]);
+        $upload = Uploads::factory()->create(['client_original_name' => 'private-file-name.pdf']);
+
+        $this->createFormInput($form, $text_column, (string)$upload->id);
+
+        $response = $this->actingAs($admin)
+            ->get("/plugin/forms/listInputs/{$page->id}/{$frame->id}/{$form->id}?keyword=private-file-name");
+
+        $response->assertOk();
+        $response->assertSee('0 件');
+        $response->assertDontSee('private-file-name.pdf');
+    }
+
+    /**
+     * 登録一覧のキーワード検索では、ファイル型項目に保存されたアップロードID自体は検索対象にしないこと。
+     */
+    public function testListInputsDoesNotSearchUploadIdAsFileColumnValue(): void
+    {
+        $admin = $this->createContentAdminUser();
+        [$page, $frame, $form] = $this->createFormSetup();
+        $file_column = FormsColumns::factory()->create([
+            'forms_id' => $form->id,
+            'column_type' => FormColumnType::file,
+        ]);
+        $upload = Uploads::factory()->create(['client_original_name' => 'file-id-target.pdf']);
+
+        $this->createFormInput($form, $file_column, (string)$upload->id);
+
+        $response = $this->actingAs($admin)
+            ->get("/plugin/forms/listInputs/{$page->id}/{$frame->id}/{$form->id}?keyword={$upload->id}");
+
+        $response->assertOk();
+        $response->assertSee('0 件');
+        $response->assertDontSee('file-id-target.pdf');
     }
 
     /**
@@ -226,5 +301,17 @@ class FormsListInputsSearchFeatureTest extends TestCase
         ]);
 
         return $input;
+    }
+
+    /**
+     * 1つの登録データに複数カラムの検索値を持たせるための入力値を追加する。
+     */
+    private function createFormInputCol(FormsInputs $input, FormsColumns $column, string $value): FormsInputCols
+    {
+        return FormsInputCols::factory()->create([
+            'forms_inputs_id' => $input->id,
+            'forms_columns_id' => $column->id,
+            'value' => $value,
+        ]);
     }
 }
