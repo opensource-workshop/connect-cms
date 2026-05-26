@@ -425,19 +425,24 @@ class PageManage extends ManagePluginBase
     }
 
     /**
-     * ページ階層移動
+     * ページ移動
      *
-     * @method_title ページ階層移動
-     * @method_desc ページは移動先を指定することで、階層を変更することができます。また、上下矢印でメニューへの表示順番を変更することもできます。
+     * @method_title ページ移動
+     * @method_desc ページは移動先と移動位置を指定することで、階層と表示順番を変更することができます。
      * @spec ページは階層構造を作成できること。
              ページは作成後に階層を変更できること。
      */
     public function movePage($request, $page_id)
     {
+        $move_position = $request->move_position ?? 'child';
+
         // ルートへ移動
         if ($request->destination_id == "0") {
             // 移動元のオブジェクトを取得
             $page = Page::find($page_id);
+            if (empty($page)) {
+                return redirect("/manage/page");
+            }
             $page->saveAsRoot();
             $page->recalcDepthWithDescendants();
         } else {
@@ -449,8 +454,24 @@ class PageManage extends ManagePluginBase
             // 移動先のオブジェクトを取得
             $destination_page = Page::find($request->destination_id);
 
+            if (empty($source_page) || empty($destination_page)) {
+                return redirect("/manage/page");
+            }
+
+            if ($source_page->is($destination_page) || $destination_page->isDescendantOf($source_page)) {
+                return redirect("/manage/page");
+            }
+
             // 移動
-            $source_page->appendToNode($destination_page)->save();
+            if ($move_position === 'before') {
+                $source_page->insertBeforeNode($destination_page);
+            } elseif ($move_position === 'after') {
+                $source_page->insertAfterNode($destination_page);
+            } else {
+                $source_page->appendToNode($destination_page)->save();
+            }
+
+            $source_page->refresh();
             $source_page->recalcDepthWithDescendants();
         }
 
