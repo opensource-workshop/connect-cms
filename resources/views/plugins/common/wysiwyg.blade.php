@@ -546,6 +546,7 @@
 
                         editor.cc_multiple_image_uploads = [];
                         editor.cc_multiple_image_first_alt = '';
+                        editor.cc_multiple_image_first_src = '';
 
                         if (files.length === 0) {
                             return;
@@ -587,6 +588,8 @@
                         Promise.all(image_promises).then(function(images) {
                             editor.cc_multiple_image_uploads = images.slice(1);
                             editor.cc_multiple_image_first_alt = images.length > 1 ? images[0].alt : '';
+                            // 追加画像はTinyMCEのフォーム値と連動しないため、選択後にSourceが変わると別画像として保存される恐れがある。
+                            editor.cc_multiple_image_first_src = images.length > 1 ? images[0].src : '';
 
                             /* call the callback and populate the Title field with the file name */
                             // callback(blobInfo.blobUri(), { title: file.name });
@@ -597,6 +600,7 @@
                             console.error('Image file read failed:', error);
                             editor.cc_multiple_image_uploads = [];
                             editor.cc_multiple_image_first_alt = '';
+                            editor.cc_multiple_image_first_src = '';
                         });
                     };
                 }

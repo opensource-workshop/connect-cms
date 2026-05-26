@@ -792,9 +792,21 @@
       const alt = editor.cc_multiple_image_first_alt;
       return isString(alt) ? alt : '';
     };
+    const getFirstImageSrc = editor => {
+      const src = editor.cc_multiple_image_first_src;
+      return isString(src) ? src : '';
+    };
     const clearAdditionalImages = editor => {
       editor.cc_multiple_image_uploads = [];
       editor.cc_multiple_image_first_alt = '';
+      editor.cc_multiple_image_first_src = '';
+    };
+    // 追加画像はTinyMCEのフォーム値と連動しないため、選択後にSourceが変わると別画像として保存される恐れがある。
+    const shouldInsertAdditionalImages = (editor, src) => hasAdditionalImages(editor) && getFirstImageSrc(editor) === src;
+    const clearAdditionalImagesIfSrcChanged = (editor, src) => {
+      if (hasAdditionalImages(editor) && getFirstImageSrc(editor) !== src) {
+        clearAdditionalImages(editor);
+      }
     };
     // TinyMCEの画像ダイアログは1つのsrcしか扱えないため、2枚目以降は保存時に追加挿入する。
     const insertAdditionalImagesAfterSelection = (editor, images) => {
@@ -1336,6 +1348,7 @@
       formFillFromMeta(info, api);
       calculateImageSize(helpers, info, state, api);
       updateImagesDropdown(info, state, api);
+      clearAdditionalImagesIfSrcChanged(helpers.editor, api.getData().src.value);
       updateAltInputState(helpers.editor, info, api);
       updateSelectedImageCountText(helpers.editor);
     };
@@ -1470,16 +1483,17 @@
         style: getStyleValue(helpers.normalizeCss, toImageData(data, false))
       };
       const imageData = toImageData(finalData, info.hasAccessibilityOptions);
-      if (hasAdditionalImages(editor)) {
+      const shouldInsertAdditionalImagesForCurrentSrc = shouldInsertAdditionalImages(editor, imageData.src);
+      if (shouldInsertAdditionalImagesForCurrentSrc) {
         imageData.alt = getFirstImageAlt(editor);
       }
-      const additionalImages = getAdditionalImages(editor).map(image => ({
+      const additionalImages = shouldInsertAdditionalImagesForCurrentSrc ? getAdditionalImages(editor).map(image => ({
         ...imageData,
         src: image.src,
         alt: image.alt,
         width: '',
         height: ''
-      }));
+      })) : [];
       editor.execCommand('mceUpdateImage', false, {
         ...imageData,
         [additionalImagesKey]: additionalImages
