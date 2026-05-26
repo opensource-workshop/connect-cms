@@ -321,10 +321,14 @@ $base_layout_page->layout = $base_layout;
                             <input type="radio" value="0" id="level_move_modal_page_0" name="level_move_modal_page_id" data-page-name="最上位" class="custom-control-input">
                             <label class="custom-control-label" for="level_move_modal_page_0">最上位</label>
                         </div>
+                        @php
+                            $page_name_stack = [];
+                        @endphp
                         @foreach($pages_select as $page_item)
                             @php
-                                $page_tree = $page_item->getPageTreeByGoingBackParent(null, false);
-                                $page_path = $page_tree->reverse()->pluck('page_name')->implode(' > ');
+                                $page_name_stack[$page_item->depth] = $page_item->page_name;
+                                $page_name_stack = array_slice($page_name_stack, 0, $page_item->depth + 1, true);
+                                $page_path = implode(' > ', $page_name_stack);
                             @endphp
                             <div class="custom-control custom-radio custom-control-block js-level-move-page-option"
                                 data-page-id="{{$page_item->id}}"
