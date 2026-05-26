@@ -24,7 +24,7 @@ class WhatsnewsViewClassesFeatureTest extends TestCase
     {
         $html = $this->renderWhatsnewsTemplate('plugins.user.whatsnews.default.whatsnews');
 
-        $this->assertWhatsnewPartClasses($html);
+        $this->assertWhatsnewPartClasses($this->extractInitialDisplayMarkup($html));
     }
 
     /**
@@ -34,7 +34,7 @@ class WhatsnewsViewClassesFeatureTest extends TestCase
     {
         $html = $this->renderWhatsnewsTemplate('plugins.user.whatsnews.onerow.whatsnews');
 
-        $this->assertWhatsnewPartClasses($html);
+        $this->assertWhatsnewPartClasses($this->extractInitialDisplayMarkup($html));
     }
 
     /**
@@ -44,13 +44,43 @@ class WhatsnewsViewClassesFeatureTest extends TestCase
     {
         $html = $this->renderWhatsnewsTemplate('plugins.user.whatsnews.card_04.whatsnews');
 
-        $this->assertWhatsnewPartClasses($html);
+        $this->assertWhatsnewPartClasses($this->extractInitialDisplayMarkup($html));
+    }
+
+    /**
+     * 標準テンプレートの追加表示でも、初期表示と同じCSS用クラスで各要素を指定できること。
+     */
+    public function testDefaultTemplateRendersClassesForEachAsyncWhatsnewPart(): void
+    {
+        $html = $this->renderWhatsnewsTemplate('plugins.user.whatsnews.default.whatsnews', UseType::use);
+
+        $this->assertWhatsnewPartClasses($this->extractAsyncDisplayMarkup($html));
+    }
+
+    /**
+     * 1行表示テンプレートの追加表示でも、初期表示と同じCSS用クラスで各要素を指定できること。
+     */
+    public function testOnerowTemplateRendersClassesForEachAsyncWhatsnewPart(): void
+    {
+        $html = $this->renderWhatsnewsTemplate('plugins.user.whatsnews.onerow.whatsnews', UseType::use);
+
+        $this->assertWhatsnewPartClasses($this->extractAsyncDisplayMarkup($html));
+    }
+
+    /**
+     * カード表示テンプレートの追加表示でも、既存のカード用HTMLのCSS用クラスが維持されること。
+     */
+    public function testCardTemplateRendersClassesForEachAsyncWhatsnewPart(): void
+    {
+        $html = $this->renderWhatsnewsTemplate('plugins.user.whatsnews.card_04.whatsnews', UseType::use);
+
+        $this->assertWhatsnewPartClasses($this->extractAsyncDisplayMarkup($html));
     }
 
     /**
      * 新着情報テンプレートの描画に必要な最小限のデータを用意する。
      */
-    private function renderWhatsnewsTemplate(string $template): string
+    private function renderWhatsnewsTemplate(string $template, int $async = UseType::not_use): string
     {
         $frame = (object) [
             'id' => 1,
@@ -69,6 +99,7 @@ class WhatsnewsViewClassesFeatureTest extends TestCase
             'read_more_btn_color_type' => 'primary',
             'read_more_btn_type' => '',
             'read_more_name' => 'もっと見る',
+            'read_more_fetch_count' => 10,
         ];
 
         $whatsnews = collect([
@@ -97,21 +128,41 @@ class WhatsnewsViewClassesFeatureTest extends TestCase
             'whatsnews_total_count' => 1,
             'link_pattern' => ['blogs' => 'show_page_frame_post'],
             'link_base' => ['blogs' => '/plugin/blogs/show'],
-            'frame_configs' => $this->createVisiblePartFrameConfigs(),
+            'frame_configs' => $this->createVisiblePartFrameConfigs($async),
         ])->render();
     }
 
     /**
      * 本文・サムネイル・罫線を表示状態にして、対象クラスがHTMLに現れるようにする。
      */
-    private function createVisiblePartFrameConfigs(): EloquentCollection
+    private function createVisiblePartFrameConfigs(int $async): EloquentCollection
     {
         return new EloquentCollection([
             new FrameConfig(['name' => WhatsnewFrameConfig::post_detail, 'value' => UseType::use]),
             new FrameConfig(['name' => WhatsnewFrameConfig::thumbnail, 'value' => UseType::use]),
             new FrameConfig(['name' => WhatsnewFrameConfig::border, 'value' => UseType::use]),
-            new FrameConfig(['name' => WhatsnewFrameConfig::async, 'value' => UseType::not_use]),
+            new FrameConfig(['name' => WhatsnewFrameConfig::async, 'value' => $async]),
         ]);
+    }
+
+    /**
+     * 追加表示用のVueテンプレートに紛れず、初期表示部分だけを検証できるようにする。
+     */
+    private function extractInitialDisplayMarkup(string $html): string
+    {
+        return preg_replace('/<template\s+v-for="whatsnews in whatsnewses">.*?<\/template>/s', '', $html) ?? $html;
+    }
+
+    /**
+     * 追加表示で差し込まれるHTML断片だけを対象に、初期表示側のクラスで補完されないようにする。
+     */
+    private function extractAsyncDisplayMarkup(string $html): string
+    {
+        $async_markup_position = strpos($html, 'v-for="whatsnews in whatsnewses"');
+
+        $this->assertNotFalse($async_markup_position);
+
+        return substr($html, $async_markup_position);
     }
 
     /**
