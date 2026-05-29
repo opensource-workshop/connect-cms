@@ -194,6 +194,10 @@ class MicrosoftGraphTransport extends Transport
     /**
      * メール本文を取得
      *
+     * 本文パートと添付ファイルは同じ children に並ぶため、
+     * Swift_Attachment は本文候補から除外する。
+     * （除外しないと text/html や text/plain の添付ファイルの中身が本文として返ってしまう）
+     *
      * @param Swift_Mime_SimpleMessage $message
      * @return string
      */
@@ -204,12 +208,18 @@ class MicrosoftGraphTransport extends Transport
         // マルチパートの場合、HTMLパートを優先
         if ($message->getChildren()) {
             foreach ($message->getChildren() as $child) {
+                if ($child instanceof \Swift_Attachment) {
+                    continue;
+                }
                 if (strpos($child->getContentType(), self::CONTENT_TYPE_HTML) !== false) {
                     return $child->getBody();
                 }
             }
             // HTMLが見つからなければテキストパート
             foreach ($message->getChildren() as $child) {
+                if ($child instanceof \Swift_Attachment) {
+                    continue;
+                }
                 if (strpos($child->getContentType(), self::CONTENT_TYPE_PLAIN) !== false) {
                     return $child->getBody();
                 }

@@ -88,52 +88,176 @@ $base_layout_page->layout = $base_layout;
                 form_toggle_display.submit();
             }
 
-            {{-- ページ階層移動モーダル画面でのjavascript --}}
+            let level_move_page_options = [];
+            let level_move_page_option_map = {};
+            let level_move_page_form_url = "{{url('/manage/page/movePage')}}";
+
+            {{-- ページ移動モーダル画面でのjavascript --}}
             $(function(){
                 if (window.connectPageManageTree) {
                     window.connectPageManageTree.init();
                 }
+                init_level_move_page_tree();
                 {{-- 移動先決定ボタン --}}
                 $('#moveLevelDoneBtn').on('click', function() {
                     let destination_id = $('input:radio[name="level_move_modal_page_id"]:checked').val();
                     if (destination_id) {
                         save_page_manage_tree_state();
-                        form_move_page.destination_id.value = destination_id;
-                        form_move_page.submit();
+                        $('#form_move_page_destination_id').val(destination_id);
+                        $('#form_move_page_move_position').val($('input:radio[name="move_position"]:checked').val());
+                        $('#form_move_page').submit();
                     }
                 })
                 {{-- 移動先選択ボタン --}}
                 $('input:radio[name="level_move_modal_page_id"]').on('change', function() {
-                    let level_move_modal_page_radio_id = $(this).attr('id');
-                    let level_move_modal_page_radio_label = $('label[for="' + level_move_modal_page_radio_id + '"]').text();
-                    $('.destination-page').text(level_move_modal_page_radio_label);
+                    if ($(this).val() === '0') {
+                        $('#move_position_before, #move_position_after').prop('disabled', true);
+                        $('#move_position_child').prop('checked', true);
+                    } else {
+                        $('#move_position_before, #move_position_after').prop('disabled', false);
+                    }
+                    update_move_page_destination_text();
                     $('#moveLevelDoneBtn').prop('disabled', false);
                 })
+                {{-- 移動位置選択ボタン --}}
+                $('input:radio[name="move_position"]').on('change', function() {
+                    update_move_page_destination_text();
+                })
+                {{-- 移動先検索 --}}
+                $('#levelMovePageSearch').on('input', function() {
+                    update_level_move_page_search_results();
+                })
             });
-            {{-- ページ階層移動アイコンを押下した際にターゲットのページをセットする --}}
+
+            {{-- 移動先ツリーのDOM参照と親子関係を初期化時にキャッシュする --}}
+            function init_level_move_page_tree() {
+                if (level_move_page_options.length) {
+                    return;
+                }
+
+                $('.js-level-move-page-option').each(function() {
+                    let element = this;
+                    let row = {
+                        element: element,
+                        id: String($(element).attr('data-page-id')),
+                        parent_id: String($(element).attr('data-parent-id') || ''),
+                        search: String($(element).data('search') || '').toLowerCase(),
+                        child_ids: [],
+                    };
+
+                    level_move_page_options.push(row);
+                    level_move_page_option_map[row.id] = row;
+                });
+
+                level_move_page_options.forEach(function(row) {
+                    if (!row.parent_id || !level_move_page_option_map[row.parent_id]) {
+                        return;
+                    }
+                    level_move_page_option_map[row.parent_id].child_ids.push(row.id);
+                });
+            }
+
+            {{-- 親子Mapから子孫ページIDを取得する --}}
+            function collect_level_move_page_descendant_ids(page_id) {
+                let row = level_move_page_option_map[page_id];
+                if (!row || !row.child_ids.length) {
+                    return [];
+                }
+
+                let descendant_ids = [];
+                row.child_ids.forEach(function(child_id) {
+                    descendant_ids.push(child_id);
+                    descendant_ids = descendant_ids.concat(collect_level_move_page_descendant_ids(child_id));
+                });
+
+                return descendant_ids;
+            }
+
+            {{-- 移動先候補行の表示状態を更新する --}}
+            function set_level_move_page_visible(row, visible) {
+                row.element.style.display = visible ? '' : 'none';
+            }
+
+            {{-- 移動先検索結果の表示を更新する --}}
+            function update_level_move_page_search_results() {
+                let keyword = $('#levelMovePageSearch').val().toLowerCase();
+                let matched_count = 0;
+
+                level_move_page_options.forEach(function(row) {
+                    let is_root_option = row.id === '0';
+                    let is_visible = true;
+
+                    is_visible = !keyword || is_root_option || row.search.indexOf(keyword) !== -1;
+
+                    set_level_move_page_visible(row, is_visible);
+                    if (is_visible && !is_root_option) {
+                        matched_count++;
+                    }
+                });
+
+                $('#levelMovePageNoResult').toggle(!!keyword && matched_count === 0);
+            }
+            {{-- 移動先と移動位置を組み合わせた確認文を更新する --}}
+            function update_move_page_destination_text() {
+                let destination = $('input:radio[name="level_move_modal_page_id"]:checked');
+                if (!destination.length) {
+                    $('.destination-page').text('');
+                    return;
+                }
+
+                let move_position = $('input:radio[name="move_position"]:checked').val();
+                if (destination.val() === '0') {
+                    $('.destination-page').text('最上位の末尾');
+                    return;
+                }
+
+                let destination_page_name = destination.attr('data-page-name');
+                let position_label = '配下の末尾';
+                if (move_position === 'before') {
+                    position_label = '上';
+                } else if (move_position === 'after') {
+                    position_label = '下';
+                }
+
+                $('.destination-page').text(destination_page_name + ' の' + position_label);
+            }
+            {{-- ページ移動アイコンを押下した際にターゲットのページをセットする --}}
             function select_page(source_id, page_name) {
                 // ページセット
-                form_move_page.action = form_move_page.action.replace(/movePage(.*$)/g, 'movePage');
-                form_move_page.action = form_move_page.action + "/" + source_id;
+                $('#form_move_page').attr('action', level_move_page_form_url + "/" + source_id);
                 // テキストセット
-                let page_name_txt = '「 <span class="source-page lead">' + page_name + '</span>」を「<span class="destination-page lead"></span>」へ移動します';
+                let page_name_txt = '<span class="source-page lead"></span> を <span class="destination-page lead"></span> へ移動します';
                 $('.modal-title').html(page_name_txt);
+                $('.source-page').text(page_name);
+                $('#levelMoveSourcePageName').text(page_name);
+                $('#levelMoveSourcePageNotice').show();
                 // ラジオボタンを外す
                 if ($('input:radio[name="level_move_modal_page_id"]:checked')[0]) {
                     $('input:radio[name="level_move_modal_page_id"]:checked')[0].checked = false;
                 }
+                // 移動位置を初期化
+                $('#move_position_child').prop('checked', true);
+                $('#move_position_before, #move_position_after').prop('disabled', false);
+                $('#form_move_page_move_position').val('child');
+                // 検索を初期化
+                $('#levelMovePageSearch').val('');
+                update_level_move_page_search_results();
+                // 移動元ラベルを初期化
+                $('.js-level-move-source-label').addClass('d-none');
                 // 選択不可を解除
                 $('input:radio[name="level_move_modal_page_id"]').prop('disabled', false);
                 // 決定ボタンを無効化
                 $('#moveLevelDoneBtn').prop('disabled', true);
                 // 自分自身は選択不可にする
                 $('#level_move_modal_page_' + source_id).prop('disabled', true);
-                // 子孫のノードは選択不可にする data-descendant_idsに子孫格納済
-                let descendant_ids = $('#level_move_modal_page_' + source_id).data('descendant_ids');
-                $(descendant_ids).each(function(i) {
-                    let descendant_id = $(this)[0].valueOf();
-                    $('#level_move_modal_page_' + descendant_id).prop('disabled', true);
-                });
+                $('#level_move_source_label_' + source_id).removeClass('d-none');
+                // 子孫のノードは選択不可にする
+                let source_row = level_move_page_option_map[String(source_id)];
+                if (source_row) {
+                    collect_level_move_page_descendant_ids(source_row.id).forEach(function(descendant_id) {
+                        $('#level_move_modal_page_' + descendant_id).prop('disabled', true);
+                    });
+                }
             }
         </script>
 
@@ -146,7 +270,8 @@ $base_layout_page->layout = $base_layout;
         {{-- ページの指定場所移動用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
         <form action="{{url('/manage/page/movePage')}}" method="POST" name="form_move_page" id="form_move_page" class="form-horizontal">
             {{ csrf_field() }}
-            <input type="hidden" name="destination_id" value="">
+            <input type="hidden" name="destination_id" id="form_move_page_destination_id" value="">
+            <input type="hidden" name="move_position" id="form_move_page_move_position" value="child">
         </form>
 
         {{-- 表示切り替え用フォーム(POSTのためのフォーム。一つ用意して一覧からJavascriptで呼び出し) --}}
@@ -154,44 +279,76 @@ $base_layout_page->layout = $base_layout;
             {{ csrf_field() }}
         </form>
 
+        @php
+            $page_children = $pages->groupBy('parent_id');
+        @endphp
+
         {{-- 階層変更用モーダル表示 --}}
         <div class="modal fade" id="moveLevlModal" tabindex="-1" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header pb-0">
-                        <h4><div class="modal-title" style="font-size:1rem;">階層移動</div></h4>
+                        <h4><div class="modal-title" style="font-size:1rem;">ページ移動</div></h4>
                     </div>
                     <div class="modal-body" style="max-height: 500px; overflow-y: scroll;">
-                            <div class="custom-control custom-radio custom-control-block">
-                                <input type="radio" value="0" id="level_move_modal_page_0" name="level_move_modal_page_id" class="custom-control-input">
-                                <label class="custom-control-label" for="level_move_modal_page_0">最上位</label>
+                        <div id="levelMoveSourcePageNotice" class="alert alert-info py-2 mb-3" style="display:none;">
+                            移動するページ：<span id="levelMoveSourcePageName"></span>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label for="levelMovePageSearch" class="small mb-1">移動先ページの検索</label>
+                            <input type="search" id="levelMovePageSearch" class="form-control form-control-sm" placeholder="ページ名、固定リンクで検索">
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="small mb-1">移動位置</label>
+                            <div class="d-flex flex-wrap align-items-center">
+                                <span class="mr-2">選択したページの</span>
+                                <div class="custom-control custom-radio mr-3">
+                                    <input type="radio" value="child" id="move_position_child" name="move_position" class="custom-control-input" checked>
+                                    <label class="custom-control-label" for="move_position_child">配下</label>
+                                </div>
+                                <div class="custom-control custom-radio mr-3">
+                                    <input type="radio" value="before" id="move_position_before" name="move_position" class="custom-control-input">
+                                    <label class="custom-control-label" for="move_position_before">上</label>
+                                </div>
+                                <div class="custom-control custom-radio mr-3">
+                                    <input type="radio" value="after" id="move_position_after" name="move_position" class="custom-control-input">
+                                    <label class="custom-control-label" for="move_position_after">下</label>
+                                </div>
+                                <span>に移動する</span>
                             </div>
+                        </div>
+                        <div class="pt-2 mt-2 border-top custom-control custom-radio custom-control-block js-level-move-page-option" data-page-id="0" data-parent-id="" data-search="最上位">
+                            <input type="radio" value="0" id="level_move_modal_page_0" name="level_move_modal_page_id" data-page-name="最上位" class="custom-control-input">
+                            <label class="custom-control-label" for="level_move_modal_page_0">最上位</label>
+                        </div>
                         @php
-                            $tmp_pages = $pages_select;
+                            $page_name_stack = [];
                         @endphp
                         @foreach($pages_select as $page_item)
-                            {{-- 以下で子孫のIDをdatasetに追加する,子孫がいないページはチェックしない --}}
                             @php
-                                $arr_descendant_ids = [];
-                                $calc_rgt = $page_item->_lft;
-                                $calc_rgt++;
-                                if ($calc_rgt != $page_item->_rgt) {
-                                    foreach ($tmp_pages as $parent_page) {
-                                        if($parent_page->isDescendantOf($page_item)) {
-                                            $arr_descendant_ids[] = $parent_page->id;
-                                        }
-                                    }
-                                }
-                                $str_descendant_ids = implode(',', $arr_descendant_ids);
+                                $page_name_stack[$page_item->depth] = $page_item->page_name;
+                                $page_name_stack = array_slice($page_name_stack, 0, $page_item->depth + 1, true);
+                                $page_path = implode(' > ', $page_name_stack);
                             @endphp
-                            <div class="custom-control custom-radio custom-control-block">
-                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-descendant_ids="[{{$str_descendant_ids}}]" name="level_move_modal_page_id" class="custom-control-input">
+                            <div class="custom-control custom-radio custom-control-block js-level-move-page-option"
+                                data-page-id="{{$page_item->id}}"
+                                data-parent-id="{{$page_item->parent_id ?? ''}}"
+                                data-search="{{$page_path}} {{$page_item->permanent_link}}">
+                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-page-name="{{$page_item->page_name}}" name="level_move_modal_page_id" class="custom-control-input">
                                 @for ($i = 0; $i < $page_item->depth; $i++)
                                     @if ($i+1==$page_item->depth) <span class="px-3"></span> @else <span class="px-2"></span>@endif
                                 @endfor
-                                <label class="custom-control-label" for="level_move_modal_page_{{$page_item->id}}" id="level_move_page_{{$page_item->id}}">{{$page_item->page_name}}</label>
+                                <label class="custom-control-label" for="level_move_modal_page_{{$page_item->id}}" id="level_move_page_{{$page_item->id}}">
+                                    {{$page_item->page_name}}
+                                    <span id="level_move_source_label_{{$page_item->id}}" class="badge badge-info ml-1 js-level-move-source-label d-none">移動するページ</span>
+                                    @if ($page_item->base_display_flag == 0)
+                                        <i class="far fa-eye-slash text-muted ml-1" title="メニューから隠す" aria-label="メニューから隠す"></i>
+                                    @endif
+                                    <span class="small text-muted ml-1">{{$page_item->permanent_link}}</span>
+                                </label>
                             </div>
                         @endforeach
+                        <div id="levelMovePageNoResult" class="text-muted" style="display:none;">該当するページがありません。</div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">閉じる</button>
@@ -200,10 +357,6 @@ $base_layout_page->layout = $base_layout;
                 </div>
             </div>
         </div>
-
-        @php
-            $page_children = $pages->groupBy('parent_id');
-        @endphp
 
         <div class="cc-table-scroll js-cc-table-scroll" data-page-manage-tree>
             <div class="cc-table-scroll__sticky">
@@ -217,7 +370,7 @@ $base_layout_page->layout = $base_layout;
             <thead>
                 <tr>
                     <th></th>
-                    <th nowrap><i class="fas fa-sitemap" title="階層移動" alt="階層移動"></i></th>
+                    <th nowrap><i class="fas fa-sitemap" title="ページ移動" alt="ページ移動"></i></th>
                     <th nowrap>ページ名</th>
                     <th nowrap class="pl-1"><i class="far fa-eye" title="メニュー表示"></i></th>
                     <th nowrap>固定リンク</th>
@@ -292,8 +445,8 @@ $base_layout_page->layout = $base_layout;
                         </div>
                     </td>
                     <td class="table-text p-1" nowrap>
-                        {{-- 階層移動 --}}
-                        <a class="btn p-1 btn-primary btn-sm" id="move_level_{{$page_item->id}}" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick="select_page({{$page_item->id}} , '{{$page_item->page_name}}' );" ><i class="fas fa-sitemap"></i></a>
+                        {{-- ページ移動 --}}
+                        <a class="btn p-1 btn-primary btn-sm" id="move_level_{{$page_item->id}}" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick='select_page({{$page_item->id}}, @json($page_item->page_name));' ><i class="fas fa-sitemap"></i></a>
                     </td>
                     <td class="table-text p-1 manage-page-pagename">
                         <div class="manage-page-tree" style="--cc-page-tree-depth: {{$page_item->depth}};">

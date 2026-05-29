@@ -14,6 +14,7 @@
     $(function () {
         var detailValue = '{{ \App\Enums\PhotoalbumPlayviewType::play_in_detail }}';
         var loadMoreUseValue = '{{ \App\Enums\UseType::use }}';
+        var manualSortValue = '{{ \App\Enums\PhotoalbumSort::manual_order }}';
 
         function togglePlayViewOptions(value) {
             var isDetail = value == detailValue;
@@ -28,6 +29,17 @@
             $('.photoalbum-load-more-options').toggleClass('text-muted', !isEnabled);
         }
 
+        function toggleManualSortInitializeOptions() {
+            $('.photoalbum-manual-sort-initialize-folder').toggleClass(
+                'd-none',
+                $('select[name="sort_folder"]').val() != manualSortValue
+            );
+            $('.photoalbum-manual-sort-initialize-file').toggleClass(
+                'd-none',
+                $('select[name="sort_file"]').val() != manualSortValue
+            );
+        }
+
         var isVisibilitySaving = false;
         var pendingVisibilitySave = false;
         var $frameForm = $('#photoalbum-frame-settings-{{ $frame_id }}');
@@ -38,6 +50,8 @@
 
         $('input[name="load_more_use_flag"]').on('change', toggleLoadMoreOptions);
         toggleLoadMoreOptions();
+        $('select[name="sort_folder"], select[name="sort_file"]').on('change', toggleManualSortInitializeOptions);
+        toggleManualSortInitializeOptions();
 
         function setVisibilitySaving(isSaving) {
             $('.photoalbum-visibility-toggle__input').prop('disabled', isSaving);
@@ -538,11 +552,23 @@
                         @endif
                     @endforeach
                 </select>
-                @if (($current_sort_folder ?? '') === PhotoalbumSort::manual_order)
-                    <small class="form-text text-muted">
-                        カスタム順の変更は <a href="#photoalbum-preview">表示プレビュー</a> の上下ボタンから行えます。
-                    </small>
-                @endif
+                <small class="form-text text-muted photoalbum-manual-sort-initialize-folder{{ ($current_sort_folder ?? '') === PhotoalbumSort::manual_order ? '' : ' d-none' }}">
+                    カスタム順の変更は <a href="#photoalbum-preview">表示プレビュー</a> の上下ボタンから行えます。
+                </small>
+                <div class="form-inline mt-2 photoalbum-manual-sort-initialize-folder{{ ($current_sort_folder ?? '') === PhotoalbumSort::manual_order ? '' : ' d-none' }}">
+                    <label for="manual_sort_initialize_folder" class="mr-2">カスタム順を初期化</label>
+                    <select class="form-control" name="manual_sort_initialize_folder" id="manual_sort_initialize_folder">
+                        <option value="">初期化しない</option>
+                        @foreach (($manual_sort_initialize_options ?? []) as $sort_key => $sort_view)
+                            <option value="{{ $sort_key }}" @if(old('manual_sort_initialize_folder') == $sort_key) selected @endif>
+                                {{ $sort_view }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <small class="form-text text-muted photoalbum-manual-sort-initialize-folder{{ ($current_sort_folder ?? '') === PhotoalbumSort::manual_order ? '' : ' d-none' }}">
+                    アルバム並び順がカスタム順のときだけ、変更確定時に選択した並び順でカスタム順を作り直します。
+                </small>
             </div>
         </div>
         {{-- 写真並び順 --}}
@@ -559,11 +585,23 @@
                         @endif
                     @endforeach
                 </select>
-                @if (($current_sort_file ?? '') === PhotoalbumSort::manual_order)
-                    <small class="form-text text-muted">
-                        カスタム順の変更は <a href="#photoalbum-preview">表示プレビュー</a> の上下ボタンから行えます。
-                    </small>
-                @endif
+                <small class="form-text text-muted photoalbum-manual-sort-initialize-file{{ ($current_sort_file ?? '') === PhotoalbumSort::manual_order ? '' : ' d-none' }}">
+                    カスタム順の変更は <a href="#photoalbum-preview">表示プレビュー</a> の上下ボタンから行えます。
+                </small>
+                <div class="form-inline mt-2 photoalbum-manual-sort-initialize-file{{ ($current_sort_file ?? '') === PhotoalbumSort::manual_order ? '' : ' d-none' }}">
+                    <label for="manual_sort_initialize_file" class="mr-2">カスタム順を初期化</label>
+                    <select class="form-control" name="manual_sort_initialize_file" id="manual_sort_initialize_file">
+                        <option value="">初期化しない</option>
+                        @foreach (($manual_sort_initialize_options ?? []) as $sort_key => $sort_view)
+                            <option value="{{ $sort_key }}" @if(old('manual_sort_initialize_file') == $sort_key) selected @endif>
+                                {{ $sort_view }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <small class="form-text text-muted photoalbum-manual-sort-initialize-file{{ ($current_sort_file ?? '') === PhotoalbumSort::manual_order ? '' : ' d-none' }}">
+                    写真並び順がカスタム順のときだけ、変更確定時に選択した並び順でカスタム順を作り直します。
+                </small>
             </div>
         </div>
 

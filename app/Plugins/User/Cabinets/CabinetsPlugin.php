@@ -47,6 +47,11 @@ class CabinetsPlugin extends UserPluginBase
     /* オブジェクト変数 */
 
     /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
+
+    /**
      * POST チェックに使用する getPost() 関数を使うか
      * [TODO] 現在（2021/11/10）は、管理者がアップしたファイルも、編集者が削除できるため、getPost()は使わない設定にする。
      *        今後自分がアップしたファイルのみ削除できるように見直しする想定で、その時は getPost()を使うと予想。
@@ -65,7 +70,7 @@ class CabinetsPlugin extends UserPluginBase
     {
         // 標準関数以外で画面などから呼ばれる関数の定義
         $functions = array();
-        $functions['get']  = ['index', 'download', 'changeDirectory'];
+        $functions['get']  = ['index', 'show', 'download', 'changeDirectory'];
         $functions['post'] = ['makeFolder', 'upload', 'deleteContents', 'rename', 'move'];
         return $functions;
     }
@@ -92,6 +97,39 @@ class CabinetsPlugin extends UserPluginBase
     {
         // プラグインのメインデータを取得する。
         return Cabinet::firstOrNew(['bucket_id' => $bucket_id]);
+    }
+
+    /* スタティック関数 */
+
+    /**
+     * 新着情報用メソッド
+     */
+    public static function getWhatsnewArgs()
+    {
+        $return[] = DB::table('cabinet_contents')
+                      ->select(
+                          'frames.page_id             as page_id',
+                          'frames.id                  as frame_id',
+                          'cabinet_contents.id        as post_id',
+                          'cabinet_contents.name      as post_title',
+                          'cabinet_contents.comment   as post_detail',
+                          DB::raw("null               as important"),
+                          DB::raw('COALESCE(cabinet_contents.updated_at, cabinet_contents.created_at) as posted_at'),
+                          'cabinet_contents.created_name as posted_name',
+                          DB::raw("null               as classname"),
+                          DB::raw("null               as category"),
+                          DB::raw('"cabinets"         as plugin_name')
+                      )
+                      ->join('cabinets', 'cabinets.id', '=', 'cabinet_contents.cabinet_id')
+                      ->join('frames', 'frames.bucket_id', '=', 'cabinets.bucket_id')
+                      ->where('frames.disable_whatsnews', 0)
+                      ->whereNotNull('cabinet_contents.parent_id')
+                      ->whereNull('cabinet_contents.deleted_at');
+
+        $return[] = 'show_page_frame_post';
+        $return[] = '/plugin/cabinets/show';
+
+        return $return;
     }
 
     /* 画面アクション関数 */
@@ -169,6 +207,32 @@ class CabinetsPlugin extends UserPluginBase
             'parent_id' =>  $parent->id,
             'folders_tree' => $folders_tree,
         ]);
+    }
+
+    /**
+     * 新着情報からキャビネットコンテンツへ遷移する
+     *
+     * @param \Illuminate\Http\Request $request リクエスト
+     * @param int $page_id ページID
+     * @param int $frame_id フレームID
+     * @param int $cabinet_content_id キャビネットコンテンツID
+     */
+    public function show($request, $page_id, $frame_id, $cabinet_content_id)
+    {
+        $cabinet = $this->getPluginBucket($this->frame->bucket_id);
+        $cabinet_content = CabinetContent::where('id', $cabinet_content_id)
+            ->where('cabinet_id', $cabinet->id)
+            ->first();
+
+        if (empty($cabinet_content)) {
+            abort(404, 'コンテンツがありません。');
+        }
+
+        $parent_id = $cabinet_content->is_folder == CabinetContent::is_folder_on
+            ? $cabinet_content->id
+            : $cabinet_content->parent_id;
+
+        return $this->index($request, $page_id, $frame_id, $parent_id);
     }
 
     /**
@@ -1129,7 +1193,7 @@ class CabinetsPlugin extends UserPluginBase
     private function saveCabinet($request, $frame_id, $bucket_id)
     {
         // バケツの取得。なければ登録。
-        $bucket = Buckets::updateOrCreate(
+        $bucket = Buckets::updateOrCreateWithDefaultPostRoles(
             ['id' => $bucket_id],
             ['bucket_name' => $request->name, 'plugin_name' => 'cabinets'],
         );

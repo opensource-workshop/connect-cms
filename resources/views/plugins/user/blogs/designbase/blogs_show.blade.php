@@ -14,7 +14,7 @@
     <header>
         {{-- 投稿日時 --}}
         <p>
-        {{$post->posted_at->format('Y/m/d')}}
+        @include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at, 'default_display_posted_time' => ShowType::not_show, 'default_posted_at_format' => BlogPostedAtFormat::slash])
         {{-- 投稿者名 --}}
         @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
             [{{$post->created_name}}]

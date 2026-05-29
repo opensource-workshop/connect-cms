@@ -46,7 +46,7 @@ use App\Enums\SearchsPageSelect;
 @if (isset($searchs))
     @if (!$searchs->id && !$create_flag)
     @else
-        <form action="{{url('/')}}/plugin/searchs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="">
+        <form action="{{url('/')}}/plugin/searchs/saveBuckets/{{$page->id}}/{{$frame_id}}#frame-{{$frame->id}}" method="POST" class="" id="searchs_edit_form_{{$frame->id}}">
             {{ csrf_field() }}
 
             {{-- create_flag がtrue の場合、新規作成するためにsearchs_id を空にする --}}
@@ -167,15 +167,42 @@ use App\Enums\SearchsPageSelect;
                 </div>
             </div>
 
+            @php
+                $selected_frame_select = old('frame_select', $searchs->frame_select);
+            @endphp
+
             <div class="form-group row mb-0">
                 <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>
                 <div class="{{$frame->getSettingInputClass(true)}}">
                     @foreach (SearchsFrameSelect::enum as $key => $item)
                         <div class="custom-control custom-radio custom-control-inline">
-                            @if(old('frame_select', $searchs->frame_select) == $key)
-                                <input type="radio" value="{{$key}}" id="frame_select_{{$key}}" name="frame_select" class="custom-control-input" checked="checked">
+                            @if($selected_frame_select == $key)
+                                <input
+                                    type="radio"
+                                    value="{{$key}}"
+                                    id="frame_select_{{$key}}"
+                                    name="frame_select"
+                                    class="custom-control-input"
+                                    checked="checked"
+                                    @if($key == SearchsFrameSelect::all_frames)
+                                        data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}.show"
+                                    @else
+                                        data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_frame_select{{$frame_id}}"
+                                    @endif
+                                >
                             @else
-                                <input type="radio" value="{{$key}}" id="frame_select_{{$key}}" name="frame_select" class="custom-control-input">
+                                <input
+                                    type="radio"
+                                    value="{{$key}}"
+                                    id="frame_select_{{$key}}"
+                                    name="frame_select"
+                                    class="custom-control-input"
+                                    @if($key == SearchsFrameSelect::all_frames)
+                                        data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}.show"
+                                    @else
+                                        data-toggle="collapse" data-target="#collapse_frame_select{{$frame_id}}:not(.show)" aria-expanded="true" aria-controls="collapse_frame_select{{$frame_id}}"
+                                    @endif
+                                >
                             @endif
                             <label class="custom-control-label" for="frame_select_{{$key}}">{{ SearchsFrameSelect::getDescription($key) }}</label>
                         </div>
@@ -193,9 +220,9 @@ use App\Enums\SearchsPageSelect;
                 </div>
             </div>
 
-            <div class="form-group row">
+            <div class="form-group row collapse" id="collapse_frame_select{{$frame_id}}">
                 <label class="{{$frame->getSettingLabelClass()}}">対象ページ - フレーム</label>
-                <div class="{{$frame->getSettingInputClass(false, true)}}">
+                <div class="{{$frame->getSettingInputClass(false, true)}}" id="searchs_target_frames_{{$frame->id}}">
                     <ul class="nav nav-pills" role="tablist">
                         @foreach(SearchsTargetPlugin::getPluginsCanSpecifiedFrames() as $target_plugin => $target_plugin_full)
                             <li class="nav-item">
@@ -275,4 +302,35 @@ use App\Enums\SearchsPageSelect;
         @endif
     @endif
 @endif
+
+<script>
+    (function() {
+        const allFramesValue = '{{ SearchsFrameSelect::all_frames }}';
+        const targetFramesArea = document.getElementById('searchs_target_frames_{{ $frame->id }}');
+        const collapseTargetFrames = document.getElementById('collapse_frame_select{{ $frame_id }}');
+        const searchsEditForm = document.getElementById('searchs_edit_form_{{ $frame->id }}');
+        const frameSelects = searchsEditForm ? searchsEditForm.querySelectorAll('input[name="frame_select"]') : [];
+
+        if (!searchsEditForm || !collapseTargetFrames || !targetFramesArea || frameSelects.length === 0) {
+            return;
+        }
+
+        const setTargetFramesDisabled = function() {
+            const checkedFrameSelect = searchsEditForm.querySelector('input[name="frame_select"]:checked');
+            const disabled = checkedFrameSelect && checkedFrameSelect.value === allFramesValue;
+
+            targetFramesArea.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        };
+
+        frameSelects.forEach(function(frameSelect) {
+            frameSelect.addEventListener('change', setTargetFramesDisabled);
+        });
+
+        setTargetFramesDisabled();
+
+        @if (isset($selected_frame_select) && $selected_frame_select == SearchsFrameSelect::selected_only)
+            $('#collapse_frame_select{{$frame_id}}').collapse('show')
+        @endif
+    })();
+</script>
 @endsection

@@ -84,7 +84,7 @@
             {{-- datafirstテンプレート --}}
             <header>
                 {{-- 投稿日時 --}}
-                <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+                <b>@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at])</b>
 
                 {{-- 投稿者名 --}}
                 @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)
@@ -99,7 +99,7 @@
             {{-- titleindexテンプレート --}}
             <header>
                 {{-- 投稿日時 --}}
-                <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+                <span class="date">@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at, 'default_display_posted_time' => ShowType::not_show])</span>
 
                 {{-- タイトル --}}
                 <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
@@ -119,7 +119,7 @@
 
             <header>
                 {{-- 投稿日時 --}}
-                <span class="date">{{$post->posted_at->format('Y年n月j日')}}</span>
+                <span class="date">@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at, 'default_display_posted_time' => ShowType::not_show])</span>
 
                 {{-- タイトル --}}
                 <a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}"><span class="title">{{$post->post_title}}</span></a>
@@ -138,7 +138,7 @@
                 <h2><a href="{{url('/')}}/plugin/blogs/show/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}">{{$post->post_title}}</a></h2>
 
                 {{-- 投稿日時 --}}
-                <b>{{$post->posted_at->format('Y年n月j日 H時i分')}}</b>
+                <b>@include('plugins.user.blogs.default.include_posted_at', ['posted_at' => $post->posted_at])</b>
 
                 {{-- 投稿者名 --}}
                 @if (FrameConfig::getConfigValue($frame_configs, BlogFrameConfig::blog_display_created_name) === BlogDisplayCreatedName::display)

@@ -11,6 +11,10 @@ use App\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * メニュープラグインの編集権限と、表示設定が保存されていない初期状態の公開表示を検証する。
+ * 画面経由の保存結果と、公開メニューに出る利用者視点の表示をFeatureテストで守る。
+ */
 class MenusModeratorEditFeatureTest extends TestCase
 {
     use RefreshDatabase;
@@ -269,5 +273,50 @@ class MenusModeratorEditFeatureTest extends TestCase
         $permitted_response->assertStatus(200);
         $permitted_response->assertSee('menu-edit-button');
         $permitted_response->assertDontSee('設定メニュー');
+    }
+
+    /**
+     * ディレクトリ展開式は、メニュー設定を保存していない新規フレームでも配下ページの存在と展開状態を示す。
+     */
+    public function testOpenCurrentTreeShowsChildrenWithDefaultSettingsWhenMenuIsNotSaved(): void
+    {
+        $parent = $this->createPublicPage('親ページ', '/parent-page', $this->page);
+        $this->createPublicPage('子ページ', '/parent-page/child-page', $parent);
+        Frame::whereKey($this->frame->id)->update(['template' => 'opencurrenttree']);
+        $this->frame = $this->frame->fresh();
+
+        $root_response = $this->get($this->index_url);
+        $root_response->assertStatus(200);
+        $root_response->assertSee('親ページ');
+        $root_response->assertSee('fas fa-plus', false);
+        $root_response->assertDontSee('子ページ');
+
+        Frame::whereKey($this->frame->id)->update(['page_id' => $parent->id]);
+        $this->frame = $this->frame->fresh();
+
+        $parent_response = $this->get("/plugin/menus/index/{$parent->id}/{$this->frame->id}");
+        $parent_response->assertStatus(200);
+        $parent_response->assertSee('親ページ');
+        $parent_response->assertSee('子ページ');
+        $parent_response->assertSee('fas fa-minus', false);
+
+        $this->assertNull(Menu::where('frame_id', $this->frame->id)->first());
+    }
+
+    /**
+     * メニュー表示対象のページ階層を作る。
+     */
+    private function createPublicPage(string $name, string $permanent_link, Page $parent): Page
+    {
+        $page = Page::factory()->create([
+            'page_name' => $name,
+            'permanent_link' => $permanent_link,
+            'base_display_flag' => 1,
+            'membership_flag' => 0,
+        ]);
+
+        $page->appendToNode($parent)->save();
+
+        return $page->fresh();
     }
 }

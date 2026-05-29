@@ -47,6 +47,14 @@
         <td>{{$base_layout_title}}</td>
     </tr>
     <tr nobr="true">
+        <td>プラグイン新規作成時のモデレータ投稿権限</td>
+        @if (Configs::getConfigsValue($configs, 'new_bucket_role_article_post_flag', 0) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
+    </tr>
+    <tr nobr="true">
+        <td>プラグイン新規作成時の編集者投稿権限</td>
+        @if (Configs::getConfigsValue($configs, 'new_bucket_role_reporter_post_flag', 0) == '1') <td>許可する</td> @else <td>許可しない</td> @endif
+    </tr>
+    <tr nobr="true">
         <td>背景色</td>
         <td>{{Configs::getConfigsValue($configs, 'base_background_color', null)}}</td>
     </tr>

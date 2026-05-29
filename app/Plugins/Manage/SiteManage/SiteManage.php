@@ -331,6 +331,20 @@ class SiteManage extends ManagePluginBase
              'value'    => $request->additional_theme]
         );
 
+        // 新規バケツ作成時のモデレータ投稿権限
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'new_bucket_role_article_post_flag'],
+            ['category' => 'general',
+             'value'    => (isset($request->new_bucket_role_article_post_flag) ? $request->new_bucket_role_article_post_flag : 0)]
+        );
+
+        // 新規バケツ作成時の編集者投稿権限
+        $configs = Configs::updateOrCreate(
+            ['name'     => 'new_bucket_role_reporter_post_flag'],
+            ['category' => 'general',
+             'value'    => (isset($request->new_bucket_role_reporter_post_flag) ? $request->new_bucket_role_reporter_post_flag : 0)]
+        );
+
         // 画面の基本の背景色
         $configs = Configs::updateOrCreate(
             ['name'     => 'base_background_color'],
@@ -847,6 +861,13 @@ class SiteManage extends ManagePluginBase
                  'value'    => $request->$field ?? '']
             );
         }
+
+        // 機能拡張用meta設定の保存
+        Configs::updateOrCreate(
+            ['name'     => 'expose_login_userid_meta'],
+            ['category' => 'meta',
+             'value'    => $request->expose_login_userid_meta ?? '0']
+        );
 
         // メタ情報の更新完了メッセージ
         session()->flash('flash_message', 'メタ情報を更新しました。');

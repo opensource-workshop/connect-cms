@@ -3,6 +3,7 @@
 namespace App\Models\Common;
 
 use App\Models\Common\BucketsRoles;
+use App\Models\Core\Configs;
 use App\Traits\ConnectRoleTrait;
 use Database\Factories\Common\BucketsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,30 @@ class Buckets extends Model
 {
     use ConnectRoleTrait;
     use HasFactory;
+
+    /**
+     * 新規バケツの投稿権限初期値に対応するConfig名
+     */
+    private const DEFAULT_NEW_BUCKET_POST_ROLE_CONFIGS = [
+        'role_article' => 'new_bucket_role_article_post_flag',
+        'role_reporter' => 'new_bucket_role_reporter_post_flag',
+    ];
+
+    /**
+     * 新規バケツの投稿権限初期値を適用する対象プラグイン
+     */
+    private const DEFAULT_POST_ROLE_TARGET_PLUGINS = [
+        'bbses',
+        'blogs',
+        'cabinets',
+        'calendars',
+        'contents',
+        'databases',
+        'faqs',
+        'photoalbums',
+        'reservations',
+        'slideshows',
+    ];
 
     /**
      * create()やupdate()で入力を受け付ける ホワイトリスト
@@ -26,6 +51,13 @@ class Buckets extends Model
 
     // Buckets のrole
     private $buckets_roles = null;
+
+    protected static function booted()
+    {
+        static::deleting(function ($bucket) {
+            BucketsRoles::where('buckets_id', $bucket->id)->delete();
+        });
+    }
 
     /**
      * 投稿権限データをrole の配列で返却
@@ -219,6 +251,104 @@ class Buckets extends Model
             }
         }
         return true;
+    }
+
+    /**
+     * 新規バケツ作成時の投稿権限初期値を適用する。
+     */
+    public function initializeDefaultPostRoles(): void
+    {
+        $default_post_role_flags = self::getDefaultNewBucketPostRoleFlags();
+
+        foreach ($default_post_role_flags as $role => $post_flag) {
+            if ((int) $post_flag !== 1) {
+                continue;
+            }
+
+            BucketsRoles::firstOrCreate(
+                [
+                    'buckets_id' => $this->id,
+                    'role' => $role,
+                ],
+                [
+                    'post_flag' => 1,
+                    'approval_flag' => 0,
+                ]
+            );
+        }
+    }
+
+    /**
+     * 投稿権限設定を持つプラグインの新規バケツなら、投稿権限初期値を適用する。
+     */
+    public function initializeDefaultPostRolesIfTargetPlugin(): void
+    {
+        if (!self::isDefaultPostRoleTargetPlugin($this->plugin_name)) {
+            return;
+        }
+
+        $this->initializeDefaultPostRoles();
+    }
+
+    /**
+     * 新規バケツを作成し、対象プラグインだけ投稿権限初期値を適用する。
+     */
+    public static function createWithDefaultPostRoles(array $attributes): self
+    {
+        $bucket = self::create($attributes);
+        $bucket->initializeDefaultPostRolesIfTargetPlugin();
+
+        return $bucket;
+    }
+
+    /**
+     * バケツを作成または更新し、新規作成時だけ投稿権限初期値を適用する。
+     */
+    public static function updateOrCreateWithDefaultPostRoles(array $attributes, array $values = []): self
+    {
+        $bucket = self::updateOrCreate($attributes, $values);
+
+        if ($bucket->wasRecentlyCreated) {
+            $bucket->initializeDefaultPostRolesIfTargetPlugin();
+        }
+
+        return $bucket;
+    }
+
+    /**
+     * 新規バケツの投稿権限初期値を適用する対象プラグインか判定する。
+     */
+    public static function isDefaultPostRoleTargetPlugin(?string $plugin_name): bool
+    {
+        return in_array($plugin_name, self::DEFAULT_POST_ROLE_TARGET_PLUGINS, true);
+    }
+
+    /**
+     * 新規バケツ作成時の投稿権限初期値を取得する。
+     */
+    public static function getDefaultNewBucketPostRoleFlags(): array
+    {
+        $config_names = array_values(self::DEFAULT_NEW_BUCKET_POST_ROLE_CONFIGS);
+        $configs = Configs::getSharedConfigs();
+
+        if ($configs->isEmpty()) {
+            $configs = Configs::whereIn('name', $config_names)->get();
+        }
+
+        return self::resolveDefaultNewBucketPostRoleFlags($configs);
+    }
+
+    /**
+     * Config群から新規バケツ作成時の投稿権限初期値を解決する。
+     */
+    private static function resolveDefaultNewBucketPostRoleFlags($configs): array
+    {
+        $configs = collect($configs);
+
+        return [
+            'role_article' => (int) Configs::getConfigsValue($configs, self::DEFAULT_NEW_BUCKET_POST_ROLE_CONFIGS['role_article'], 0),
+            'role_reporter' => (int) Configs::getConfigsValue($configs, self::DEFAULT_NEW_BUCKET_POST_ROLE_CONFIGS['role_reporter'], 0),
+        ];
     }
 
     protected static function newFactory()

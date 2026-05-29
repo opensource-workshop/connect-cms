@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 use App\Enums\StatusType;
 
@@ -37,7 +38,15 @@ use Carbon\Exceptions\Exception;
  */
 class CalendarsPlugin extends UserPluginBase
 {
+    /** 繰り返し予定の最大登録件数 */
+    private const REPEAT_MAX_OCCURRENCES = 200;
+
     /* オブジェクト変数 */
+
+    /**
+     * 新着機能を使うか
+     */
+    public $use_whatsnew = true;
 
     /**
      * 変更時のPOSTデータ
@@ -154,23 +163,25 @@ class CalendarsPlugin extends UserPluginBase
     public static function getWhatsnewArgs()
     {
         // 戻り値('sql_method'、'link_pattern'、'link_base')
-        $return[] = DB::table('calendars_posts')
+        $return[] = DB::table('calendar_posts')
                       ->select(
-                          'frames.page_id           as page_id',
-                          'frames.id                as frame_id',
-                          'calendars_posts.id           as post_id',
-                          'calendars_posts.title        as post_title',
-                          DB::raw("null             as important"),
-                          'calendars_posts.created_at   as posted_at',
-                          'calendars_posts.created_name as posted_name',
-                          DB::raw("null             as classname"),
-                          DB::raw("null             as category"),
+                          'frames.page_id              as page_id',
+                          'frames.id                   as frame_id',
+                          'calendar_posts.id           as post_id',
+                          'calendar_posts.title        as post_title',
+                          'calendar_posts.body         as post_detail',
+                          DB::raw("null                as important"),
+                          'calendar_posts.created_at   as posted_at',
+                          'calendar_posts.created_name as posted_name',
+                          DB::raw("null                as classname"),
+                          DB::raw("null                as category"),
                           DB::raw('"calendars"          as plugin_name')
                       )
-                      ->join('calendars', 'calendars.id', '=', 'calendars_posts.calendars_id')
+                      ->join('calendars', 'calendars.id', '=', 'calendar_posts.calendar_id')
                       ->join('frames', 'frames.bucket_id', '=', 'calendars.bucket_id')
                       ->where('frames.disable_whatsnews', 0)
-                      ->whereNull('calendars_posts.deleted_at');
+                      ->where('calendar_posts.status', StatusType::active)
+                      ->whereNull('calendar_posts.deleted_at');
 
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/calendars/show';
@@ -367,6 +378,9 @@ class CalendarsPlugin extends UserPluginBase
      */
     public function save($request, $page_id, $frame_id, $post_id = null)
     {
+        $repeat_type = $request->get('repeat_type') ?: 'none';
+        $request->merge(['repeat_type' => $repeat_type]);
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'title'      => ['required', 'max:191'],
@@ -374,6 +388,9 @@ class CalendarsPlugin extends UserPluginBase
             'location'   => ['nullable', 'max:191'],
             'contact'    => ['nullable', 'max:191'],
             'start_date' => ['required', 'date'],
+            'repeat_type' => ['nullable', 'in:none,weekly,monthly_date,monthly_weekday'],
+            'repeat_until' => ['nullable', 'required_unless:repeat_type,none', 'date'],
+            'repeat_edit_type' => ['nullable', 'in:only,after,all'],
         ]);
         $validator->setAttributeNames([
             'title'      => 'タイトル',
@@ -381,6 +398,9 @@ class CalendarsPlugin extends UserPluginBase
             'location'   => '場所',
             'contact'    => '連絡先',
             'start_date' => '開始日時',
+            'repeat_type' => '繰り返し',
+            'repeat_until' => '繰り返し終了日',
+            'repeat_edit_type' => '変更範囲',
         ]);
         // エラーがあった場合は入力画面に戻る。
         if ($validator->fails()) {
@@ -403,46 +423,258 @@ class CalendarsPlugin extends UserPluginBase
             }
         }
 
-        // POSTデータのモデル取得
-        $post = CalendarPost::firstOrNew(['id' => $post_id]);
+        $base_post = null;
+        if (!empty($post_id)) {
+            $base_post = $this->getPost($post_id);
+            if (empty($base_post->id) || !$base_post->exists) {
+                return;
+            }
+        }
+
+        if ($repeat_type !== 'none' && !empty($post_id)) {
+            $validator = Validator::make($request->all(), []);
+            $validator->errors()->add('repeat_type', '繰り返し予定は新規登録時のみ設定できます。');
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $repeat_dates = [$request->start_date];
+        if ($repeat_type !== 'none') {
+            if ($request->repeat_until < $request->start_date) {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('repeat_until', '繰り返し終了日が開始日の前は設定できません。');
+                return back()->withErrors($validator)->withInput();
+            }
+
+            $repeat_dates = $this->getRepeatStartDates($request->start_date, $request->repeat_until, $repeat_type);
+            if (count($repeat_dates) > self::REPEAT_MAX_OCCURRENCES) {
+                $validator = Validator::make($request->all(), []);
+                $validator->errors()->add('repeat_until', '繰り返し予定は一度に' . self::REPEAT_MAX_OCCURRENCES . '件まで登録できます。');
+                return back()->withErrors($validator)->withInput();
+            }
+        }
 
         // フレームから calendar_id 取得
         $calendar_frame = $this->getPluginFrame($frame_id);
 
-        // 値のセット
-        $post->calendar_id = $calendar_frame->calendar_id;
-        $post->allday_flag = $request->get('allday_flag');
-        $post->start_date  = $request->start_date;
-        $post->start_time  = $request->start_time;
-        $post->end_date    = $request->end_date;
-        $post->end_time    = $request->end_time;
-        $post->title       = $request->title;
-        $post->body        = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
-        $post->location    = $request->location;
-        $post->contact     = $request->contact;
-
-        // bugfix: 【カレンダー】承認機能ONで一般が書き込んだ内容を、管理者が編集すると、以後その予定が一般で編集できなくなるバグ修正. created_idは UserableNohistory で自動セットするよう修正
-        // 投稿者をセット
-        // if (Auth::check()) {
-        //     $post->created_id = Auth::user()->id;
-        // }
-
         // 承認の要否確認とステータス処理
         if ($request->status == StatusType::temporary) {
-            $post->status = StatusType::temporary;  // 一時保存
+            $status = StatusType::temporary;  // 一時保存
         // } elseif ($this->buckets->needApprovalUser(Auth::user())) {
         } elseif ($this->isApproval()) {
-            $post->status = StatusType::approval_pending;  // 承認待ち
+            $status = StatusType::approval_pending;  // 承認待ち
         } else {
-            $post->status = StatusType::active;  // 公開
+            $status = StatusType::active;  // 公開
         }
 
         // 保存
-        $post->save();
+        if (!empty($base_post)) {
+            DB::transaction(function () use ($request, $base_post, $calendar_frame, $status) {
+                $posts = $this->getRepeatEditPosts($base_post, $request->get('repeat_edit_type', 'only'));
+                foreach ($posts as $post) {
+                    $start_date = $this->getShiftedDate($post->start_date, $base_post->start_date, $request->start_date);
+                    $end_date = $this->getShiftedEndDate($post, $base_post, $request, $start_date);
+                    $this->setPostValues($post, $request, $calendar_frame->calendar_id, $status, $start_date, null, $end_date);
+                    $post->save();
+                }
+            });
+        } else {
+            $repeat_group_id = count($repeat_dates) > 1 ? (string)Str::uuid() : null;
+            DB::transaction(function () use ($request, $calendar_frame, $status, $repeat_dates, $repeat_group_id) {
+                foreach ($repeat_dates as $repeat_date) {
+                    $post = new CalendarPost();
+                    $this->setPostValues($post, $request, $calendar_frame->calendar_id, $status, $repeat_date, $repeat_group_id);
+                    $post->save();
+                }
+            });
+        }
 
         // 登録後は初期表示へ
         // return new Collection(['redirect_path' => url('/') . "/plugin/calendars/edit/" . $page_id . "/" . $frame_id . "/" . $post->id . "#frame-" . $frame_id]);
         return collect(['redirect_path' => url($this->page->permanent_link) . "#frame-{$frame_id}"]);
+    }
+
+    /**
+     * 繰り返し予定の編集対象を取得する。
+     */
+    private function getRepeatEditPosts(CalendarPost $post, string $repeat_edit_type): Collection
+    {
+        if (empty($post->repeat_group_id) || $repeat_edit_type === 'only') {
+            return new Collection([$post]);
+        }
+
+        $query = $this->getRepeatPostsQuery($post)
+            ->orderBy('start_date')
+            ->orderBy('id');
+
+        if ($repeat_edit_type === 'after') {
+            $query->where(function ($query) use ($post) {
+                $query->where('start_date', '>', $post->start_date)
+                    ->orWhere(function ($query) use ($post) {
+                        $query->where('start_date', $post->start_date)
+                            ->where('id', '>=', $post->id);
+                    });
+            });
+        } elseif ($repeat_edit_type !== 'all') {
+            return new Collection([$post]);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * 権限範囲内の同一繰り返し予定を取得するクエリを返す。
+     */
+    private function getRepeatPostsQuery(CalendarPost $post)
+    {
+        $query = CalendarPost::where('calendar_id', $post->calendar_id)
+            ->where('repeat_group_id', $post->repeat_group_id);
+
+        return $this->appendAuthWhereBase($query, 'calendar_posts');
+    }
+
+    /**
+     * 基準予定からの差分で日付をずらす。
+     */
+    private function getShiftedDate(string $target_date, string $base_date, string $new_base_date): string
+    {
+        $diff_days = CarbonImmutable::parse($base_date)->diffInDays(CarbonImmutable::parse($new_base_date), false);
+        return CarbonImmutable::parse($target_date)->addDays($diff_days)->format('Y-m-d');
+    }
+
+    /**
+     * 編集対象の終了日を取得する。
+     */
+    private function getShiftedEndDate(CalendarPost $post, CalendarPost $base_post, $request, string $start_date): string
+    {
+        if (empty($request->end_date)) {
+            return $start_date;
+        }
+
+        $base_end_date = empty($base_post->end_date) ? $base_post->start_date : $base_post->end_date;
+        $post_end_date = empty($post->end_date) ? $post->start_date : $post->end_date;
+        return $this->getShiftedDate($post_end_date, $base_end_date, $request->end_date);
+    }
+
+    /**
+     * 登録する予定の値をセットする。
+     */
+    private function setPostValues(
+        CalendarPost $post,
+        $request,
+        int $calendar_id,
+        int $status,
+        string $start_date,
+        ?string $repeat_group_id,
+        ?string $end_date = null
+    ): void {
+        $post->calendar_id      = $calendar_id;
+        $post->allday_flag      = $request->get('allday_flag');
+        $post->start_date       = $start_date;
+        $post->start_time       = $request->start_time;
+        $post->end_date         = $end_date ?? $this->getRepeatedEndDate($request->start_date, $request->end_date, $start_date);
+        $post->end_time         = $request->end_time;
+        $post->title            = $request->title;
+        $post->body             = $this->clean($request->body);   // wysiwygのXSS対応のJavaScript等の制限
+        $post->location         = $request->location;
+        $post->contact          = $request->contact;
+        if (empty($post->id) || !empty($repeat_group_id)) {
+            $post->repeat_group_id = $repeat_group_id;
+        }
+        $post->status           = $status;
+    }
+
+    /**
+     * 繰り返し予定の開始日一覧を取得する。
+     */
+    private function getRepeatStartDates(string $start_date, string $repeat_until, string $repeat_type): array
+    {
+        $start = CarbonImmutable::parse($start_date);
+        $until = CarbonImmutable::parse($repeat_until);
+
+        if ($repeat_type === 'weekly') {
+            return $this->getWeeklyRepeatStartDates($start, $until);
+        }
+        if ($repeat_type === 'monthly_date') {
+            return $this->getMonthlyDateRepeatStartDates($start, $until);
+        }
+        if ($repeat_type === 'monthly_weekday') {
+            return $this->getMonthlyWeekdayRepeatStartDates($start, $until);
+        }
+
+        return [$start->format('Y-m-d')];
+    }
+
+    /**
+     * 毎週の開始日一覧を取得する。
+     */
+    private function getWeeklyRepeatStartDates(CarbonImmutable $start, CarbonImmutable $until): array
+    {
+        $dates = [];
+        for ($date = $start; $date->lte($until); $date = $date->addWeek()) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        return $dates;
+    }
+
+    /**
+     * 毎月同日の開始日一覧を取得する。存在しない日付の月は登録しない。
+     */
+    private function getMonthlyDateRepeatStartDates(CarbonImmutable $start, CarbonImmutable $until): array
+    {
+        $dates = [];
+        $day = $start->day;
+
+        for ($date = $start->startOfMonth(); $date->lte($until); $date = $date->addMonthNoOverflow()) {
+            if (!checkdate($date->month, $day, $date->year)) {
+                continue;
+            }
+
+            $repeat_date = $date->setDay($day);
+            if ($repeat_date->lt($start) || $repeat_date->gt($until)) {
+                continue;
+            }
+
+            $dates[] = $repeat_date->format('Y-m-d');
+        }
+
+        return $dates;
+    }
+
+    /**
+     * 毎月第n曜日の開始日一覧を取得する。該当する第n曜日がない月は登録しない。
+     */
+    private function getMonthlyWeekdayRepeatStartDates(CarbonImmutable $start, CarbonImmutable $until): array
+    {
+        $dates = [];
+        $week_number = (int)ceil($start->day / 7);
+        $day_of_week = $start->dayOfWeek;
+
+        for ($date = $start->startOfMonth(); $date->lte($until); $date = $date->addMonthNoOverflow()) {
+            $repeat_date = $date->firstOfMonth($day_of_week)->addWeeks($week_number - 1);
+            if ($repeat_date->month !== $date->month || $repeat_date->lt($start) || $repeat_date->gt($until)) {
+                continue;
+            }
+
+            $dates[] = $repeat_date->format('Y-m-d');
+        }
+
+        return $dates;
+    }
+
+    /**
+     * 繰り返し後の終了日を取得する。
+     */
+    private function getRepeatedEndDate(string $base_start_date, ?string $base_end_date, string $repeated_start_date): string
+    {
+        if (empty($base_end_date)) {
+            return $repeated_start_date;
+        }
+
+        $base_start = CarbonImmutable::parse($base_start_date);
+        $base_end = CarbonImmutable::parse($base_end_date);
+        $repeated_start = CarbonImmutable::parse($repeated_start_date);
+
+        return $repeated_start->addDays($base_start->diffInDays($base_end))->format('Y-m-d');
     }
 
     /**
@@ -474,14 +706,47 @@ class CalendarsPlugin extends UserPluginBase
     {
         // id がある場合、データを削除
         if ($post_id) {
+            $post = $this->getPost($post_id);
+            if (empty($post->id) || !$post->exists) {
+                return;
+            }
+
+            $delete_post_ids = $this->getDeletePostIds($post, $request->get('repeat_delete_type', 'only'));
+
             // データを削除する。（論理削除で削除日、ID などを残すためにupdate）
-            CalendarPost::where('id', $post_id)->update([
+            CalendarPost::whereIn('id', $delete_post_ids)->update([
                 'deleted_at'   => date('Y-m-d H:i:s'),
                 'deleted_id'   => Auth::user()->id,
                 'deleted_name' => Auth::user()->name,
             ]);
         }
         return;
+    }
+
+    /**
+     * 削除対象の予定IDを取得する。
+     */
+    private function getDeletePostIds(CalendarPost $post, string $repeat_delete_type): array
+    {
+        if (empty($post->repeat_group_id) || $repeat_delete_type === 'only') {
+            return [$post->id];
+        }
+
+        $query = $this->getRepeatPostsQuery($post);
+
+        if ($repeat_delete_type === 'after') {
+            $query->where(function ($query) use ($post) {
+                $query->where('start_date', '>', $post->start_date)
+                    ->orWhere(function ($query) use ($post) {
+                        $query->where('start_date', $post->start_date)
+                            ->where('id', '>=', $post->id);
+                    });
+            });
+        } elseif ($repeat_delete_type !== 'all') {
+            return [$post->id];
+        }
+
+        return $query->pluck('id')->all();
     }
 
     /**
@@ -598,7 +863,7 @@ class CalendarsPlugin extends UserPluginBase
         }
 
         // バケツの取得。なければ登録。
-        $bucket = Buckets::updateOrCreate(
+        $bucket = Buckets::updateOrCreateWithDefaultPostRoles(
             ['id' => $bucket_id],
             ['bucket_name' => $request->name, 'plugin_name' => 'calendars'],
         );

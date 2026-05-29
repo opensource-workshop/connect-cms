@@ -615,6 +615,7 @@ class UserPluginBase extends PluginBase
     {
         // Buckets の取得
         $buckets = $this->getBuckets($frame_id);
+        $default_post_role_flags = [];
 
         if ($this->frame->plugin_name == 'contents' || $buckets) {
             // 固定記事プラグイン(=コンテンツプラグイン)はバケツありなし、どちらでも表示する。
@@ -624,10 +625,15 @@ class UserPluginBase extends PluginBase
             return $this->commonView('empty_bucket_setting');
         }
 
+        if ($this->frame->plugin_name == 'contents' && empty($buckets)) {
+            $default_post_role_flags = Buckets::getDefaultNewBucketPostRoleFlags();
+        }
+
         return $this->commonView('frame_edit_roles', [
-            'buckets'      => $buckets,
-            'plugin_name'  => $this->frame->plugin_name,
-            'use_approval' => $use_approval,
+            'buckets'                 => $buckets,
+            'plugin_name'             => $this->frame->plugin_name,
+            'use_approval'            => $use_approval,
+            'default_post_role_flags' => $default_post_role_flags,
         ]);
     }
 

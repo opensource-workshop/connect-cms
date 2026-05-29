@@ -10,6 +10,27 @@
 
 @section("plugin_setting_$frame->id")
 
+@php
+    $search_condition = $search_condition ?? [
+        'keyword' => '',
+        'status' => '',
+        'created_from' => '',
+        'created_to' => '',
+    ];
+    $per_page_options = $per_page_options ?? config('forms.list_inputs.per_page_options', []);
+    $view_count = $view_count ?? config('forms.list_inputs.default_per_page');
+    $list_inputs_url = url('/') . "/plugin/forms/listInputs/{$page->id}/{$frame_id}/{$form->id}";
+    $has_search_condition = $search_condition['keyword'] !== ''
+        || $search_condition['status'] !== ''
+        || $search_condition['created_from'] !== ''
+        || $search_condition['created_to'] !== '';
+    $pagination_appends = array_filter($search_condition, function ($value) {
+        return !is_null($value) && $value !== '';
+    });
+    $list_inputs_redirect_query = array_merge($pagination_appends, ["frame_{$frame_id}_page" => 1]);
+    $list_inputs_redirect_path = $list_inputs_url . '?' . http_build_query($list_inputs_redirect_query) . "#frame-{$frame_id}";
+@endphp
+
 {{-- 登録後メッセージ表示 --}}
 @include('plugins.common.flash_message')
 
@@ -59,6 +80,41 @@
     })
 </script>
 
+<form action="{{$list_inputs_url}}#frame-{{$frame_id}}" method="GET" class="mb-3" role="search" aria-label="{{$form->forms_name}}の登録一覧検索">
+    <div class="form-row align-items-end">
+        <div class="form-group col-md-3 mb-2">
+            <label for="forms-inputs-keyword-{{$frame_id}}">
+                キーワード
+                <i class="fas fa-info-circle text-muted" data-toggle="tooltip" data-placement="top" title="入力値・添付ファイル名・採番・登録ユーザ・IPアドレスを検索します。"></i>
+            </label>
+            <input type="text" name="keyword" id="forms-inputs-keyword-{{$frame_id}}" value="{{$search_condition['keyword']}}" class="form-control" placeholder="キーワード">
+        </div>
+        <div class="form-group col-md-2 mb-2">
+            <label for="forms-inputs-status-{{$frame_id}}">状態</label>
+            <select name="status" id="forms-inputs-status-{{$frame_id}}" class="form-control">
+                <option value="">すべて</option>
+                @foreach (FormStatusType::enum as $status_key => $status_label)
+                    <option value="{{$status_key}}" @if((string)$search_condition['status'] === (string)$status_key) selected @endif>{{$status_label}}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group col-md-3 mb-2">
+            <label for="forms-inputs-created-from-{{$frame_id}}">登録日From</label>
+            <input type="date" name="created_from" id="forms-inputs-created-from-{{$frame_id}}" value="{{$search_condition['created_from']}}" class="form-control forms-list-inputs-date">
+        </div>
+        <div class="form-group col-md-3 mb-2">
+            <label for="forms-inputs-created-to-{{$frame_id}}">登録日To</label>
+            <input type="date" name="created_to" id="forms-inputs-created-to-{{$frame_id}}" value="{{$search_condition['created_to']}}" class="form-control forms-list-inputs-date">
+        </div>
+    </div>
+    <div class="text-right mb-3">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> 検索</button>
+        @if ($has_search_condition)
+            <a href="{{$list_inputs_url}}#frame-{{$frame_id}}" class="btn btn-secondary"><i class="fas fa-times"></i> クリア</a>
+        @endif
+    </div>
+</form>
+
 <div class="row">
     <div class="col-3 text-left d-flex align-items-end">
         {{-- (左側)件数 --}}
@@ -66,6 +122,18 @@
     </div>
 
     <div class="col text-right">
+        {{-- (右側)表示件数変更 --}}
+        <form action="{{url('/')}}/redirect/plugin/forms/indexCount/{{$page->id}}/{{$frame_id}}#frame-{{$frame_id}}" method="POST" class="d-inline-block mr-2" name="view_count_spectator_{{$frame_id}}">
+            {{ csrf_field() }}
+            <input type="hidden" name="redirect_path" value="{{$list_inputs_redirect_path}}">
+            <label for="forms-inputs-view-count-{{$frame_id}}" class="mr-1 mb-0">表示件数</label>
+            <select name="view_count_spectator" id="forms-inputs-view-count-{{$frame_id}}" class="form-control form-control-sm d-inline-block w-auto" onchange="document.forms.view_count_spectator_{{$frame_id}}.submit();">
+                @foreach ($per_page_options as $per_page_option)
+                    <option value="{{$per_page_option}}" @if((int)$view_count === (int)$per_page_option) selected @endif>{{$per_page_option}}件</option>
+                @endforeach
+            </select>
+        </form>
+
         {{-- (右側)ダウンロードボタン --}}
         <div class="btn-group">
             <button type="button" class="btn btn-primary btn-sm" onclick="submit_download_shift_jis({{$form->id}});">
@@ -231,7 +299,7 @@
 </table>
 
 {{-- ページング処理 --}}
-@include('plugins.common.user_paginate', ['posts' => $inputs, 'frame' => $frame, 'aria_label_name' => $form->forms_name, 'class' => 'form-group mt-3'])
+@include('plugins.common.user_paginate', ['posts' => $inputs, 'frame' => $frame, 'aria_label_name' => $form->forms_name, 'class' => 'form-group mt-3', 'appends' => $pagination_appends])
 
 {{-- ボタン --}}
 <div class="text-center pt-2">

@@ -420,6 +420,11 @@ class SearchsPlugin extends UserPluginBase
             $message = '設定を変更しました。';
         }
 
+        $target_frame_ids = $request->target_frame_ids;
+        if (intval($request->frame_select) == SearchsFrameSelect::all_frames && !$request->has('target_frame_ids')) {
+            $target_frame_ids = empty($searchs->target_frame_ids) ? [] : explode(',', $searchs->target_frame_ids);
+        }
+
         // 設定データ
         $searchs->search_name       = $request->search_name;
         $searchs->count             = $request->count;
@@ -427,7 +432,7 @@ class SearchsPlugin extends UserPluginBase
         $searchs->view_posted_at    = intval($request->view_posted_at);
         $searchs->target_plugins    = implode(',', $request->target_plugin);
         $searchs->frame_select      = intval($request->frame_select);
-        $searchs->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
+        $searchs->target_frame_ids  = empty($target_frame_ids) ? "": implode(',', $target_frame_ids);
         $searchs->recieve_keyword   = intval($request->recieve_keyword);
         $searchs->page_select       = intval($request->page_select);
 

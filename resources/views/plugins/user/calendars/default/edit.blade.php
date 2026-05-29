@@ -40,6 +40,18 @@
     }
 </script>
 
+{{-- 繰り返し予定の終了日を制御 --}}
+<script type="text/javascript">
+    function change_repeat_type{{$frame_id}}() {
+        if (form_calendars_posts{{$frame_id}}.repeat_type.value == 'none') {
+            form_calendars_posts{{$frame_id}}.repeat_until.value = '';
+            form_calendars_posts{{$frame_id}}.repeat_until.disabled = true;
+        } else {
+            form_calendars_posts{{$frame_id}}.repeat_until.disabled = false;
+        }
+    }
+</script>
+
 @if ($errors && $errors->has('reply_role_error'))
     <div class="alert alert-danger">
         <span class="font-weight-bold">{{$errors->first('reply_role_error')}}</span>
@@ -177,6 +189,55 @@
         @include('plugins.common.errors_inline', ['name' => 'end_date', 'class' => $errors_div_class])
     </div>
 
+    @if (empty($post->id))
+    <div class="form-group form-row mb-0">
+        <label class="{{$label_class}}">繰り返し</label>
+        <div class="col-md-4 col-12">
+            <select name="repeat_type" class="form-control @if ($errors && $errors->has('repeat_type')) border-danger @endif" onchange="change_repeat_type{{$frame_id}}();">
+                <option value="none" @if(old('repeat_type', 'none') == 'none') selected @endif>繰り返しなし</option>
+                <option value="weekly" @if(old('repeat_type') == 'weekly') selected @endif>毎週（開始日と同じ曜日）</option>
+                <option value="monthly_date" @if(old('repeat_type') == 'monthly_date') selected @endif>毎月（開始日と同じ日）</option>
+                <option value="monthly_weekday" @if(old('repeat_type') == 'monthly_weekday') selected @endif>毎月（開始日と同じ第n曜日）</option>
+            </select>
+            @include('plugins.common.errors_inline', ['name' => 'repeat_type'])
+        </div>
+        <div class="{{$input_area_date_class}}">
+            <div class="input-group date" id="repeat_until{{$frame_id}}" data-target-input="nearest">
+                <input type="text" name="repeat_until" value="{{old('repeat_until')}}" class="form-control datetimepicker-input @if ($errors && $errors->has('repeat_until')) border-danger @endif" data-target="#repeat_until{{$frame_id}}" @if(old('repeat_type', 'none') == 'none') disabled @endif />
+                <div class="input-group-append" data-target="#repeat_until{{$frame_id}}" data-toggle="datetimepicker">
+                    <div class="input-group-text @if ($errors && $errors->has('repeat_until')) border-danger @endif"><i class="fas fa-calendar-alt"></i></div>
+                </div>
+            </div>
+            @include('plugins.common.datetimepicker', ['element_id' => 'repeat_until' . $frame_id, 'format' => 'yyyy-MM-dd', 'clock_icon' => false])
+        </div>
+        <div class="col-md-3 col-12">
+            <small class="text-muted">指定日まで同じ予定を登録します。</small>
+        </div>
+    </div>
+    <div class="form-group form-row">
+        @include('plugins.common.errors_inline', ['name' => 'repeat_until', 'class' => $errors_div_class])
+    </div>
+    @elseif (!empty($post->repeat_group_id))
+    <div class="form-group form-row">
+        <label class="{{$label_class}}">変更範囲</label>
+        <div class="{{$input_area_class}}">
+            <div class="custom-control custom-radio">
+                <input type="radio" name="repeat_edit_type" value="only" class="custom-control-input" id="repeat_edit_only{{$frame_id}}" @if(old('repeat_edit_type', 'only') == 'only') checked @endif>
+                <label class="custom-control-label" for="repeat_edit_only{{$frame_id}}">この予定のみ変更する</label>
+            </div>
+            <div class="custom-control custom-radio">
+                <input type="radio" name="repeat_edit_type" value="after" class="custom-control-input" id="repeat_edit_after{{$frame_id}}" @if(old('repeat_edit_type') == 'after') checked @endif>
+                <label class="custom-control-label" for="repeat_edit_after{{$frame_id}}">この予定以降の繰り返し予定を変更する</label>
+            </div>
+            <div class="custom-control custom-radio">
+                <input type="radio" name="repeat_edit_type" value="all" class="custom-control-input" id="repeat_edit_all{{$frame_id}}" @if(old('repeat_edit_type') == 'all') checked @endif>
+                <label class="custom-control-label" for="repeat_edit_all{{$frame_id}}">この繰り返し予定をすべて変更する</label>
+            </div>
+            @include('plugins.common.errors_inline', ['name' => 'repeat_edit_type'])
+        </div>
+    </div>
+    @endif
+
     <div class="form-group form-row">
         <label class="{{$label_class}}">場所</label>
         <div class="{{$input_area_class}}">
@@ -254,6 +315,22 @@
                 <form action="{{url('/')}}/redirect/plugin/calendars/delete/{{$page->id}}/{{$frame_id}}/{{$post->id}}#frame-{{$frame->id}}" method="POST">
                     {{csrf_field()}}
                     <input type="hidden" name="redirect_path" value="{{$page->permanent_link}}#frame-{{$frame_id}}">
+                    @if (!empty($post->repeat_group_id))
+                    <div class="text-left d-inline-block mb-3">
+                        <div class="custom-control custom-radio">
+                            <input type="radio" name="repeat_delete_type" value="only" class="custom-control-input" id="repeat_delete_only{{$frame_id}}" checked>
+                            <label class="custom-control-label" for="repeat_delete_only{{$frame_id}}">この予定のみ削除する</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" name="repeat_delete_type" value="after" class="custom-control-input" id="repeat_delete_after{{$frame_id}}">
+                            <label class="custom-control-label" for="repeat_delete_after{{$frame_id}}">この予定以降の繰り返し予定を削除する</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" name="repeat_delete_type" value="all" class="custom-control-input" id="repeat_delete_all{{$frame_id}}">
+                            <label class="custom-control-label" for="repeat_delete_all{{$frame_id}}">この繰り返し予定をすべて削除する</label>
+                        </div>
+                    </div>
+                    @endif
                     <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
                 </form>
             </div>

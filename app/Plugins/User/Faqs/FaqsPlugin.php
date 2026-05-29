@@ -961,10 +961,11 @@ class FaqsPlugin extends UserPluginBase
         // 画面から渡ってくるfaqs_id が空ならバケツとFAQを新規登録
         if (empty($request->faqs_id)) {
             // バケツの登録
-            $bucket_id = DB::table('buckets')->insertGetId([
+            $bucket = Buckets::createWithDefaultPostRoles([
                 'bucket_name' => $request->faq_name,
                 'plugin_name' => 'faqs'
             ]);
+            $bucket_id = $bucket->id;
 
             // FAQデータ新規オブジェクト
             $faqs = new Faqs();
@@ -1043,7 +1044,7 @@ class FaqsPlugin extends UserPluginBase
             Frame::where('id', $frame_id)->update(['bucket_id' => null]);
 
             // backetsの削除
-            Buckets::where('id', $frame->bucket_id)->delete();
+            Buckets::destroy($frame->bucket_id);
         }
         // 削除処理はredirect 付のルートで呼ばれて、処理後はページの再表示が行われるため、ここでは何もしない。
     }

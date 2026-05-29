@@ -87,7 +87,7 @@ class MenusPlugin extends UserPluginBase
     public function index($request, $page_id, $frame_id)
     {
         // メニュー
-        $menu = Menu::where('frame_id', $frame_id)->first();
+        $menu = Menu::where('frame_id', $frame_id)->first() ?? $this->getDefaultMenu($frame_id);
         //Log::debug(json_encode( $menu, JSON_UNESCAPED_UNICODE));
 
         // ページに対する権限
@@ -231,6 +231,21 @@ class MenusPlugin extends UserPluginBase
     private function isModeratorEditAllowed(): bool
     {
         return (bool) FrameConfig::getConfigValue($this->frame_configs, MenuFrameConfig::menu_allow_moderator_edit, 0);
+    }
+
+    /**
+     * メニュー設定が未保存のフレームでも、表示時は初期設定で扱う。
+     */
+    private function getDefaultMenu($frame_id): Menu
+    {
+        return new Menu([
+            'frame_id' => $frame_id,
+            'select_flag' => 0,
+            'page_ids' => '',
+            'folder_close_font' => 0,
+            'folder_open_font' => 0,
+            'indent_font' => 0,
+        ]);
     }
 
     /**

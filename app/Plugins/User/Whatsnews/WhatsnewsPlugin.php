@@ -250,7 +250,8 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         // 記事詳細から、最初の画像を抜き出して設定する。
-        $whatsnews = $this->addWhatsnewsValues($whatsnews);
+        $post_detail_length = FrameConfig::getConfigValueAndOld($this->frame_configs, WhatsnewFrameConfig::post_detail_length);
+        $whatsnews = $this->addWhatsnewsValues($whatsnews, $post_detail_length);
 
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
         $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
@@ -314,19 +315,28 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         // タイトルのタグを取り除き, データベース、ウィジウィグ型のタイトル指定に対応
-        $whatsnew->post_title_strip_tags = strip_tags($whatsnew->post_title);
+        $whatsnew->post_title_strip_tags = $this->stripTagsAndDecodeEntities($whatsnew->post_title);
 
         // タグを取り除き、指定に応じて文字数制限した本文
+        $post_detail_strip_tags = $this->stripTagsAndDecodeEntities($whatsnew->post_detail);
         if ($post_detail_length) {
-            $whatsnew->post_detail_strip_tags = mb_substr(strip_tags($whatsnew->post_detail), 0, $post_detail_length);
-            if (mb_strlen(strip_tags($whatsnew->post_detail)) > $post_detail_length) {
+            $whatsnew->post_detail_strip_tags = mb_substr($post_detail_strip_tags, 0, $post_detail_length);
+            if (mb_strlen($post_detail_strip_tags) > $post_detail_length) {
                 $whatsnew->post_detail_strip_tags = $whatsnew->post_detail_strip_tags . '...';
             }
         } else {
-            $whatsnew->post_detail_strip_tags = strip_tags($whatsnew->post_detail);
+            $whatsnew->post_detail_strip_tags = $post_detail_strip_tags;
         }
 
         return $whatsnew;
+    }
+
+    /**
+     * 新着表示用にタグを除去し、本文中のHTMLエンティティを文字として扱える形に戻す。
+     */
+    private function stripTagsAndDecodeEntities(?string $value): string
+    {
+        return html_entity_decode(strip_tags($value ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
