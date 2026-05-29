@@ -92,6 +92,43 @@
             <small class="form-text text-muted">ページのタイプを指定（例：website, article, blog, video.movie等）※初期値：website</small>
         </div>
 
+        {{-- 機能拡張用meta --}}
+        <hr class="mt-4 mb-3">
+        <h5 id="expose_meta_settings">機能拡張用meta</h5>
+        <div class="alert alert-info mb-3">
+            <small>
+                <strong><i class="fas fa-info-circle"></i> 機能拡張用metaとは</strong><br>
+                JavaScript等のフロントエンド拡張から参照する目的で、Connect-CMSのHTMLヘッダにmetaタグを追加出力する設定です。<br>
+                <strong>※ HTMLソースに出力されるため、組織のセキュリティポリシーに合わせて有効化してください。</strong>
+            </small>
+        </div>
+        <div class="form-group">
+            <label class="col-form-label">ログインIDをmetaタグに出力 <small class="text-muted">(cc-login-userid)</small></label>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "expose_login_id_meta", "0") == "0")
+                            <input type="radio" value="0" id="expose_login_id_meta_off" name="expose_login_id_meta" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="0" id="expose_login_id_meta_off" name="expose_login_id_meta" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="expose_login_id_meta_off">出力しない</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        @if(Configs::getConfigsValueAndOld($configs, "expose_login_id_meta", "0") == "1")
+                            <input type="radio" value="1" id="expose_login_id_meta_on" name="expose_login_id_meta" class="custom-control-input" checked="checked">
+                        @else
+                            <input type="radio" value="1" id="expose_login_id_meta_on" name="expose_login_id_meta" class="custom-control-input">
+                        @endif
+                        <label class="custom-control-label" for="expose_login_id_meta_on">出力する</label>
+                    </div>
+                </div>
+            </div>
+            <small class="form-text text-muted">ログイン中のみ &lt;meta name="cc-login-userid" content="{ログインID}"&gt; を出力します。</small>
+        </div>
+
         {{-- Submitボタン --}}
         <div class="form-group text-center">
             <div class="row">
