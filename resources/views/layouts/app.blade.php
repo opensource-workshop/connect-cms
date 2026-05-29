@@ -98,7 +98,7 @@ if (! isset($cc_configs)) {
     <meta name="csrf-token" content="{{csrf_token()}}">
     {{-- ログインユーザID。未ログイン時 or 機能無効時は出力しない --}}
     @auth
-    @if (Configs::getConfigsValue($cc_configs, 'expose_login_id_meta') == '1')
+    @if (Configs::getConfigsValue($cc_configs, 'expose_login_userid_meta') == '1')
     <meta name="cc-login-userid" content="{{ Auth::user()->userid }}">
     @endif
     @endauth

@@ -107,22 +107,22 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "expose_login_id_meta", "0") == "0")
-                            <input type="radio" value="0" id="expose_login_id_meta_off" name="expose_login_id_meta" class="custom-control-input" checked="checked">
+                        @if(Configs::getConfigsValueAndOld($configs, "expose_login_userid_meta", "0") == "0")
+                            <input type="radio" value="0" id="expose_login_userid_meta_off" name="expose_login_userid_meta" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" value="0" id="expose_login_id_meta_off" name="expose_login_id_meta" class="custom-control-input">
+                            <input type="radio" value="0" id="expose_login_userid_meta_off" name="expose_login_userid_meta" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="expose_login_id_meta_off">出力しない</label>
+                        <label class="custom-control-label" for="expose_login_userid_meta_off">出力しない</label>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="custom-control custom-radio custom-control-inline">
-                        @if(Configs::getConfigsValueAndOld($configs, "expose_login_id_meta", "0") == "1")
-                            <input type="radio" value="1" id="expose_login_id_meta_on" name="expose_login_id_meta" class="custom-control-input" checked="checked">
+                        @if(Configs::getConfigsValueAndOld($configs, "expose_login_userid_meta", "0") == "1")
+                            <input type="radio" value="1" id="expose_login_userid_meta_on" name="expose_login_userid_meta" class="custom-control-input" checked="checked">
                         @else
-                            <input type="radio" value="1" id="expose_login_id_meta_on" name="expose_login_id_meta" class="custom-control-input">
+                            <input type="radio" value="1" id="expose_login_userid_meta_on" name="expose_login_userid_meta" class="custom-control-input">
                         @endif
-                        <label class="custom-control-label" for="expose_login_id_meta_on">出力する</label>
+                        <label class="custom-control-label" for="expose_login_userid_meta_on">出力する</label>
                     </div>
                 </div>
             </div>

@@ -864,9 +864,9 @@ class SiteManage extends ManagePluginBase
 
         // 機能拡張用meta設定の保存
         Configs::updateOrCreate(
-            ['name'     => 'expose_login_id_meta'],
+            ['name'     => 'expose_login_userid_meta'],
             ['category' => 'meta',
-             'value'    => $request->expose_login_id_meta ?? '0']
+             'value'    => $request->expose_login_userid_meta ?? '0']
         );
 
         // メタ情報の更新完了メッセージ
