@@ -96,6 +96,10 @@ if (! isset($cc_configs)) {
 @endif
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{csrf_token()}}">
+    {{-- ログインID（使用例：JSから参照する等）。未ログイン時は出力しない --}}
+    @auth
+    <meta name="cc-login-id" content="{{ Auth::user()->userid }}">
+    @endauth
     {{-- cc_configsのセット場所は、app\Http\Middleware\ConnectInit::handle(). 管理画面・一般画面全てのviewで参照できる --}}
     <title>@if(isset($page)){{$page->page_name}} | @endif{{$site_name}}</title>
 
