@@ -9,15 +9,6 @@ use Throwable;
 class Handler extends ExceptionHandler
 {
     /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array
-     */
-    protected $dontReport = [
-        //
-    ];
-
-    /**
      * A list of the inputs that are never flashed for validation exceptions.
      *
      * @var array
@@ -86,10 +77,9 @@ class Handler extends ExceptionHandler
     /**
      * Register the exception handling callbacks for the application.
      *
-     * @return void
-     * @link https://readouble.com/laravel/8.x/ja/errors.html#rendering-exceptions
+     * @link https://readouble.com/laravel/10.x/ja/errors.html#rendering-exceptions
      */
-    public function register()
+    public function register(): void
     {
         $this->renderable(function (\Swift_TransportException $e, $request) {
             // メール設定エラー

@@ -132,8 +132,8 @@
             </div>
 
             <div class="form-group">
-                <label class="col-form-label">MAIL_DRIVER</label>
-                <div class="form-text">{{config('mail.driver')}}</div>
+                <label class="col-form-label">MAIL_MAILER</label>
+                <div class="form-text">{{config('mail.default')}}</div>
             </div>
 
                 {{-- Submitボタン --}}
