@@ -62,7 +62,11 @@
             $value = '';
         }
         else {
-            $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
+            if (preg_match('/\A(?:https?:\/\/|\/(?!\/))[^\s<>"\']*\z/i', $obj->value)) {
+                $value = '<a href="' . e($obj->value) . '" target="_blank" rel="noopener noreferrer">' . e($obj->value) . '</a>';
+            } else {
+                $value = e($obj->value);
+            }
         }
     }
     // 日付型

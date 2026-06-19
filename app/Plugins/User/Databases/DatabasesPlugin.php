@@ -1315,6 +1315,15 @@ class DatabasesPlugin extends UserPluginBase
             $validator_rule[] = 'nullable';
             $validator_rule[] = 'date_format:H:i';
         }
+        // リンクチェック
+        if ($databases_column->column_type == DatabaseColumnType::link) {
+            if (!$databases_column->required) {
+                $validator_rule[] = 'nullable';
+            }
+            // http/https の絶対URL、または / で始まるサイト内相対URLのみ許可する。
+            // javascript: や data:、//example.com のようなプロトコル相対URL、HTML属性を壊す文字は拒否する。
+            $validator_rule[] = 'regex:/\A(?:https?:\/\/|\/(?!\/))[^\s<>"\']*\z/i';
+        }
         // 画像チェック
         if ($databases_column->column_type == DatabaseColumnType::image) {
             if (!$databases_column->required) {
@@ -1378,33 +1387,22 @@ class DatabasesPlugin extends UserPluginBase
     }
 
     /**
-     * 登録時の確認
+     * 登録・更新入力のバリデーションルールを組み立てる
      */
-    public function publicConfirm($request, $page_id, $frame_id, $id = null)
+    private function getInputValidatorArray($databases_columns, bool $confirmed_file_id = false)
     {
-        // Databases、Frame データ
-        $database = $this->getDatabases($frame_id);
-
-        // 権限のよって固定項目"表示順"を非表示にするか
-        $is_hide_posted = (new DatabasesTool())->isHidePosted($database);
-
-        // データベースのカラムデータ
-        $databases_columns = $this->getDatabasesColumns($database);
-
-        // 権限のよって登録・編集の非表示columnsを取り除く
-        $databases_columns = $this->removeRegistEditHideColumns($databases_columns);
-
-        // ファイル系の詳細データ
-        $uploads = collect();
-        if ($id) {
-            $uploads = $this->getUploadsInputCols($id);
-        }
-
-        // エラーチェック配列
         $validator_array = array('column' => array(), 'message' => array());
 
         foreach ($databases_columns as $databases_column) {
-            // バリデータールールをセット
+            if ($confirmed_file_id && DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                $validator_rule = [];
+                $validator_rule[] = $databases_column->required ? 'required' : 'nullable';
+                $validator_rule[] = 'integer';
+                $validator_rule[] = Rule::exists('uploads', 'id')->where('plugin_name', 'databases');
+                $validator_array['column']['databases_columns_value.' . $databases_column->id] = $validator_rule;
+                $validator_array['message']['databases_columns_value.' . $databases_column->id] = $databases_column->column_name;
+                continue;
+            }
             $validator_array = $this->getValidatorRule($validator_array, $databases_column);
         }
 
@@ -1412,13 +1410,20 @@ class DatabasesPlugin extends UserPluginBase
         $validator_array['column']['posted_at']         = ['required', 'date_format:Y-m-d H:i'];
         $validator_array['column']['expires_at']        = ['nullable', 'date_format:Y-m-d H:i', 'after:posted_at'];
         $validator_array['column']['display_sequence']  = ['nullable', 'numeric'];
-        $validator_array['column']['categories_id'] = ['nullable', 'exists:categories,id'];
+        $validator_array['column']['categories_id']     = ['nullable', 'exists:categories,id'];
         $validator_array['message']['posted_at']        = '公開日時';
         $validator_array['message']['expires_at']       = '公開終了日時';
         $validator_array['message']['display_sequence'] = '表示順';
-        $validator_array['message']['categories_id'] = 'カテゴリ';
+        $validator_array['message']['categories_id']    = 'カテゴリ';
 
-        // --- 入力値変換
+        return $validator_array;
+    }
+
+    /**
+     * 登録・更新入力をバリデーション前に正規化する
+     */
+    private function normalizeInputRequest($request, $databases_columns)
+    {
         // 入力値をトリム
         // bugfix: $request->all()を取得して全て$request->merge()すると、「Serialization of 'Illuminate\Http\UploadedFile' is not allowed」エラーが発生する時がある。
         // Illuminate\Session\Store.phpでセッションのserialize()を行っており、oldセッションにUploadオブジェクトが混ざるとシリアライズできずにエラーになっていた。
@@ -1481,6 +1486,69 @@ class DatabasesPlugin extends UserPluginBase
             // 表示順:  全角→半角変換
             "display_sequence" => StringUtils::convertNumericAndMinusZenkakuToHankaku($request->display_sequence),
         ]);
+    }
+
+    /**
+     * 省略された任意項目を空文字で補完する
+     */
+    private function fillMissingInputColumnValues($request, $databases_columns)
+    {
+        $databases_columns_value = (array)$request->databases_columns_value;
+
+        foreach ($databases_columns as $databases_column) {
+            if ($databases_column->isNotInputColumnType()) {
+                continue;
+            }
+            if (!array_key_exists($databases_column->id, $databases_columns_value)) {
+                $databases_columns_value[$databases_column->id] = '';
+            }
+        }
+
+        $request->merge([
+            "databases_columns_value" => $databases_columns_value,
+        ]);
+    }
+
+    /**
+     * 入力エラー時にファイル項目を除いて入力値を保持する
+     */
+    private function flashInputExceptFiles($request, $databases_columns)
+    {
+        $flashExcepts = [];
+        foreach ($databases_columns as $databases_column) {
+            if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
+                $flashExcepts[] = 'databases_columns_value.' . $databases_column->id;
+            }
+        }
+
+        $request->flashExcept($flashExcepts);
+    }
+
+    /**
+     * 登録時の確認
+     */
+    public function publicConfirm($request, $page_id, $frame_id, $id = null)
+    {
+        // Databases、Frame データ
+        $database = $this->getDatabases($frame_id);
+
+        // 権限のよって固定項目"表示順"を非表示にするか
+        $is_hide_posted = (new DatabasesTool())->isHidePosted($database);
+
+        // データベースのカラムデータ
+        $databases_columns = $this->getDatabasesColumns($database);
+
+        // 権限のよって登録・編集の非表示columnsを取り除く
+        $databases_columns = $this->removeRegistEditHideColumns($databases_columns);
+
+        // ファイル系の詳細データ
+        $uploads = collect();
+        if ($id) {
+            $uploads = $this->getUploadsInputCols($id);
+        }
+
+        $validator_array = $this->getInputValidatorArray($databases_columns);
+        $this->normalizeInputRequest($request, $databases_columns);
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), $validator_array['column']);
@@ -1494,18 +1562,12 @@ class DatabasesPlugin extends UserPluginBase
             // var_dump($validator->errors()->first("posted_at"));
             // Log::debug(var_export($request->posted_at, true));
 
-            // ファイル項目を探してセッション対象から除く
-            $flashExcepts = [];
-            foreach ($databases_columns as $databases_column) {
-                if (DatabasesColumns::isFileColumnType($databases_column->column_type)) {
-                    $flashExcepts[] = 'databases_columns_value.' . $databases_column->id;
-                }
-            }
             // 入力をフラッシュデータとして保存
-            $request->flashExcept($flashExcepts);
+            $this->flashInputExceptFiles($request, $databases_columns);
 
             return $this->input($request, $page_id, $frame_id, $id, $validator->errors());
         }
+        $this->fillMissingInputColumnValues($request, $databases_columns);
 
         // ファイル関連の変数
         if ($request->has('delete_upload_column_ids')) {
@@ -1594,6 +1656,26 @@ class DatabasesPlugin extends UserPluginBase
         // Databases、Frame データ
         $database = $this->getDatabases($frame_id);
 
+        // データベースのカラムデータ
+        $all_databases_columns = $this->getDatabasesColumns($database);
+
+        // 権限のよって登録・編集の非表示columnsを取り除く
+        $databases_columns = $this->removeRegistEditHideColumns($all_databases_columns);
+
+        // publicStoreは確認画面で一時保存したファイルIDを受け取るため、ファイル系はアップロードIDとして検証する。
+        $validator_array = $this->getInputValidatorArray($databases_columns, true);
+        $this->normalizeInputRequest($request, $databases_columns);
+
+        // 項目のエラーチェック。publicConfirmを経由しない直接POSTでも同じ検証を行う。
+        $validator = Validator::make($request->all(), $validator_array['column']);
+        $validator->setAttributeNames($validator_array['message']);
+        if ($validator->fails()) {
+            $this->flashInputExceptFiles($request, $databases_columns);
+
+            return $this->input($request, $page_id, $frame_id, $id, $validator->errors());
+        }
+        $this->fillMissingInputColumnValues($request, $databases_columns);
+
         if ($isTemporary) {
             $status = StatusType::temporary;  // 一時保存
         } else {
@@ -1665,11 +1747,8 @@ class DatabasesPlugin extends UserPluginBase
             }
         }
 
-        // データベースのカラムデータ
-        $databases_columns = DatabasesColumns::where('databases_id', $database->id)->orderBy('display_sequence')->get();
-
         // 権限のよって登録・編集の非表示columのdatabases_columns_id配列を取得する
-        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($databases_columns, 'regist_edit_display_flag');
+        $hide_columns_ids = (new DatabasesTool())->getHideColumnsIds($all_databases_columns, 'regist_edit_display_flag');
         // Log::debug('[' . __METHOD__ . '] ' . __FILE__ . ' (line ' . __LINE__ . ')');
         // Log::debug(var_export($databases_columns_ids, true));
 
@@ -1680,12 +1759,6 @@ class DatabasesPlugin extends UserPluginBase
                                 ->whereNotIn('databases_columns_id', $hide_columns_ids)
                                 ->delete();
         }
-
-        // データベースのカラムデータ 権限非表示カラムを除いて再取得
-        $databases_columns = DatabasesColumns::where('databases_id', $database->id)
-                                                ->whereNotIn('id', $hide_columns_ids)
-                                                ->orderBy('display_sequence')
-                                                ->get();
 
         // databases_input_cols 登録
         foreach ($databases_columns as $databases_column) {
