@@ -26,6 +26,16 @@ class Translate extends ApiPluginBase
     use ConnectCommonTrait;
 
     /**
+     * APIルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedApiMethods(): array
+    {
+        return [
+            'post',
+        ];
+    }
+
+    /**
      * 翻訳処理
      */
     public function post($request)
