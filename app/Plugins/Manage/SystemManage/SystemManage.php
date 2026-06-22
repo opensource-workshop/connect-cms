@@ -250,14 +250,41 @@ class SystemManage extends ManagePluginBase
             abort(403, '権限がありません。');
         }
 
+        // .env の1行に書き込む値のため、制御文字は受け付けない。
+        $control_character_rule = 'not_regex:/[\x00-\x1F\x7F]/';
+        $validator = Validator::make($request->all(), [
+            'mail_from_address' => ['nullable', 'email', 'max:255', $control_character_rule],
+            'mail_from_name'    => ['nullable', 'string', 'max:255', $control_character_rule],
+            'mail_host'         => ['nullable', 'string', 'max:255', $control_character_rule],
+            'mail_port'         => ['nullable', 'integer', 'between:1,65535'],
+            'mail_username'     => ['nullable', 'string', 'max:255', $control_character_rule],
+            'mail_password'     => ['nullable', 'string', 'max:1024', $control_character_rule],
+            'mail_encryption'   => ['nullable', 'in:null,tls,ssl'],
+        ], [
+            'not_regex' => ':attributeに制御文字は使用できません。',
+        ]);
+        $validator->setAttributeNames([
+            'mail_from_address' => '送信者メールアドレス',
+            'mail_from_name'    => '送信者名',
+            'mail_host'         => 'SMTPサーバアドレス',
+            'mail_port'         => 'SMTPサーバのポート番号',
+            'mail_username'     => 'SMTPAuthのユーザ',
+            'mail_password'     => 'SMTPAuthのパスワード',
+            'mail_encryption'   => 'メール暗号化',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect("/manage/system/mail")->withErrors($validator)->withInput();
+        }
+
         // envファイルを書き換える
         $path = base_path('.env');
 
         if (file_exists($path)) {
             if (preg_match('/MAIL_FROM_ADDRESS=null/', file_get_contents($path))) {
-                file_put_contents($path, preg_replace('/MAIL_FROM_ADDRESS=null/', "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_FROM_ADDRESS=null', "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
             } else {
-                file_put_contents($path, preg_replace('/MAIL_FROM_ADDRESS=' . config('mail.from.address') . '/', "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_FROM_ADDRESS=' . config('mail.from.address'), "MAIL_FROM_ADDRESS={$request->mail_from_address}", file_get_contents($path)));
             }
 
             // ${APP_NAME}, ダブルクォート囲みなし は先に置換
@@ -269,19 +296,19 @@ class SystemManage extends ManagePluginBase
             file_put_contents($path, str_replace('MAIL_PORT=' . config('mail.port'), "MAIL_PORT={$request->mail_port}", file_get_contents($path)));
 
             if (preg_match('/MAIL_USERNAME=null/', file_get_contents($path))) {
-                file_put_contents($path, preg_replace('/MAIL_USERNAME=null/', "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_USERNAME=null', "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
             } else {
-                file_put_contents($path, preg_replace('/MAIL_USERNAME=' . config('mail.username') . '/', "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_USERNAME=' . config('mail.username'), "MAIL_USERNAME={$request->mail_username}", file_get_contents($path)));
             }
             if (preg_match('/MAIL_PASSWORD=null/', file_get_contents($path))) {
-                file_put_contents($path, preg_replace('/MAIL_PASSWORD=null/', "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_PASSWORD=null', "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
             } else {
-                file_put_contents($path, preg_replace('/MAIL_PASSWORD=' . config('mail.password') . '/', "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_PASSWORD=' . config('mail.password'), "MAIL_PASSWORD={$request->mail_password}", file_get_contents($path)));
             }
             if (preg_match('/MAIL_ENCRYPTION=null/', file_get_contents($path))) {
-                file_put_contents($path, preg_replace('/MAIL_ENCRYPTION=null/', "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_ENCRYPTION=null', "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
             } else {
-                file_put_contents($path, preg_replace('/MAIL_ENCRYPTION=' . config('mail.encryption') . '/', "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
+                file_put_contents($path, str_replace('MAIL_ENCRYPTION=' . config('mail.encryption'), "MAIL_ENCRYPTION={$request->mail_encryption}", file_get_contents($path)));
             }
         }
 
