@@ -15,6 +15,7 @@ use App\Models\Common\Page;
 use App\Models\Core\Configs;
 
 use App\Traits\ConnectCommonTrait;
+use App\Utilities\Url\UrlUtils;
 
 /**
  * 画面の基本処理
@@ -898,7 +899,7 @@ class DefaultController extends ConnectController
 
         // redirect_path があれば遷移
         if ($request->redirect_path) {
-            $redirect_response = redirect($request->redirect_path);
+            $redirect_response = redirect(UrlUtils::safeRedirectPath($request->redirect_path));
             if ($request->flash_message) {
                 // フラッシュメッセージの設定があれば、Laravelのフラッシュデータ保存に連携
                 $redirect_response = $redirect_response->with('flash_message', $request->flash_message);
