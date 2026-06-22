@@ -12,7 +12,7 @@
             $value = '';
         }
         else {
-            $value = '<a href="' . url('/') . '/file/' . $obj->value . '" target="_blank">' . $obj->client_original_name . '</a>';
+            $value = '<a href="' . url('/') . '/file/' . (int)$obj->value . '" target="_blank" rel="noopener noreferrer">' . e($obj->client_original_name) . '</a>';
         }
     }
     // 複数選択型

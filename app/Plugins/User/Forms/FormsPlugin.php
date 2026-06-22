@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 
 use Carbon\Carbon;
 
@@ -864,6 +865,34 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
+     * 最終登録で受け取るファイルIDの検証ルールを組み立てる。
+     *
+     * 確認画面のhidden値は利用者が変更できるため、アップロード済みファイルIDとして扱える値だけを保存する。
+     */
+    private function getPublicStoreFileValidatorArray($forms_columns, int $page_id): array
+    {
+        $validator_array = array('column' => array(), 'message' => array());
+
+        foreach ($forms_columns as $forms_column) {
+            if (!FormsColumns::isFileColumnType($forms_column->column_type)) {
+                continue;
+            }
+
+            $validator_rule = [];
+            $validator_rule[] = $forms_column->required ? 'required' : 'nullable';
+            $validator_rule[] = 'integer';
+            $validator_rule[] = Rule::exists('uploads', 'id')
+                ->where('plugin_name', 'forms')
+                ->where('page_id', $page_id);
+
+            $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
+            $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
+        }
+
+        return $validator_array;
+    }
+
+    /**
      * 集計結果
      *
      * @method_title 集計結果
@@ -1233,6 +1262,19 @@ class FormsPlugin extends UserPluginBase
             return collect(['redirect_path' => url($this->page->permanent_link)]);
         }
 
+        // フォームのカラムデータ
+        $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
+
+        // 確認画面のhidden値を直接改ざんされても、不正なファイルIDを保存しない。
+        $validator_array = $this->getPublicStoreFileValidatorArray($forms_columns, $page_id);
+        if (!empty($validator_array['column'])) {
+            $validator = Validator::make($request->all(), $validator_array['column']);
+            $validator->setAttributeNames($validator_array['message']);
+            if ($validator->fails()) {
+                return collect(['redirect_path' => url($this->page->permanent_link)]);
+            }
+        }
+
         // forms_inputs 登録
         $forms_inputs = new FormsInputs();
         $forms_inputs->forms_id = $form->id;
@@ -1265,9 +1307,6 @@ class FormsPlugin extends UserPluginBase
         }
 
         $forms_inputs->save();
-
-        // フォームのカラムデータ
-        $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
 
         // メールの送信文字列
         $contents_text = '';
