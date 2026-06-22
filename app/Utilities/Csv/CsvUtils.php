@@ -163,6 +163,33 @@ class CsvUtils
     }
 
     /**
+     * CSVを表計算ソフトで開いた際の数式実行を防ぐ
+     */
+    public static function escapeCsvFormula($value)
+    {
+        if (!is_string($value) || $value === '') {
+            return $value;
+        }
+
+        if (in_array($value[0], ['=', '+', '-', '@', "\t", "\r", "\n"], true)) {
+            return "'" . $value;
+        }
+
+        return $value;
+    }
+
+    /**
+     * CSV行の各セルに数式実行防止を適用する
+     */
+    public static function escapeCsvFormulaLine(array $csv_line): array
+    {
+        foreach ($csv_line as &$csv_col) {
+            $csv_col = self::escapeCsvFormula($csv_col);
+        }
+        return $csv_line;
+    }
+
+    /**
      * レスポンス時のCSVデータ 取得
      */
     public static function getResponseCsvData(array $csv_array, ?string $character_code): string
@@ -171,6 +198,7 @@ class CsvUtils
         $csv_data = '';
         foreach ($csv_array as $csv_line) {
             foreach ($csv_line as $csv_col) {
+                $csv_col = self::escapeCsvFormula($csv_col);
                 // RFC4180に準拠するため、フィールドの値に含まれるダブルクォーテーションをエスケープする
                 $csv_col = $csv_col !== null ? str_replace('"', '""', $csv_col) : '';
                 // RFC4180に準拠するため、ダブルクォーテーションで囲む

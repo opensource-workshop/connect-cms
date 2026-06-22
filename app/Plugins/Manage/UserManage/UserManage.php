@@ -1721,7 +1721,7 @@ class UserManage extends ManagePluginBase
                 } else {
                     mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $head);
                 }
-                fputcsv($stream, $head);
+                fputcsv($stream, CsvUtils::escapeCsvFormulaLine($head));
 
                 // データの処理
                 $users_query->chunk(1000, function ($users) use ($stream, $copy_base, $character_code) {
@@ -1768,7 +1768,7 @@ class UserManage extends ManagePluginBase
                         } else {
                             mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $csv_array);
                         }
-                        fputcsv($stream, $csv_array);
+                        fputcsv($stream, CsvUtils::escapeCsvFormulaLine($csv_array));
                     }
                 });
                 fclose($stream);

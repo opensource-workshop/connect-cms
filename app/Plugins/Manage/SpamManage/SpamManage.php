@@ -11,8 +11,10 @@ use App\Models\Common\SpamList;
 use App\Models\User\Forms\Forms;
 
 use App\Enums\SpamBlockType;
+use App\Enums\CsvCharacterCode;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Utilities\Csv\CsvUtils;
 
 /**
  * スパム管理クラス
@@ -268,24 +270,23 @@ class SpamManage extends ManagePluginBase
         // フォーム一覧を取得
         $forms = Forms::pluck('forms_name', 'id');
 
-        // CSVデータの作成
-        $csv_data = '';
-
-        // ヘッダー行
-        $csv_data .= '"種別","値","適用範囲","メモ","登録日時"' . "\n";
+        $csv_array = [
+            ['種別', '値', '適用範囲', 'メモ', '登録日時'],
+        ];
 
         // データ行
         foreach ($spam_lists as $spam) {
             $scope_name = is_null($spam->target_id) ? '全体' : ($forms[$spam->target_id] ?? '不明');
-            $csv_data .= '"' . SpamBlockType::getDescription($spam->block_type) . '",';
-            $csv_data .= '"' . str_replace('"', '""', $spam->block_value) . '",';
-            $csv_data .= '"' . $scope_name . '",';
-            $csv_data .= '"' . str_replace('"', '""', $spam->memo ?? '') . '",';
-            $csv_data .= '"' . $spam->created_at . '"' . "\n";
+            $csv_array[] = [
+                SpamBlockType::getDescription($spam->block_type),
+                $spam->block_value,
+                $scope_name,
+                $spam->memo ?? '',
+                (string)$spam->created_at,
+            ];
         }
 
-        // 文字コード変換（UTF-8 BOM付き）
-        $csv_data = "\xEF\xBB\xBF" . $csv_data;
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, CsvCharacterCode::utf_8);
 
         // ファイル名
         $filename = 'spam_list_' . date('Ymd_His') . '.csv';
@@ -361,25 +362,24 @@ class SpamManage extends ManagePluginBase
         // フォーム一覧を取得
         $forms = Forms::pluck('forms_name', 'id');
 
-        // CSVデータの作成
-        $csv_data = '';
-
-        // ヘッダー行
-        $csv_data .= '"ブロック日時","種別","マッチした値","フォーム名","IPアドレス","送信メールアドレス"' . "\n";
+        $csv_array = [
+            ['ブロック日時', '種別', 'マッチした値', 'フォーム名', 'IPアドレス', '送信メールアドレス'],
+        ];
 
         // データ行
         foreach ($block_histories as $history) {
             $form_name = $history->forms_id ? ($forms[$history->forms_id] ?? '不明') : '';
-            $csv_data .= '"' . $history->created_at . '",';
-            $csv_data .= '"' . SpamBlockType::getDescription($history->block_type) . '",';
-            $csv_data .= '"' . str_replace('"', '""', $history->block_value) . '",';
-            $csv_data .= '"' . str_replace('"', '""', $form_name) . '",';
-            $csv_data .= '"' . ($history->client_ip ?? '') . '",';
-            $csv_data .= '"' . str_replace('"', '""', $history->submitted_email ?? '') . '"' . "\n";
+            $csv_array[] = [
+                (string)$history->created_at,
+                SpamBlockType::getDescription($history->block_type),
+                $history->block_value,
+                $form_name,
+                $history->client_ip ?? '',
+                $history->submitted_email ?? '',
+            ];
         }
 
-        // 文字コード変換（UTF-8 BOM付き）
-        $csv_data = "\xEF\xBB\xBF" . $csv_data;
+        $csv_data = CsvUtils::getResponseCsvData($csv_array, CsvCharacterCode::utf_8);
 
         // ファイル名
         $filename = 'spam_block_history_' . date('Ymd_His') . '.csv';
