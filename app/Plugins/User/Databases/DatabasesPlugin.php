@@ -1500,7 +1500,8 @@ class DatabasesPlugin extends UserPluginBase
                 continue;
             }
             if (!array_key_exists($databases_column->id, $databases_columns_value)) {
-                $databases_columns_value[$databases_column->id] = '';
+                $default_value = $databases_column->column_type == DatabaseColumnType::checkbox ? [] : '';
+                $databases_columns_value[$databases_column->id] = $default_value;
             }
         }
 
