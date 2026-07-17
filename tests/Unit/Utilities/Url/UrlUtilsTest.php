@@ -3,6 +3,7 @@
 namespace Tests\Unit\Utilities\Url;
 
 use App\Utilities\Url\UrlUtils;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 /**
@@ -121,5 +122,36 @@ class UrlUtilsTest extends TestCase
         config(['app.url' => 'https://cms.example.jp']);
 
         $this->assertSame('/plugin/forms/index/12/34', UrlUtils::safeRedirectPath('https://attacker.example/plugin/forms/index/12/34'));
+    }
+
+    /**
+     * テストの意図:
+     * ディレクトリインストール環境では、redirect_path に含まれる設置ディレクトリを二重に付与しない。
+     */
+    public function testSafeRedirectPathStripsBasePathOnDirectoryInstall(): void
+    {
+        $original_request = app('request');
+        $request = Request::create('/tmp/plugin/forms/thanks/17/443', 'GET', [], [], [], [
+            'HTTP_HOST' => 'cms.example.jp',
+            'HTTPS' => 'on',
+            'SCRIPT_NAME' => '/tmp/index.php',
+            'SCRIPT_FILENAME' => '/var/www/html/tmp/index.php',
+        ]);
+
+        app()->instance('request', $request);
+
+        try {
+            $this->assertSame(
+                '/plugin/forms/thanks/17/443#frame-443',
+                UrlUtils::safeRedirectPath('https://cms.example.jp/tmp/plugin/forms/thanks/17/443#frame-443')
+            );
+
+            $this->assertSame(
+                '/plugin/forms/thanks/17/443#frame-443',
+                UrlUtils::safeRedirectPath('/tmp/plugin/forms/thanks/17/443#frame-443')
+            );
+        } finally {
+            app()->instance('request', $original_request);
+        }
     }
 }
