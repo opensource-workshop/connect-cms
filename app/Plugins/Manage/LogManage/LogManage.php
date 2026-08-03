@@ -5,6 +5,7 @@ namespace App\Plugins\Manage\LogManage;
 use App\Models\Core\AppLog;
 use App\Models\Core\Configs;
 use App\Plugins\Manage\ManagePluginBase;
+use App\Utilities\Csv\CsvUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -392,7 +393,7 @@ class LogManage extends ManagePluginBase
                 $query->chunk(1000, function ($logs) use ($stream) {
                     foreach ($logs as $log) {
                         mb_convert_variables('SJIS-win', 'UTF-8', $log);
-                        fputcsv($stream, [
+                        fputcsv($stream, CsvUtils::escapeCsvFormulaLine([
                             $log->id,
                             $log->created_at,
                             $log->userid,
@@ -403,7 +404,7 @@ class LogManage extends ManagePluginBase
                             $log->plugin_name,
                             $log->route_name,
                             $log->uri,
-                        ]);
+                        ]));
                     }
                 });
                 fclose($stream);

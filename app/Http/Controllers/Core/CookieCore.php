@@ -41,6 +41,24 @@ class CookieCore
     }
 
     /**
+     * コアGETルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedCoreGetMethods(): array
+    {
+        return [];
+    }
+
+    /**
+     * コアPOSTルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedCorePostMethods(): array
+    {
+        return [
+            'setCookieForMessageFirst',
+        ];
+    }
+
+    /**
      * パスワードチェック処理
      */
     public function setCookieForMessageFirst($request, $page_id)

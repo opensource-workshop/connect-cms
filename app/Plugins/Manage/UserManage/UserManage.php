@@ -27,6 +27,7 @@ use App\Rules\CustomValiUserEmailUnique;
 use App\Rules\CustomValiEmails;
 use App\Rules\CustomValiCsvExistsName;
 use App\Rules\CustomValiLoginIdAndPasswordDoNotMatch;
+use App\Traits\AuthorizesAdminSystemRoleAssignmentTrait;
 use App\Traits\ConnectMailTrait;
 use App\User;
 use App\Utilities\Csv\CsvUtils;
@@ -54,6 +55,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class UserManage extends ManagePluginBase
 {
+    use AuthorizesAdminSystemRoleAssignmentTrait;
     use ConnectMailTrait;
 
     /**
@@ -870,6 +872,8 @@ class UserManage extends ManagePluginBase
                 abort(403, '権限がありません。');
             }
         }
+
+        $this->abortIfCannotGrantAdminSystemRole($request->manage);
 
         // ユーザーのカラム
         $users_columns = UsersTool::getUsersColumns($request->columns_set_id);
@@ -1717,7 +1721,7 @@ class UserManage extends ManagePluginBase
                 } else {
                     mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $head);
                 }
-                fputcsv($stream, $head);
+                fputcsv($stream, CsvUtils::escapeCsvFormulaLine($head));
 
                 // データの処理
                 $users_query->chunk(1000, function ($users) use ($stream, $copy_base, $character_code) {
@@ -1764,7 +1768,7 @@ class UserManage extends ManagePluginBase
                         } else {
                             mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $csv_array);
                         }
-                        fputcsv($stream, $csv_array);
+                        fputcsv($stream, CsvUtils::escapeCsvFormulaLine($csv_array));
                     }
                 });
                 fclose($stream);
@@ -2324,6 +2328,20 @@ class UserManage extends ManagePluginBase
             if ($validator->fails()) {
                 $errors = array_merge($errors, $validator->errors()->all());
                 // continue;
+            }
+
+            if (!$this->canGrantAdminSystemRole()) {
+                $view_user_roles_col_no = array_search('view_user_roles', $import_column_col_no, true);
+                $csv_view_user_roles = explode(UsersTool::CHECKBOX_SEPARATOR, (string)($csv_columns[$view_user_roles_col_no] ?? ''));
+                $csv_view_user_roles = StringUtils::trimInput($csv_view_user_roles);
+
+                if (in_array('admin_system', $csv_view_user_roles, true)) {
+                    $errors[] = $line_count . '行目の権限にシステム管理者権限は指定できません。';
+                }
+
+                if ($users_id && UsersRoles::where('users_id', $users_id)->where('role_name', 'admin_system')->exists()) {
+                    $errors[] = $line_count . '行目の既存のシステム管理者ユーザは更新できません。';
+                }
             }
 
             $line_count++;

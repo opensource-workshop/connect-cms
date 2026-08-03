@@ -1481,7 +1481,7 @@ class LearningtasksPlugin extends UserPluginBase
         // CSV で出力
         $stream = fopen('php://temp', 'r+b');
         foreach ($statuses as $user) {
-            fputcsv($stream, $user);
+            fputcsv($stream, CsvUtils::escapeCsvFormulaLine($user));
         }
         rewind($stream);
         $csv = str_replace(PHP_EOL, "\r\n", stream_get_contents($stream));

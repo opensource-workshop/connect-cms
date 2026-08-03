@@ -5,6 +5,116 @@ namespace App\Utilities\Url;
 class UrlUtils
 {
     /**
+     * リダイレクト先を内部パスに正規化する。
+     *
+     * @param mixed $redirect_path
+     * @param string $fallback
+     * @return string
+     */
+    public static function safeRedirectPath($redirect_path, string $fallback = '/'): string
+    {
+        if (!is_string($redirect_path)) {
+            return $fallback;
+        }
+
+        if (preg_match('/[\x00-\x1F\x7F]/', $redirect_path) === 1) {
+            return $fallback;
+        }
+
+        $redirect_path = trim($redirect_path);
+        if ($redirect_path === '') {
+            return $fallback;
+        }
+
+        if (strpos($redirect_path, '\\') !== false) {
+            return $fallback;
+        }
+
+        if (strpos($redirect_path, '//') === 0) {
+            return $fallback;
+        }
+
+        if (strpos($redirect_path, '/') === 0) {
+            return self::stripCurrentBasePath($redirect_path, $fallback);
+        }
+
+        $parsed_url = parse_url($redirect_path);
+        if ($parsed_url === false || !isset($parsed_url['scheme']) || !isset($parsed_url['host'])) {
+            return $fallback;
+        }
+
+        if (!in_array(strtolower($parsed_url['scheme']), ['http', 'https'], true)) {
+            return $fallback;
+        }
+
+        $path = $parsed_url['path'] ?? '/';
+        if (strpos($path, '//') === 0) {
+            return $fallback;
+        }
+
+        $query = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+
+        return self::stripCurrentBasePath($path . $query . $fragment, $fallback);
+    }
+
+    /**
+     * ディレクトリインストール時に、URL の path に含まれるアプリの base path を取り除く。
+     *
+     * @param string $redirect_path
+     * @param string $fallback
+     * @return string
+     */
+    private static function stripCurrentBasePath(string $redirect_path, string $fallback): string
+    {
+        $base_path = self::currentBasePath();
+        if ($base_path === '') {
+            return $redirect_path;
+        }
+
+        $path = parse_url($redirect_path, PHP_URL_PATH);
+        if (!is_string($path)) {
+            return $redirect_path;
+        }
+
+        if ($path !== $base_path && strpos($path, $base_path . '/') !== 0) {
+            return $redirect_path;
+        }
+
+        $stripped_path = substr($redirect_path, strlen($base_path));
+        if ($stripped_path === '' || strpos($stripped_path, '?') === 0 || strpos($stripped_path, '#') === 0) {
+            $stripped_path = '/' . $stripped_path;
+        }
+
+        if (strpos($stripped_path, '//') === 0) {
+            return $fallback;
+        }
+
+        return $stripped_path;
+    }
+
+    /**
+     * 現在のリクエストの base path を取得する。
+     *
+     * @return string
+     */
+    private static function currentBasePath(): string
+    {
+        try {
+            $base_path = request()->getBaseUrl();
+        } catch (\Throwable $exception) {
+            return '';
+        }
+
+        $base_path = rtrim((string) $base_path, '/');
+        if ($base_path === '' || $base_path === '/') {
+            return '';
+        }
+
+        return $base_path;
+    }
+
+    /**
      * Check if URL is http/https and resolves only to global (non private/reserved) IPs.
      */
     public static function isGlobalHttpUrl(string $url): bool

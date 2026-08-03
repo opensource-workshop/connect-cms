@@ -97,7 +97,7 @@ class LearningtasksCsvExporter
                 );
             }
             // ヘッダー行を CSV として書き込み
-            fputcsv($handle, $header_row);
+            fputcsv($handle, CsvUtils::escapeCsvFormulaLine($header_row));
             // データ行を取得 (DataProvider から iterable で)
             $data_rows_iterable = $this->data_provider->getRows(
                 $this->column_definition,
@@ -116,7 +116,7 @@ class LearningtasksCsvExporter
                 // RFC4180 準拠: fputcsv は基本的なダブルクォートのエスケープは行うが、
                 // 改行コード等の扱いでより厳密な処理が必要な場合は、自前でエスケープ処理を追加検討。
                 // (CsvUtils::getResponseCsvData にあった str_replace('"', '""', ...) の処理は fputcsv が行う)
-                fputcsv($handle, $row_array);
+                fputcsv($handle, CsvUtils::escapeCsvFormulaLine($row_array));
             }
             // php://output は fclose 不要
         };

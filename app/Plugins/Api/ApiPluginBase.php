@@ -26,6 +26,14 @@ class ApiPluginBase extends PluginBase
     use ConnectCommonTrait;
 
     /**
+     * APIルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedApiMethods(): array
+    {
+        return [];
+    }
+
+    /**
      * json encode
      *
      * @todo app\Http\Controllers\Core\ApiController.php で重複

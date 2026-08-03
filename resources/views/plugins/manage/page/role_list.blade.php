@@ -179,7 +179,9 @@
                     <tr>
                         <th colspan="4" class="cc-sticky-col">参加ユーザ</th>
                         @foreach($groups as $group)
-                            <td nowrap class="table-text py-1"><small class="txt-limit">{!!$group->group_user_names!!}</small></td>
+                            <td nowrap class="table-text py-1">
+                                <small class="txt-limit">{{$group->group_user_names}}</small>
+                            </td>
                         @endforeach
                     </tr>
 
@@ -191,14 +193,51 @@
     @endif
 </div>
 
+{{--
+    ユーザ名をHTMLとして解釈させないためBladeではエスケープし、ここで区切り文字の<br>だけをDOMとして復元する。
+    省略判定は従来対応（#2180）のinnerHTML.lengthに合わせ、区切り文字の<br>も含めて400文字で切り詰める。
+--}}
 <script>
     // 表示する文字数制限
-    const limits = document.getElementsByClassName("txt-limit");
-    for (const limit of limits) {
-        const str = limit.innerHTML;
-        const len = 400; // 全角400字(約1000バイト)
-        if (str.length > len) {
-            limit.innerHTML = str.substring(0, len) + "<br><div class='text-danger'>(ユーザ多数のため以下省略)</div>";
+    const userNameLimits = document.getElementsByClassName("txt-limit");
+    const userNameLimitLength = 400; // 全角400字(約1000バイト)
+    const userNameSeparator = "<br>";
+    const userNameSeparatorLength = userNameSeparator.length;
+
+    for (const limit of userNameLimits) {
+        const userNames = limit.textContent.split(userNameSeparator);
+        limit.textContent = "";
+        let displayLength = 0;
+        let hasPreviousUserName = false;
+
+        const appendUserName = (userName) => {
+            if (hasPreviousUserName) {
+                limit.appendChild(document.createElement("br"));
+            }
+            limit.appendChild(document.createTextNode(userName));
+            hasPreviousUserName = true;
+        };
+
+        for (const userName of userNames) {
+            const separatorLength = hasPreviousUserName ? userNameSeparatorLength : 0;
+            const userNameLength = Array.from(userName).length;
+
+            if (displayLength + separatorLength + userNameLength > userNameLimitLength) {
+                const remainingLength = userNameLimitLength - displayLength - separatorLength;
+                if (remainingLength > 0) {
+                    appendUserName(Array.from(userName).slice(0, remainingLength).join(""));
+                }
+
+                limit.appendChild(document.createElement("br"));
+                const omitted = document.createElement("div");
+                omitted.className = "text-danger";
+                omitted.textContent = "(ユーザ多数のため以下省略)";
+                limit.appendChild(omitted);
+                break;
+            }
+
+            appendUserName(userName);
+            displayLength += separatorLength + userNameLength;
         }
     }
 </script>

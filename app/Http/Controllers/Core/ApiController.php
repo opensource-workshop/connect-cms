@@ -96,7 +96,7 @@ class ApiController extends ConnectController
             return false;
         }
 
-        require $file_path;
+        require_once $file_path;
 
         /// 引数のアクションと同じメソッドを呼び出す。
         // $class_path = "app\Plugins\Api\\" . ucfirst($plugin_name) . "\\" . ucfirst($class_name);
@@ -121,8 +121,8 @@ class ApiController extends ConnectController
             return $this->encodeJson($ret, $request);
         }
 
-        // メソッドの有無確認
-        if (!method_exists($plugin_instance, $action)) {
+        // 許可されたメソッドのみ呼び出す
+        if (!in_array($action, $plugin_instance->getAllowedApiMethods(), true) || !is_callable([$plugin_instance, $action])) {
             $ret = array('code' => 404, 'message' => '指定されたメソッドは存在しません。');
             return $this->encodeJson($ret, $request);
         }

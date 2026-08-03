@@ -48,6 +48,28 @@ class FrameCore
     }
 
     /**
+     * コアGETルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedCoreGetMethods(): array
+    {
+        return [];
+    }
+
+    /**
+     * コアPOSTルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedCorePostMethods(): array
+    {
+        return [
+            'addPlugin',
+            'destroy',
+            'update',
+            'sequenceUp',
+            'sequenceDown',
+        ];
+    }
+
+    /**
      * プラグインの追加
      *
      * @param String $plugin_name

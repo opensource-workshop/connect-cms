@@ -33,6 +33,19 @@ class OpacApi extends ApiPluginBase
     use ConnectCommonTrait;
 
     /**
+     * APIルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedApiMethods(): array
+    {
+        return [
+            'book',
+            'rent',
+            'returnbook',
+            'rentinfo',
+        ];
+    }
+
+    /**
      *  書籍情報表示
      */
     public function book($request, $opac_id, $key_column, $key_value)

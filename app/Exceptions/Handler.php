@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Utilities\Url\UrlUtils;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Session\TokenMismatchException;
 use Throwable;
@@ -67,7 +68,7 @@ class Handler extends ExceptionHandler
 
             if ($request->has('redirect_path')) {
                 // 一般プラグイン編集時リダイレクト対応
-                return redirect($request->redirect_path)->withInput();
+                return redirect(UrlUtils::safeRedirectPath($request->redirect_path))->withInput();
             }
             return redirect()->back()->withInput();
         }

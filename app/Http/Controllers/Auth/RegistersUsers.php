@@ -14,6 +14,7 @@ use App\Models\Core\UserSection;
 use App\Plugins\Manage\UserManage\UsersTool;
 use App\Providers\RouteServiceProvider;
 use App\Rules\CustomValiTokenExists;
+use App\Traits\AuthorizesAdminSystemRoleAssignmentTrait;
 use App\Traits\ConnectCommonTrait;
 use App\Traits\ConnectMailTrait;
 use App\User;
@@ -36,6 +37,7 @@ use Illuminate\Support\Facades\Validator;
  */
 trait RegistersUsers
 {
+    use AuthorizesAdminSystemRoleAssignmentTrait;
     use RedirectsUsers;
     use ConnectCommonTrait;
     use ConnectMailTrait;
@@ -167,6 +169,10 @@ trait RegistersUsers
         } elseif (Configs::getConfigsValue($configs, 'user_register_enable') != "1") {
             // 未ログインの場合は、ユーザー登録が許可されていなければ、認証エラーとする。
             abort(403);
+        }
+
+        if ($this->isCan('admin_user')) {
+            $this->abortIfCannotGrantAdminSystemRole($request->manage);
         }
 
         // ユーザーデータ登録

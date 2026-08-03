@@ -27,6 +27,16 @@ class UserApi extends ApiPluginBase
     use ConnectCommonTrait;
 
     /**
+     * APIルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedApiMethods(): array
+    {
+        return [
+            'info',
+        ];
+    }
+
+    /**
      *  ページ初期表示
      */
     public function info($request, $userid)

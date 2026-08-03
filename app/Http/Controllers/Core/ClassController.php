@@ -114,15 +114,27 @@ class ClassController extends ConnectController
      */
     private static function createCoreInstance($plugin_name, $page_id, $frame_id)
     {
-        // Todo：コアの場合、ホワイトリストを作成して、呼び出せるクラストアクションを指定する。
         // プラグイン毎に動的にnew するので、use せずにここでrequire する。
         $file_path = base_path() . "/app/Http/Controllers/Core/" . ucfirst($plugin_name) . "Core.php";
-        require $file_path;
+        require_once $file_path;
 
         /// インスタンス生成
         $class_name = "app\Http\Controllers\Core\\" . ucfirst($plugin_name) . "Core";
         $plugin_instance = new $class_name($page_id, $frame_id);
         return $plugin_instance;
+    }
+
+    /**
+     * コアルートから呼び出し可能なメソッドか判定
+     */
+    private function isAllowedCoreMethod($plugin_instance, $action, string $request_method): bool
+    {
+        $allowed_method_name = 'getAllowedCore' . ucfirst(strtolower($request_method)) . 'Methods';
+        if (!method_exists($plugin_instance, $allowed_method_name)) {
+            return false;
+        }
+
+        return in_array($action, $plugin_instance->$allowed_method_name(), true) && is_callable([$plugin_instance, $action]);
     }
 
     /**
@@ -135,6 +147,10 @@ class ClassController extends ConnectController
     {
         // インスタンス生成
         $plugin_instance = self::createCoreInstance($action_type, $page_id, $frame_id);
+
+        if (!$this->isAllowedCoreMethod($plugin_instance, $action, 'get')) {
+            abort(404);
+        }
 
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。
@@ -152,6 +168,10 @@ class ClassController extends ConnectController
     {
         // インスタンス生成
         $plugin_instance = self::createCoreInstance($action_type, $page_id, $frame_id);
+
+        if (!$this->isAllowedCoreMethod($plugin_instance, $action, 'post')) {
+            abort(404);
+        }
 
         // 指定されたアクションを呼ぶ。
         // 呼び出し先のアクションでは、view 関数でblade を呼び出している想定。

@@ -24,6 +24,16 @@ class Nc2Sso extends ApiPluginBase
     use ConnectCommonTrait;
 
     /**
+     * APIルートから呼び出しを許可するメソッド一覧
+     */
+    public function getAllowedApiMethods(): array
+    {
+        return [
+            'index',
+        ];
+    }
+
+    /**
      *  ページ初期表示
      *
      * @return view

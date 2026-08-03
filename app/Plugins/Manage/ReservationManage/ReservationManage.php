@@ -1100,7 +1100,7 @@ class ReservationManage extends ManagePluginBase
                             mb_convert_variables(CsvCharacterCode::sjis_win, CsvCharacterCode::utf_8, $input);
                         }
 
-                        fputcsv($stream, [
+                        fputcsv($stream, CsvUtils::escapeCsvFormulaLine([
                             $input->id,
                             $input->facility_name,
                             $input->start_datetime,
@@ -1109,7 +1109,7 @@ class ReservationManage extends ManagePluginBase
                             $input->updated_at,
                             $input->status_display,
                             $input->inputs_column_value,
-                        ]);
+                        ]));
                     }
                 });
                 fclose($stream);

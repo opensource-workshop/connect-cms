@@ -17,11 +17,12 @@
             $value = '';
         }
         else {
-            $value = '<a href="' . url('/') . '/file/' . $obj->value . '" target="_blank">' . $obj->client_original_name . '</a>';
+            $upload_id = (int)$obj->value;
+            $value = '<a href="' . url('/') . '/file/' . $upload_id . '" target="_blank" rel="noopener noreferrer">' . e($obj->client_original_name) . '</a>';
 
             // ダウンロード件数
             if ($column->show_download_button) {
-                $value .= '<button class="ml-4 btn btn-sm btn-primary databases-file-download-button" onclick="window.open(\''. url('/') . '/file/' . $obj->value . '\', \'_blank\')">';
+                $value .= '<button class="ml-4 btn btn-sm btn-primary databases-file-download-button" onclick="window.open(\''. url('/') . '/file/' . $upload_id . '\', \'_blank\')">';
                 $value .= '<i class="fas fa-download"></i><span class="d-none d-sm-inline"> ダウンロード</span>';
                 $value .= '</button>';
             }
@@ -40,7 +41,7 @@
         }
         else {
             $filename = Uploads::getFilenameNoExtensionById($obj->value);
-            $value = '<img src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" alt="'.$filename.'" />';
+            $value = '<img src="' . url('/') . '/file/' . (int)$obj->value . '" class="img-fluid" alt="' . e($filename) . '" />';
         }
     }
     // 動画型
@@ -49,7 +50,7 @@
             $value = '';
         }
         else {
-            $value = '<video src="' . url('/') . '/file/' . $obj->value . '" class="img-fluid" controls></video>';
+            $value = '<video src="' . url('/') . '/file/' . (int)$obj->value . '" class="img-fluid" controls></video>';
             if ($column->show_play_count) {
                 $value .= '<span class="ml-4 databases-media-play-count-label">再生回数：</span>';
                 $value .= '<span class="databases-media-play-count">'. $obj->play_count . '</span>';
@@ -62,7 +63,11 @@
             $value = '';
         }
         else {
-            $value = '<a href="' . $obj->value . '" target="_blank">' . $obj->value . '</a>';
+            if (preg_match('/\A(?:https?:\/\/|\/(?!\/))[^\s<>"\']*\z/i', $obj->value)) {
+                $value = '<a href="' . e($obj->value) . '" target="_blank" rel="noopener noreferrer">' . e($obj->value) . '</a>';
+            } else {
+                $value = e($obj->value);
+            }
         }
     }
     // 日付型
