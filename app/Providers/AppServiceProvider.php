@@ -27,10 +27,8 @@ class AppServiceProvider extends AuthServiceProvider
 
     /**
      * Register any application services.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
         //
     }
@@ -40,10 +38,8 @@ class AppServiceProvider extends AuthServiceProvider
      * Larvel の仕様で引数はuserオブジェクト＋1つしか受け付けないため、
      * ($user, $args = null) で受付。
      * $args は [$post, $plugin_name] の配列オブジェクト
-     *
-     * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         // ペジネーションでBootstrapのスタイルを利用する
         // Laravel 8からデフォルトがTailwind CSSフレームワークに変わったが、以前のままで行く
@@ -58,9 +54,6 @@ class AppServiceProvider extends AuthServiceProvider
         // Laravel, Symfony 側の処理で http 始まりの URL で処理されてしまう。
         // config('app.url') が https 始まりか？http 始まりか？ をもとに強制的に scheme を設定する
         URL::forceScheme(Str::startsWith(config('app.url'), 'https') ? 'https' : 'http');
-
-        // 認可サービス(Gate)利用の準備
-        $this->registerPolicies();
 
         // *** ロールから確認（一般）
 
@@ -365,8 +358,6 @@ class AppServiceProvider extends AuthServiceProvider
             // エラーログ出力
             Log::error("Queue::failing ID:{$event->job->getJobId()} Connection:{$event->connectionName} Message:{$event->exception->getMessage()}");
         });
-
-        return false;
     }
 
     /**
