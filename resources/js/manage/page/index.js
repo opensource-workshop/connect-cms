@@ -178,10 +178,10 @@
     function isRowVisible(row, rowMap) {
         const ancestorIds = (row.dataset.ancestorIds || '').split(' ').filter(Boolean);
 
-        // 祖先が一覧内に無い場合は隠さず表示する（表示漏れを防ぐ）。
+        // 祖先行が無い／折り畳みトグルを持たない場合は隠さない（明示的に閉じている時だけ隠す）。
         return ancestorIds.every(function (ancestorId) {
             const ancestorRow = rowMap.get(ancestorId);
-            return !ancestorRow || ancestorRow.dataset.treeExpanded === '1';
+            return !ancestorRow || ancestorRow.dataset.treeExpanded !== '0';
         });
     }
 
