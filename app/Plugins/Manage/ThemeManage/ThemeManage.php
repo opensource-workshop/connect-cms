@@ -292,14 +292,13 @@ class ThemeManage extends ManagePluginBase
         $request->flash();
 
         $messages['dir_name.regex'] = '入力された:attributeは使用できません。半角の英数字、アンダースコア(_)、ハイフン(-)のみを使い、先頭がハイフンにならないように入力してください。';
-        $messages['theme_name.not_regex'] = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
+        $messages['theme_name.not_regex'] = self::THEME_NAME_NG_MESSAGE;
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             /* regex：英数字_- OK */
             'dir_name'   => ['required', 'regex:/^\w[\w-]*$/'],
-            /* not_regex：themes.ini に書き出せない文字（"、\）は不可 */
-            'theme_name' => ['required', 'not_regex:/["\\\\]/'],
+            'theme_name' => $this->getThemeNameRules(),
         ], $messages);
         $validator->setAttributeNames([
             'dir_name'   => 'ディレクトリ名',
@@ -532,6 +531,27 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
+     * themes.ini に書き出せない文字（ダブルクォート、円記号）
+     *
+     * ini の値はダブルクォートで囲んで書き出すため、予約文字（半角カッコ等）は使えるが、
+     * ダブルクォートと円記号は書き出した値をそのまま読み戻せないため使えない。
+     */
+    private const THEME_NAME_NG_REGEX = '/["\\\\]/';
+
+    /**
+     * themes.ini に書き出せない文字が入力された場合のメッセージ
+     */
+    private const THEME_NAME_NG_MESSAGE = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
+
+    /**
+     * テーマ名の入力チェックルールの取得
+     */
+    private function getThemeNameRules(): array
+    {
+        return ['required', 'not_regex:' . self::THEME_NAME_NG_REGEX];
+    }
+
+    /**
      * themes.ini ファイルの内容の生成
      *
      * テーマ名に ini の予約文字（半角カッコ等）が含まれていても読み込めるよう、値はダブルクォートで囲む。
@@ -601,12 +621,11 @@ class ThemeManage extends ManagePluginBase
         // セッション初期化などのLaravel 処理
         $request->flash();
 
-        $messages['theme_name.not_regex'] = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
+        $messages['theme_name.not_regex'] = self::THEME_NAME_NG_MESSAGE;
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            /* not_regex：themes.ini に書き出せない文字（"、\）は不可 */
-            'theme_name' => ['required', 'not_regex:/["\\\\]/'],
+            'theme_name' => $this->getThemeNameRules(),
         ], $messages);
         $validator->setAttributeNames([
             'theme_name' => 'テーマ名',
@@ -913,14 +932,13 @@ class ThemeManage extends ManagePluginBase
         $request->flash();
 
         $messages['dir_name.regex'] = '入力された:attributeは使用できません。半角の英数字、アンダースコア(_)、ハイフン(-)のみを使い、先頭がハイフンにならないように入力してください。';
-        $messages['theme_name.not_regex'] = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
+        $messages['theme_name.not_regex'] = self::THEME_NAME_NG_MESSAGE;
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             // regex：英数字_- OK
             'dir_name'   => ['required', 'regex:/^\w[\w-]*$/'],
-            /* not_regex：themes.ini に書き出せない文字（"、\）は不可 */
-            'theme_name' => ['required', 'not_regex:/["\\\\]/'],
+            'theme_name' => $this->getThemeNameRules(),
         ], $messages);
         $validator->setAttributeNames([
             'dir_name'   => 'ディレクトリ名',
