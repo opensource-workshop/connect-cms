@@ -190,8 +190,8 @@ class PluginBase
                     }
                     // 第2階層テーマがある場合は選択肢に追加する。
                     if (!empty($sub_themes)) {
-                        // テーマ設定ファイルにテーマ名がない場合はディレクトリ名をテーマ名とする。
-                        $themes[] = array('name' => $theme_inis['theme_name'] ?? basename($dir), 'dir' => basename($dir), 'themes' => $sub_themes);
+                        // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
+                        $themes[] = $this->getThemeName($dir, $theme_inis) + array('themes' => $sub_themes);
                     }
                 } else {
                     // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
