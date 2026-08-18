@@ -1660,7 +1660,7 @@ class SiteManage extends ManagePluginBase
         $dirs = array();
         foreach ($tmp_dirs as $tmp_dir) {
             // テーマ設定ファイル取得
-            $theme_inis = parse_ini_file(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
+            $theme_inis = FileUtils::parseIniFile(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
             $theme_name = '';
             if (!empty($theme_inis) && array_key_exists('theme_name', $theme_inis)) {
                 $theme_name = $theme_inis['theme_name'];

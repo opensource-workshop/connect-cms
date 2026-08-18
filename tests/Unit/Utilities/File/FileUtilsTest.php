@@ -37,4 +37,40 @@ class FileUtilsTest extends TestCase
             ['', ''],
         ];
     }
+
+    /**
+     * ini ファイルの値に変換するテスト
+     *
+     * @dataProvider escapeIniValueProvider
+     */
+    public function testEscapeIniValue($input, $expected)
+    {
+        $result = FileUtils::escapeIniValue($input);
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * ini ファイルの値に変換するテストのデータプロバイダ
+     */
+    public function escapeIniValueProvider()
+    {
+        return [
+            // ini の予約文字はダブルクォートで囲むことで使える
+            ['theme_user_02 (clear-steelblue)', '"theme_user_02 (clear-steelblue)"'],
+            ['テーマA (青)', '"テーマA (青)"'],
+            ['A!B|C&D', '"A!B|C&D"'],
+            ['コメント;付き', '"コメント;付き"'],
+
+            // ダブルクォート・円記号・改行は除去する
+            ['テーマ"A"', '"テーマA"'],
+            ['テーマ\\A', '"テーマA"'],
+            ["テーマ\r\nA", '"テーマA"'],
+
+            // 予約文字を含まない値はそのままダブルクォートで囲むだけ
+            ['Default', '"Default"'],
+
+            // 空文字
+            ['', '""'],
+        ];
+    }
 }
