@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Utilities\File\FileUtils;
 
 /**
  * テーマ管理クラス
@@ -257,7 +258,7 @@ class ThemeManage extends ManagePluginBase
         $dirs = array();
         foreach ($tmp_dirs as $tmp_dir) {
             // テーマ設定ファイル取得
-            $theme_inis = parse_ini_file(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
+            $theme_inis = FileUtils::parseIniFile(public_path() . '/themes/Users/' . basename($tmp_dir) . '/themes.ini');
             $theme_name = '';
             if (!empty($theme_inis) && array_key_exists('theme_name', $theme_inis)) {
                 $theme_name = $theme_inis['theme_name'];
@@ -291,12 +292,14 @@ class ThemeManage extends ManagePluginBase
         $request->flash();
 
         $messages['dir_name.regex'] = '入力された:attributeは使用できません。半角の英数字、アンダースコア(_)、ハイフン(-)のみを使い、先頭がハイフンにならないように入力してください。';
+        $messages['theme_name.not_regex'] = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             /* regex：英数字_- OK */
             'dir_name'   => ['required', 'regex:/^\w[\w-]*$/'],
-            'theme_name' => ['required'],
+            /* not_regex：themes.ini に書き出せない文字（"、\）は不可 */
+            'theme_name' => ['required', 'not_regex:/["\\\\]/'],
         ], $messages);
         $validator->setAttributeNames([
             'dir_name'   => 'ディレクトリ名',
@@ -318,7 +321,7 @@ class ThemeManage extends ManagePluginBase
         $result = File::makeDirectory(public_path() . '/themes/Users/' . basename($request->dir_name), 0775);
 
         // themes.ini ファイルの作成
-        $themes_ini = '[base]' . "\n" . 'theme_name = ' . $request->theme_name;
+        $themes_ini = $this->makeThemesIni($request->theme_name);
         $result = File::put(public_path() . '/themes/Users/' . basename($request->dir_name) . '/themes.ini', $themes_ini);
 
         // themes.css ファイルの作成
@@ -529,6 +532,16 @@ class ThemeManage extends ManagePluginBase
     }
 
     /**
+     * themes.ini ファイルの内容の生成
+     *
+     * テーマ名に ini の予約文字（半角カッコ等）が含まれていても読み込めるよう、値はダブルクォートで囲む。
+     */
+    private function makeThemesIni($theme_name): string
+    {
+        return '[base]' . "\n" . 'theme_name = ' . FileUtils::escapeIniValue((string)$theme_name) . "\n";
+    }
+
+    /**
      * ユーザ・テーマ名の取得
      */
     private function getUserThemeName($dir_name)
@@ -538,7 +551,7 @@ class ThemeManage extends ManagePluginBase
             return '';
         }
 
-        $theme_inis = parse_ini_file($theme_ini_path);
+        $theme_inis = FileUtils::parseIniFile($theme_ini_path);
         if (empty($theme_inis) || !array_key_exists('theme_name', $theme_inis)) {
             return '';
         }
@@ -588,10 +601,13 @@ class ThemeManage extends ManagePluginBase
         // セッション初期化などのLaravel 処理
         $request->flash();
 
+        $messages['theme_name.not_regex'] = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
-            'theme_name' => ['required'],
-        ]);
+            /* not_regex：themes.ini に書き出せない文字（"、\）は不可 */
+            'theme_name' => ['required', 'not_regex:/["\\\\]/'],
+        ], $messages);
         $validator->setAttributeNames([
             'theme_name' => 'テーマ名',
         ]);
@@ -608,7 +624,7 @@ class ThemeManage extends ManagePluginBase
         $theme_name = $request->theme_name;
 
         // themes.ini ファイルの保存
-        $themes_ini = '[base]' . "\n" . 'theme_name = ' . $theme_name;
+        $themes_ini = $this->makeThemesIni($theme_name);
         $result = File::put(public_path() . '/themes/Users/' . $dir_name . '/themes.ini', $themes_ini);
 
         return view('plugins.manage.theme.theme_name_edit', [
@@ -897,12 +913,14 @@ class ThemeManage extends ManagePluginBase
         $request->flash();
 
         $messages['dir_name.regex'] = '入力された:attributeは使用できません。半角の英数字、アンダースコア(_)、ハイフン(-)のみを使い、先頭がハイフンにならないように入力してください。';
+        $messages['theme_name.not_regex'] = '入力された:attributeは使用できません。ダブルクォート(")と円記号(\)は使用できません。';
 
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             // regex：英数字_- OK
             'dir_name'   => ['required', 'regex:/^\w[\w-]*$/'],
-            'theme_name' => ['required'],
+            /* not_regex：themes.ini に書き出せない文字（"、\）は不可 */
+            'theme_name' => ['required', 'not_regex:/["\\\\]/'],
         ], $messages);
         $validator->setAttributeNames([
             'dir_name'   => 'ディレクトリ名',
@@ -931,7 +949,7 @@ class ThemeManage extends ManagePluginBase
         $result = File::makeDirectory(public_path() . '/themes/Users/' . basename($request->dir_name), 0775);
 
         // themes.ini ファイルの作成
-        $themes_ini = '[base]' . "\n" . 'theme_name = ' . $request->theme_name;
+        $themes_ini = $this->makeThemesIni($request->theme_name);
         $result = File::put(public_path() . '/themes/Users/' . basename($request->dir_name) . '/themes.ini', $themes_ini);
 
         // themes.css ファイルの作成

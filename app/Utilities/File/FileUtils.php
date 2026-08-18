@@ -112,6 +112,58 @@ class FileUtils
     }
 
     /**
+     * ini ファイルを安全に読み込む
+     *
+     * 壊れた ini ファイルがあっても例外を投げず、空配列を返す。
+     * PluginBase::ccErrorHandler() が PHP の警告を ErrorException 化するため、
+     * parse_ini_file() の構文エラーで画面全体がシステムエラーになるのを防ぐ。
+     *
+     * INI_SCANNER_RAW を指定するため、ini の予約文字（( ) { } | & ~ ! ^ " $ ?）を含む値も
+     * ダブルクォートで囲まれていない状態で読み込める。
+     * ※ RAW では 'on'、'true'、'null' 等の値変換や定数展開は行われない。
+     *
+     * @param string $path ini ファイルのパス
+     * @param bool $process_sections セクション名をキーにした多次元配列で受け取るか
+     * @return array 読み込めなかった場合は空配列
+     */
+    public static function parseIniFile(string $path, bool $process_sections = false): array
+    {
+        if (!is_file($path)) {
+            return [];
+        }
+
+        try {
+            $inis = parse_ini_file($path, $process_sections, INI_SCANNER_RAW);
+        } catch (\Throwable $e) {
+            // エラーハンドラで例外化されるケース
+            \Log::warning('ini ファイルの読み込みに失敗しました。path = ' . $path . ', message = ' . $e->getMessage());
+            return [];
+        }
+
+        if (!is_array($inis)) {
+            // エラーハンドラが設定されていないケース（false が返る）
+            \Log::warning('ini ファイルの読み込みに失敗しました。path = ' . $path);
+            return [];
+        }
+
+        return $inis;
+    }
+
+    /**
+     * ini ファイルの値として使える文字列（ダブルクォート囲み）に変換する
+     *
+     * ini の予約文字を含む値でも、ダブルクォートで囲めば安全に読み書きできる。
+     * ダブルクォート・円記号・改行は ini の値として正しく表現できないため除去する。
+     *
+     * @param string $value ini ファイルに書き出す値
+     * @return string ダブルクォートで囲んだ文字列
+     */
+    public static function escapeIniValue(string $value): string
+    {
+        return '"' . str_replace(['"', '\\', "\r", "\n"], '', $value) . '"';
+    }
+
+    /**
      * 指定ディレクトリの総使用量を計算（フォーマット済み文字列で返却）
      *
      * @param string $dir 計算対象ディレクトリ

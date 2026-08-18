@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Common\Numbers;
 use App\Traits\ConnectMailTrait;
+use App\Utilities\File\FileUtils;
 
 /**
  * プラグイン基底クラス
@@ -166,8 +167,8 @@ class PluginBase
         $themes = array();  // 画面に渡すテーマ配列
         foreach ($dirs as $dir) {
             if (File::exists($dir."/themes.ini")) {
-                // テーマ設定ファイルのパース
-                $theme_inis = parse_ini_file($dir."/themes.ini");
+                // テーマ設定ファイルのパース（壊れたファイルがあっても画面が落ちないよう、空配列が返る）
+                $theme_inis = FileUtils::parseIniFile($dir."/themes.ini");
 
                 // ディレクトリがテーマ・グループ用のものなら、その下のディレクトリを探す。
                 if (array_key_exists('theme_dir', $theme_inis) && $theme_inis['theme_dir'] == 'group') {
@@ -178,8 +179,8 @@ class PluginBase
                     asort($group_dirs);  // ディレクトリが名前に対して逆順になることがあるのでソートしておく。
                     foreach ($group_dirs as $group_dir) {
                         if (File::exists($group_dir."/themes.ini")) {
-                            // テーマ設定ファイルのパース
-                            $group_theme_inis = parse_ini_file($group_dir."/themes.ini");
+                            // テーマ設定ファイルのパース（壊れたファイルがあっても画面が落ちないよう、空配列が返る）
+                            $group_theme_inis = FileUtils::parseIniFile($group_dir."/themes.ini");
 
                             // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
                             $sub_themes[] = $this->getThemeName($group_dir, $group_theme_inis, basename($dir));
@@ -189,7 +190,8 @@ class PluginBase
                     }
                     // 第2階層テーマがある場合は選択肢に追加する。
                     if (!empty($sub_themes)) {
-                        $themes[] = array('name' => $theme_inis['theme_name'], 'dir' => basename($dir), 'themes' => $sub_themes);
+                        // テーマ設定ファイルにテーマ名がない場合はディレクトリ名をテーマ名とする。
+                        $themes[] = array('name' => $theme_inis['theme_name'] ?? basename($dir), 'dir' => basename($dir), 'themes' => $sub_themes);
                     }
                 } else {
                     // テーマ設定ファイルからテーマ名を探す。設定がなければディレクトリ名をテーマ名とする。
