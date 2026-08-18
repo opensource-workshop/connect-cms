@@ -51,6 +51,7 @@ if (! isset($cc_configs)) {
     } elseif ($is_manage_page || in_array(\Route::currentRouteName(), [
         'show_login_form', 'login',
         'show_register_form', 'register',
+        'register.confirmToken', 'register.storeToken',
         'password.request', 'password.reset',
     ])) {
         $meta_robots = 'noindex, nofollow';
