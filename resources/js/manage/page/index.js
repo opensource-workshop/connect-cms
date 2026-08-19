@@ -168,22 +168,21 @@
     /**
      * 祖先の展開状態をたどり、対象行を表示すべきか判定する。
      *
+     * parent_id カラムは実体（Nested Set の _lft/_rgt）とズレている場合があるため、
+     * ちらつき防止スタイルと同じ data-ancestor-ids を判定に使う。
+     *
      * @param {HTMLElement} row 対象の行
      * @param {Map<string, HTMLElement>} rowMap ページIDと行要素の対応
      * @returns {boolean} 表示対象なら true
      */
     function isRowVisible(row, rowMap) {
-        let parentId = row.dataset.parentId;
+        const ancestorIds = (row.dataset.ancestorIds || '').split(' ').filter(Boolean);
 
-        while (parentId) {
-            const parentRow = rowMap.get(parentId);
-            if (!parentRow || parentRow.dataset.treeExpanded !== '1') {
-                return false;
-            }
-            parentId = parentRow.dataset.parentId;
-        }
-
-        return true;
+        // 祖先行が無い／折り畳みトグルを持たない場合は隠さない（明示的に閉じている時だけ隠す）。
+        return ancestorIds.every(function (ancestorId) {
+            const ancestorRow = rowMap.get(ancestorId);
+            return !ancestorRow || ancestorRow.dataset.treeExpanded !== '0';
+        });
     }
 
     /**
