@@ -51,6 +51,11 @@ Route::post('register/storeToken/{id}/{token}', 'Auth\RegisterController@storeTo
 //Route::get('/test/{language}/{any}', 'Core\TestController@invokeGet')->where('any', '.*');
 //Route::post('/test/{id?}', 'Core\TestController@invokePost');
 
+// 画面サイズを選択できるプレビューモード
+Route::get('/preview/{page_id}', 'Core\PreviewController@show')
+    ->where('page_id', '[1-9][0-9]*')
+    ->name('preview.device');
+
 // コアのget処理(Frame関係)
 Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore')->name('get_core');
 
