@@ -218,6 +218,18 @@ class PreviewDeviceFeatureTest extends TestCase
     }
 
     /**
+     * 管理画面がプレビュー対象ページを持たなくても、必須パラメータ不足で表示できなくならないこと。
+     */
+    public function testPageManagementCanOpenWithoutPreviewTarget(): void
+    {
+        $user = $this->createUserWithRole('admin_page');
+
+        $response = $this->actingAs($user)->get('/manage/page');
+
+        $response->assertOk();
+    }
+
+    /**
      * iframe内の通常リンクやフォームを操作すると、プレビューを継続せず通常画面へ戻ること。
      */
     public function testPreviewFrameTargetsTopWindow(): void

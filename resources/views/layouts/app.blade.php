@@ -23,7 +23,8 @@ use App\Http\Controllers\Core\UploadController;
     }
 
     // URL文字列を入力として受け取らないよう、現在ページのIDからプレビューを開始する。
-    $preview_url = isset($page) ? route('preview.device', ['page_id' => $page->id]) : null;
+    $preview_url = !$is_manage_page && isset($page) && !empty($page->id) ?
+        route('preview.device', ['page_id' => $page->id]) : null;
 
 if (! isset($cc_configs)) {
     // cc_configsは app\Http\Middleware\ConnectInit.php で処理しているため、基本ここには入らない。
