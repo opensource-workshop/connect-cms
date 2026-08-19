@@ -52,7 +52,7 @@ Route::post('register/storeToken/{id}/{token}', 'Auth\RegisterController@storeTo
 //Route::post('/test/{id?}', 'Core\TestController@invokePost');
 
 // 画面サイズを選択できるプレビューモード
-Route::get('/preview/{page_id}', 'Core\PreviewController@show')
+Route::get('/core/preview/{page_id}', 'Core\PreviewController@show')
     ->where('page_id', '[1-9][0-9]*')
     ->name('preview.device');
 

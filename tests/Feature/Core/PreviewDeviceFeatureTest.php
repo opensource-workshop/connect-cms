@@ -103,7 +103,7 @@ class PreviewDeviceFeatureTest extends TestCase
     {
         $user = $this->createUserWithRole('role_arrangement');
 
-        $missing_response = $this->actingAs($user)->get('/preview');
+        $missing_response = $this->actingAs($user)->get('/core/preview');
         $string_response = $this->actingAs($user)->get(route('preview.device', [
             'page_id' => 'invalid',
         ]));
