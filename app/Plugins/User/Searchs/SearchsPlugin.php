@@ -522,6 +522,16 @@ class SearchsPlugin extends UserPluginBase
                 continue;
             }
 
+            // ページの選択「ページ管理のメニュー表示条件に従う」
+            if ($searchs_frame->page_select == SearchsPageSelect::menu_visible_only) {
+                // 親子関係をループ（自分 ➔ 親 ➔ ルート）して、base_display_flag が 0 の場合は見れないページとして除外する
+                foreach ($page_tree as $ancestor_page) {
+                    if (!$ancestor_page->base_display_flag) {
+                        continue 2;
+                    }
+                }
+            }
+
             // 見れるページ
             $visible_page_ids[] = $page->id;
         }
