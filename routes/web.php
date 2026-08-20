@@ -56,6 +56,10 @@ Route::get('/core/preview/{page_id}', 'Core\PreviewController@show')
     ->where('page_id', '[1-9][0-9]*')
     ->name('preview.device');
 
+// 不正なプレビューURLを汎用コアルートへ流さず404にする
+Route::get('/core/preview/{invalid_path?}', 'Core\PreviewController@notFound')
+    ->where('invalid_path', '.*');
+
 // コアのget処理(Frame関係)
 Route::get('/core/{action_type}/{action}/{page_id?}/{frame_id?}', 'Core\ClassController@invokeGetCore')->name('get_core');
 

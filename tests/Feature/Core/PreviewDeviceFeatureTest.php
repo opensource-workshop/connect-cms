@@ -113,11 +113,13 @@ class PreviewDeviceFeatureTest extends TestCase
         $negative_response = $this->actingAs($user)->get(route('preview.device', [
             'page_id' => -1,
         ]));
+        $nested_response = $this->actingAs($user)->get('/core/preview/invalid/path');
 
         $missing_response->assertStatus(404);
         $string_response->assertStatus(404);
         $zero_response->assertStatus(404);
         $negative_response->assertStatus(404);
+        $nested_response->assertStatus(404);
     }
 
     /**

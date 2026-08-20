@@ -13,7 +13,13 @@ class PreviewController extends Controller
     /** プレビュー画面はプラグイン管理者だけが利用できる */
     public function __construct()
     {
-        $this->middleware(['auth', 'can:role_arrangement']);
+        $this->middleware(['auth', 'can:role_arrangement'])->only('show');
+    }
+
+    /** 不正なプレビューURLを404として扱う */
+    public function notFound()
+    {
+        abort(404);
     }
 
     /** 選択した画面サイズで対象ページを表示するプレビュー枠を返す */
