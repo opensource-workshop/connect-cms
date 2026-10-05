@@ -11,7 +11,7 @@
 @section("plugin_contents_$frame->id")
 <ul>
 @foreach($frames as $frame_record)
-    <li id="tab_{{$frame_record->id}}" class="tab_{{$frame_record->id}}@if (isset($tabs) && $tabs->default_frame_id == $frame_record->id) current @endif"><a href="#" onclick="return false;">{{$frame_record->frame_title}}</a></li>
+    <li id="tab_{{$frame_record->id}}" class="tab_{{$frame_record->id}}@if ($default_frame_id == $frame_record->id) current @endif"><a href="#" onclick="return false;">{{$frame_record->frame_title}}</a></li>
 @endforeach
 </ul>
 
@@ -33,6 +33,10 @@ $(document).ready(function(){
         @endforeach
         });
     @endforeach
+    @if ($is_fallback_default)
+        {{-- 初期表示フレームが表示対象外のため、表示できる先頭のタブを選択状態にする --}}
+        $('.tab_{{$default_frame_id}}').trigger('click');
+    @endif
     });
 });
 </script>
