@@ -773,6 +773,11 @@ class DefaultController extends ConnectController
     {
         // フレームをループし、対応するインスタンスの件数取得メソッドを呼んで、条件が合致すれば非表示フラグをon
         foreach ($frames as $key => $frame) {
+            // 非公開等で出力しないフレームは、件数取得も不要
+            if ($frame->isInvisiblePrivateFrame()) {
+                continue;
+            }
+
             // データがない場合にフレームも非表示にする。
             if ($frame->none_hidden) {
                 // 表示コンテンツの件数取得メソッドの有無確認と呼び出し
