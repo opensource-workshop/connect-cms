@@ -7,7 +7,7 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
-{{-- 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、期間限定公開等）にマッチした場合は、HTML自体を出力しない --}}
+{{-- 非ログインまたはフレーム配置権限を持たない、且つ、非表示条件（非公開、又は、期間限定公開等）にマッチした場合は、HTML自体を出力しない --}}
 @if (!$frame->isInvisiblePrivateFrame())
 @php
 // 独自クラス名 ＆ フレーム＆アクションのクラス名生成
