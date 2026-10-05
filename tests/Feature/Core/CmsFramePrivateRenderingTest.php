@@ -19,8 +19,9 @@ use Tests\TestCase;
  * フレームの公開設定によるページ表示時のHTML出力を検証する。
  *
  * テスト方針:
- * - ページをHTTP経由で表示し、非公開等のフレームがCSSで隠されるのではなく、
+ * - ページをHTTP経由で表示し、表示対象外のフレームはCSSで隠すのではなく、
  *   フレームの要素・タイトル・プラグイン本文ともHTMLに出力されないことを確認する。
+ * - 公開設定とログイン状態の組み合わせは、出力される／されないの両方向をデータプロバイダで網羅する。
  * - フレーム配置権限を持つ利用者には従来どおり出力され、プレビュー時は一般利用者と同じ見え方になることを確認する。
  */
 class CmsFramePrivateRenderingTest extends TestCase
@@ -38,146 +39,122 @@ class CmsFramePrivateRenderingTest extends TestCase
     }
 
     /**
-     * 非公開フレームは、ゲストに対してフレーム要素も本文もHTMLに出力しないこと。
+     * 公開設定とログイン状態の組み合わせごとの、フレーム出力有無の一覧。
+     *
+     * 期間限定公開の日時はsetUp前に評価されないよう、現在日時からの日数だけを渡す。
      */
-    public function testAlwaysCloseFrameIsNotRenderedForGuest(): void
+    public function contentOpenTypeProvider(): array
     {
-        [$page, $frame] = $this->createContentsFrame('always-close', [
+        // [公開設定, 公開日時Fromの日数, 公開日時Toの日数, 閲覧者, プレビュー, 出力されるか]
+        return [
+            '公開 × ゲスト' => [ContentOpenType::always_open, null, null, 'guest', false, true],
+            '非公開 × ゲスト' => [ContentOpenType::always_close, null, null, 'guest', false, false],
+            '非公開 × ログインユーザー' => [ContentOpenType::always_close, null, null, 'user', false, false],
+            '期間限定公開（期間内） × ゲスト' => [ContentOpenType::limited_open, -1, 1, 'guest', false, true],
+            '期間限定公開（期間終了） × ゲスト' => [ContentOpenType::limited_open, -10, -1, 'guest', false, false],
+            '期間限定公開（期間開始前） × ゲスト' => [ContentOpenType::limited_open, 1, 10, 'guest', false, false],
+            'ログイン後表示 × ゲスト' => [ContentOpenType::login_open, null, null, 'guest', false, false],
+            'ログイン後表示 × ログインユーザー' => [ContentOpenType::login_open, null, null, 'user', false, true],
+            'ログイン後非表示 × ゲスト' => [ContentOpenType::login_close, null, null, 'guest', false, true],
+            'ログイン後非表示 × ログインユーザー' => [ContentOpenType::login_close, null, null, 'user', false, false],
+            '非公開 × フレーム配置権限' => [ContentOpenType::always_close, null, null, 'arrangement', false, true],
+            '非公開 × フレーム配置権限（プレビュー）' => [ContentOpenType::always_close, null, null, 'arrangement', true, false],
+        ];
+    }
+
+    /**
+     * 公開設定で表示対象外のフレームはHTML自体を出力せず、表示対象のフレームは出力されること。
+     *
+     * @dataProvider contentOpenTypeProvider
+     */
+    public function testFrameRenderingFollowsContentOpenType(
+        int $content_open_type,
+        ?int $from_days,
+        ?int $to_days,
+        string $viewer,
+        bool $preview,
+        bool $expected_rendered
+    ): void {
+        [$page, $frame] = $this->createContentsFrame('target', [
+            'content_open_type' => $content_open_type,
+            'content_open_date_from' => is_null($from_days) ? null : Carbon::now()->addDays($from_days),
+            'content_open_date_to' => is_null($to_days) ? null : Carbon::now()->addDays($to_days),
+        ]);
+
+        $user = $this->createViewer($viewer);
+        if ($user) {
+            $this->actingAs($user);
+        }
+
+        $response = $this->get($page->permanent_link . ($preview ? '?mode=preview' : ''));
+
+        $response->assertOk();
+        if ($expected_rendered) {
+            $this->assertFrameRendered($response, $frame, 'target');
+        } else {
+            $this->assertFrameNotRendered($response, $frame, 'target');
+        }
+    }
+
+    /**
+     * 非公開フレームのアクションURLを直接指定しても、フレームの本文を出力しないこと。
+     */
+    public function testAlwaysCloseFrameIsNotRenderedByDirectActionUrl(): void
+    {
+        [$page, $frame] = $this->createContentsFrame('direct-close', [
             'content_open_type' => ContentOpenType::always_close,
         ]);
 
-        $response = $this->get($page->permanent_link);
+        $response = $this->post("/plugin/contents/index/{$page->id}/{$frame->id}");
 
         $response->assertOk();
-        $this->assertFrameNotRendered($response, $frame, 'always-close');
+        $this->assertFrameNotRendered($response, $frame, 'direct-close');
     }
 
     /**
-     * 期間限定公開フレームは、公開期間外ならHTMLに出力しないこと。
+     * 公開フレームは、アクションURLを直接指定した場合も従来どおり本文を出力すること。
      */
-    public function testLimitedOpenFrameOutsidePeriodIsNotRenderedForGuest(): void
+    public function testAlwaysOpenFrameIsRenderedByDirectActionUrl(): void
     {
-        [$page, $frame] = $this->createContentsFrame('limited-expired', [
-            'content_open_type' => ContentOpenType::limited_open,
-            'content_open_date_from' => Carbon::now()->subDays(10),
-            'content_open_date_to' => Carbon::now()->subDays(1),
-        ]);
-
-        $response = $this->get($page->permanent_link);
-
-        $response->assertOk();
-        $this->assertFrameNotRendered($response, $frame, 'limited-expired');
-    }
-
-    /**
-     * 期間限定公開フレームは、公開期間内なら出力されること。
-     */
-    public function testLimitedOpenFrameWithinPeriodIsRenderedForGuest(): void
-    {
-        [$page, $frame] = $this->createContentsFrame('limited-active', [
-            'content_open_type' => ContentOpenType::limited_open,
-            'content_open_date_from' => Carbon::now()->subDays(1),
-            'content_open_date_to' => Carbon::now()->addDays(1),
-        ]);
-
-        $response = $this->get($page->permanent_link);
-
-        $response->assertOk();
-        $this->assertFrameRendered($response, $frame, 'limited-active');
-    }
-
-    /**
-     * ログイン後表示フレームは、未ログインのゲストにはHTMLを出力しないこと。
-     */
-    public function testLoginOpenFrameIsNotRenderedForGuest(): void
-    {
-        [$page, $frame] = $this->createContentsFrame('login-open', [
-            'content_open_type' => ContentOpenType::login_open,
-        ]);
-
-        $response = $this->get($page->permanent_link);
-
-        $response->assertOk();
-        $this->assertFrameNotRendered($response, $frame, 'login-open');
-    }
-
-    /**
-     * ログイン後非表示フレームは、配置権限のないログインユーザーにはHTMLを出力しないこと。
-     */
-    public function testLoginCloseFrameIsNotRenderedForLoggedInUser(): void
-    {
-        [$page, $frame] = $this->createContentsFrame('login-close', [
-            'content_open_type' => ContentOpenType::login_close,
-        ]);
-
-        /** @var User $user */
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->get($page->permanent_link);
-
-        $response->assertOk();
-        $this->assertFrameNotRendered($response, $frame, 'login-close');
-    }
-
-    /**
-     * 公開フレームは、ゲストにも出力されること。
-     */
-    public function testAlwaysOpenFrameIsRenderedForGuest(): void
-    {
-        [$page, $frame] = $this->createContentsFrame('always-open', [
+        [$page, $frame] = $this->createContentsFrame('direct-open', [
             'content_open_type' => ContentOpenType::always_open,
         ]);
 
+        $response = $this->post("/plugin/contents/index/{$page->id}/{$frame->id}");
+
+        $response->assertOk();
+        $this->assertFrameRendered($response, $frame, 'direct-open');
+    }
+
+    /**
+     * 公開中で表示データが0件の「データがない場合にフレームも非表示にする」フレームは、従来どおりd-noneで出力されること。
+     */
+    public function testNoneHiddenFrameWithoutDataIsRenderedWithDNone(): void
+    {
+        [$page, $frame] = $this->createNoneHiddenWhatsnewsFrame(ContentOpenType::always_open);
+
         $response = $this->get($page->permanent_link);
 
         $response->assertOk();
-        $this->assertFrameRendered($response, $frame, 'always-open');
-    }
-
-    /**
-     * フレーム配置権限を持つ利用者には、非公開フレームも編集のため出力されること。
-     */
-    public function testAlwaysCloseFrameIsRenderedForArrangementUser(): void
-    {
-        [$page, $frame] = $this->createContentsFrame('close-for-admin', [
-            'content_open_type' => ContentOpenType::always_close,
-        ]);
-
-        $response = $this->actingAs($this->createUserWithRole('role_arrangement'))->get($page->permanent_link);
-
-        $response->assertOk();
-        $this->assertFrameRendered($response, $frame, 'close-for-admin');
-    }
-
-    /**
-     * フレーム配置権限を持つ利用者でも、プレビュー時は一般利用者と同様に非公開フレームを出力しないこと。
-     */
-    public function testAlwaysCloseFrameIsNotRenderedForArrangementUserInPreview(): void
-    {
-        [$page, $frame] = $this->createContentsFrame('close-preview', [
-            'content_open_type' => ContentOpenType::always_close,
-        ]);
-
-        $response = $this->actingAs($this->createUserWithRole('role_arrangement'))->get($page->permanent_link . '?mode=preview');
-
-        $response->assertOk();
-        $this->assertFrameNotRendered($response, $frame, 'close-preview');
+        $this->assertMatchesRegularExpression(
+            '/<div class="[^"]*\bd-none\b[^"]*" id="frame-' . $frame->id . '">/',
+            $response->getContent()
+        );
     }
 
     /**
      * 「データがない場合にフレームも非表示にする」設定の非公開フレームでも、ページ表示が壊れずHTMLを出力しないこと。
+     *
+     * 表示対象外のフレームで件数取得を省略しても、ページ表示に影響しないことの確認。
      */
-    public function testNoneHiddenAlwaysCloseFrameIsNotRenderedForGuest(): void
+    public function testNoneHiddenAlwaysCloseFrameDoesNotBreakPage(): void
     {
-        [$page, $frame] = $this->createContentsFrame('none-hidden-close', [
-            'content_open_type' => ContentOpenType::always_close,
-            'none_hidden' => 1,
-        ]);
+        [$page, $frame] = $this->createNoneHiddenWhatsnewsFrame(ContentOpenType::always_close);
 
         $response = $this->get($page->permanent_link);
 
         $response->assertOk();
-        $this->assertFrameNotRendered($response, $frame, 'none-hidden-close');
+        $response->assertDontSee('id="frame-' . $frame->id . '"', false);
     }
 
     /**
@@ -185,11 +162,7 @@ class CmsFramePrivateRenderingTest extends TestCase
      */
     private function createContentsFrame(string $marker, array $attributes): array
     {
-        $page = Page::create([
-            'page_name' => "page-{$marker}",
-            'permanent_link' => "/page-{$marker}",
-            'base_display_flag' => 1,
-        ]);
+        $page = $this->createPage($marker);
 
         $bucket = Buckets::create([
             'bucket_name' => "bucket-{$marker}",
@@ -219,18 +192,63 @@ class CmsFramePrivateRenderingTest extends TestCase
     }
 
     /**
-     * フレーム配置権限などのベースロールを持つユーザーを作成する。
+     * 件数取得で0件となる（新着設定のない）新着フレームを、「データがない場合にフレームも非表示にする」設定で作成する。
+     *
+     * 件数取得（getContentsCount）を持つのは新着プラグインのため、新着フレームを使う。
      */
-    private function createUserWithRole(string $role): User
+    private function createNoneHiddenWhatsnewsFrame(int $content_open_type): array
     {
+        $page = $this->createPage('none-hidden');
+
+        $frame = Frame::create([
+            'page_id' => $page->id,
+            'area_id' => 2,
+            'frame_title' => 'title-none-hidden',
+            'frame_design' => 'default',
+            'plugin_name' => 'whatsnews',
+            'frame_col' => 0,
+            'template' => 'default',
+            'bucket_id' => null,
+            'display_sequence' => 1,
+            'none_hidden' => 1,
+            'content_open_type' => $content_open_type,
+        ]);
+
+        return [$page, $frame];
+    }
+
+    /**
+     * テスト用のページを作成する。
+     */
+    private function createPage(string $marker): Page
+    {
+        return Page::create([
+            'page_name' => "page-{$marker}",
+            'permanent_link' => "/page-{$marker}",
+            'base_display_flag' => 1,
+        ]);
+    }
+
+    /**
+     * 閲覧者の種別に応じたユーザーを作成する。ゲストの場合はnullを返す。
+     */
+    private function createViewer(string $viewer): ?User
+    {
+        if ($viewer === 'guest') {
+            return null;
+        }
+
+        /** @var User $user */
         $user = User::factory()->create();
 
-        UsersRoles::factory()->create([
-            'users_id' => $user->id,
-            'target' => 'base',
-            'role_name' => $role,
-            'role_value' => 1,
-        ]);
+        if ($viewer === 'arrangement') {
+            UsersRoles::factory()->create([
+                'users_id' => $user->id,
+                'target' => 'base',
+                'role_name' => 'role_arrangement',
+                'role_value' => 1,
+            ]);
+        }
 
         return $user;
     }
