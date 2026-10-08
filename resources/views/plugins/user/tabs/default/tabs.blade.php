@@ -16,7 +16,7 @@
     // frame_titleが空の場合、タブが表示されないため、メッセージをタブに表示する
     $frame_title = is_null($frame_record->frame_title) ? '(フレームタイトルを設定してください)' : $frame_record->frame_title;
     @endphp
-    <li id="tab_{{$frame_record->id}}" class="tab_{{$frame_record->id}} nav-item"><a href="#" class="nav-link tab_a_{{$frame_record->id}} @if (isset($tabs) && $tabs->default_frame_id == $frame_record->id) active @endif" onclick="return false;">{{  $frame_title  }}</a></li>
+    <li id="tab_{{$frame_record->id}}" class="tab_{{$frame_record->id}} nav-item"><a href="#" class="nav-link tab_a_{{$frame_record->id}} @if ($default_frame_id == $frame_record->id) active @endif" onclick="return false;">{{  $frame_title  }}</a></li>
 @endforeach
 </ul>
 
@@ -38,6 +38,10 @@ $(document).ready(function(){
         @endforeach
         });
     @endforeach
+    @if ($is_fallback_default)
+        {{-- 初期表示フレームが表示対象外のため、表示できる先頭のタブを選択状態にする --}}
+        $('.tab_{{$default_frame_id}}').trigger('click');
+    @endif
     });
 });
 </script>

@@ -7,6 +7,8 @@
  * @copyright OpenSource-WorkShop Co.,Ltd. All Rights Reserved
  * @category コア
 --}}
+{{-- 非ログインまたはフレーム配置権限を持たない、且つ、非表示条件（非公開、又は、期間限定公開等）にマッチした場合は、HTML自体を出力しない --}}
+@if (!$frame->isInvisiblePrivateFrame())
 @php
 // 独自クラス名 ＆ フレーム＆アクションのクラス名生成
 if ($frame->classname) {
@@ -30,10 +32,6 @@ if ($frame->default_hidden && (!Auth::check() || !Auth::user()->can('role_arrang
 // see) DefaultController::setHiddenFrame()
 $hidden_flag = '';
 if ($default_hidden == '' & isset($frame->hidden_flag) && $frame->hidden_flag == true && (!Auth::check() || !Auth::user()->can('role_arrangement'))) {
-    $hidden_flag = ' d-none';
-}
-// 非ログインまたはフレーム編集権限を持たない、且つ、非表示条件（非公開、又は、期間限定公開）にマッチした場合はフレームを非表示にする
-if ($frame->isInvisiblePrivateFrame()) {
     $hidden_flag = ' d-none';
 }
 @endphp
@@ -150,3 +148,4 @@ if ($frame->isInvisiblePrivateFrame()) {
     </div>
 </div>
 </div>
+@endif

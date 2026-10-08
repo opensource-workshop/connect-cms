@@ -98,12 +98,27 @@ class TabsPlugin extends UserPluginBase
                        ->orderBy('display_sequence', 'asc')
                        ->get();
 
+        // 公開設定で表示対象外のフレームは、フレーム本体と同様にタブも出力しない
+        $visible_frames = $frames->reject(function ($frame) {
+            return $frame->isInvisiblePrivateFrame();
+        })->values();
+
+        // 初期表示フレームが表示対象外の場合は、表示できる先頭のフレームを初期表示にする
+        $default_frame_id = empty($tabs) ? null : $tabs->default_frame_id;
+        $is_fallback_default = false;
+        if ($frames->contains('id', $default_frame_id) && !$visible_frames->contains('id', $default_frame_id)) {
+            $default_frame_id = optional($visible_frames->first())->id;
+            $is_fallback_default = !empty($default_frame_id);
+        }
+
         // 画面へ
         return $this->view('tabs', [
             'page_id'   => $page_id,
             'tabs'      => $tabs,
-            'frames'    => $frames,
-            'frames2'   => $frames,
+            'frames'    => $visible_frames,
+            'frames2'   => $visible_frames,
+            'default_frame_id'    => $default_frame_id,
+            'is_fallback_default' => $is_fallback_default,
         ]);
     }
 
