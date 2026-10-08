@@ -234,7 +234,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
 @endphp
 <body class="@if(isset($page)){{$page->getPermanentlinkClassname()}}@endif {{ $body_optional_class }}">
 @if (Auth::check() || Configs::getConfigsValue($cc_configs, 'base_header_hidden') != '1')
-<nav class="navbar navbar-expand-md bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
+<nav class="navbar navbar-expand-lg bg-dark {{$base_header_font_color_class}} @if (Configs::getConfigsValue($cc_configs, 'base_header_fix') == '1') sticky-top @endif {{ $base_header_optional_class }}" aria-label="ヘッダー">
     <!-- Branding Image -->
     <a class="navbar-brand cc-custom-brand" href="{{ url('/') }}">
         {{$site_name}}
@@ -249,7 +249,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
         {{-- メニュー類を右側にするため、空ulタグでnavbar-nav mr-autoを定義 --}}
         <ul class="navbar-nav mr-auto"></ul>
 
-        <ul class="navbar-nav d-md-none">
+        <ul class="navbar-nav d-lg-none">
 
             @if(isset($page_list))
 
@@ -267,7 +267,7 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
             @endif
         </ul>
 
-        <div class="dropdown-divider d-md-none"></div>
+        <div class="dropdown-divider d-lg-none"></div>
 
         <ul class="navbar-nav text-nowrap">
             {{-- 管理メニュー表示判定（管理機能 or コンテンツ権限に付与がある場合）--}}
