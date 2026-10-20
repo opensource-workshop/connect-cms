@@ -1,0 +1,84 @@
+.cc-preview-shell {
+    min-height: 100vh;
+    margin: 0;
+    background: #d9dde2;
+}
+
+.cc-preview-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: $zindex-fixed + 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    padding: .5rem;
+    color: $white;
+    background: $dark;
+    gap: .5rem;
+}
+
+.cc-preview-toolbar__group {
+    flex-shrink: 0;
+}
+
+.cc-preview-toolbar__help {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: $font-size-sm;
+}
+
+.cc-preview-stage {
+    width: 100%;
+    min-height: calc(100vh - 5rem);
+    overflow: auto;
+}
+
+.cc-preview-canvas {
+    position: relative;
+    margin: 0 auto 1rem;
+}
+
+.cc-preview-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+    background: $white;
+    box-shadow: 0 0 0 1px rgba($black, .2), 0 .25rem 1rem rgba($black, .2);
+    transform-origin: top left;
+    visibility: hidden;
+}
+
+.cc-preview-size-label {
+    width: fit-content;
+    padding: .125rem .5rem;
+    border: 1px solid rgba($black, .2);
+    border-radius: $border-radius-sm;
+    background: $white;
+    color: $dark;
+    font-size: $font-size-sm;
+    line-height: 1.5;
+}
+
+.cc-preview-stage--ready .cc-preview-frame {
+    visibility: visible;
+}
+
+@include media-breakpoint-down(sm) {
+    .cc-preview-toolbar {
+        justify-content: flex-start;
+    }
+
+    .cc-preview-toolbar__help {
+        width: 100%;
+        text-align: center;
+    }
+
+    .cc-preview-toolbar__exit {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
