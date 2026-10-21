@@ -65,7 +65,7 @@
                     <thead>
                         <tr>
                             <th nowrap style="width:10%;">適用順 <label class="badge badge-danger">必須</label></th>
-                            <th nowrap>IPアドレス(*でALL) <label class="badge badge-danger">必須</label></th>
+                            <th nowrap>IPアドレス(*でALL。IPv4/IPv6、CIDR形式可) <label class="badge badge-danger">必須</label></th>
                             <th nowrap style="min-width:150px;">権限</th>
                             <th nowrap>メモ</th>
                             <th nowrap>拒否/許可 <label class="badge badge-danger">必須</label></th>

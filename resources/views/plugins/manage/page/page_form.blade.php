@@ -589,7 +589,7 @@ use App\Models\Core\Configs;
                 </div>
             @endif
 
-            <small class="form-text text-muted">※ カンマで複数、CIDR形式での指定可能、*での指定は不可</small>
+            <small class="form-text text-muted">※ カンマで複数、IPv4/IPv6、CIDR形式（例: 192.168.1.0/24, 2001:db8::/64）での指定可能、*での指定は不可</small>
         </div>
     </div>
     <div class="form-group row">

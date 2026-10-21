@@ -13,6 +13,7 @@ use App\Models\Common\Page;
 use App\Models\Common\PageRole;
 use App\Models\User\Contents\Contents;
 use App\Plugins\Manage\ManagePluginBase;
+use App\Rules\CustomValiIpAddressRange;
 use App\Rules\CustomValiMetaRobots;
 use App\Rules\CustomValiTextMax;
 use App\Rules\CustomValiUrlMax;
@@ -183,7 +184,7 @@ class PageManage extends ManagePluginBase
             'password'         => ['nullable', 'max:255'],
             'background_color' => ['nullable', 'max:255'],
             'header_color'     => ['nullable', 'max:255'],
-            'ip_address'       => ['nullable', new CustomValiTextMax()],
+            'ip_address'       => ['nullable', new CustomValiTextMax(), CustomValiIpAddressRange::multiple()],
             'othersite_url'    => ['nullable', new CustomValiUrlMax()],
             'class'            => ['nullable', 'max:255'],
             'layout_inherit_flag' => ['nullable', Rule::in(['0', '1'])],

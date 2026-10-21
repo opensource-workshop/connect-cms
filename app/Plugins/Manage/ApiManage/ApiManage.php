@@ -12,6 +12,7 @@ use DB;
 use App\Models\Core\ApiSecret;
 
 use App\Plugins\Manage\ManagePluginBase;
+use App\Rules\CustomValiIpAddressRange;
 
 /**
  * API管理クラス
@@ -103,11 +104,14 @@ class ApiManage extends ManagePluginBase
         $validator = Validator::make($request->all(), [
             'secret_name' => ['required_with:secret_code,apis,ip_address'],
             'secret_code' => ['required_with:secret_name,apis,ip_address'],
+            'ip_address'  => ['nullable', CustomValiIpAddressRange::single()],
+            'api_secrets.*.ip_address' => ['nullable', CustomValiIpAddressRange::single()],
         ]);
         $validator->setAttributeNames([
             'secret_name' => '利用名',
             'secret_code' => '秘密コード',
             'ip_address'  => 'IPアドレス',
+            'api_secrets.*.ip_address' => 'IPアドレス',
             'apis'        => '使用API',
         ]);
 

@@ -38,7 +38,7 @@
         <thead>
             <th nowrap>利用名</th>
             <th nowrap>秘密コード</th>
-            <th nowrap>制限IPアドレス</th>
+            <th nowrap>制限IPアドレス<br><small class="font-weight-normal text-muted">IPv4/IPv6、CIDR形式可</small></th>
             <th nowrap>使用API</th>
             <th nowrap><i class="fas fa-trash-alt"></i></th>
         </thead>
@@ -58,7 +58,8 @@
                 </td>
                 <td class="table-text col-1 p-1 w-auto">
                     <div class="form-group mb-0">
-                        <input type="text" name="api_secrets[{{$loop->iteration}}][ip_address]" value="{{$api_secret->ip_address}}" class="form-control">
+                        <input type="text" name="api_secrets[{{$loop->iteration}}][ip_address]" value="{{old('api_secrets.'.$loop->iteration.'.ip_address', $api_secret->ip_address)}}" class="form-control">
+                        @include('plugins.common.errors_inline', ['name' => 'api_secrets.'.$loop->iteration.'.ip_address'])
                     </div>
                 </td>
                 <td class="table-text p-1 w-auto">

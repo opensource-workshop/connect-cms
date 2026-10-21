@@ -14,6 +14,7 @@ use App\Models\Common\Holiday;
 use App\Models\Common\Page;
 use App\Models\Common\YasumiHoliday;
 use App\Models\Core\Plugins;
+use App\Utilities\Network\IpAddressUtils;
 
 trait ConnectCommonTrait
 {
@@ -120,26 +121,11 @@ trait ConnectCommonTrait
     }
 
     /**
-     * IPアドレスが範囲内か
+     * IPアドレスが範囲内か（IPv4/IPv6対応）
      */
     private function isRangeIp($remote_ip, $check_ips)
     {
-        // * は範囲内
-        if ($check_ips == "*") {
-            return true;
-        }
-
-        // IP アドレス直接チェック
-        if (strpos($check_ips, '/') === false) {
-            return ($remote_ip === $check_ips);
-        }
-
-        // CIDR 形式
-        list($check_ip, $mask) = explode('/', $check_ips);
-        $check_ip_long  = ip2long($check_ip)  >> (32 - $mask);
-        $remote_ip_long = ip2long($remote_ip) >> (32 - $mask);
-
-        return ($check_ip_long == $remote_ip_long);
+        return IpAddressUtils::isRange($remote_ip, $check_ips);
     }
 
     /**
