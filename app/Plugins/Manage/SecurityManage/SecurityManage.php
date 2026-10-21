@@ -79,7 +79,7 @@ class SecurityManage extends ManagePluginBase
             // 項目のエラーチェック
             $validator = Validator::make($request->all(), [
                 'add_apply_sequence'   => ['required'],
-                'add_ip_address'       => ['required', new CustomValiIpAddressRange()],
+                'add_ip_address'       => ['required', CustomValiIpAddressRange::single()],
                 'add_reject'           => ['required'],
             ]);
             $validator->setAttributeNames([
@@ -99,7 +99,7 @@ class SecurityManage extends ManagePluginBase
                 // 項目のエラーチェック
                 $validator = Validator::make($request->all(), [
                     'apply_sequence.'.$login_permit_id   => ['required'],
-                    'ip_address.'.$login_permit_id       => ['required', new CustomValiIpAddressRange()],
+                    'ip_address.'.$login_permit_id       => ['required', CustomValiIpAddressRange::single()],
                     'reject.'.$login_permit_id           => ['required'],
                 ]);
                 $validator->setAttributeNames([

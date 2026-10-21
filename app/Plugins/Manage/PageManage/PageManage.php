@@ -184,7 +184,7 @@ class PageManage extends ManagePluginBase
             'password'         => ['nullable', 'max:255'],
             'background_color' => ['nullable', 'max:255'],
             'header_color'     => ['nullable', 'max:255'],
-            'ip_address'       => ['nullable', new CustomValiTextMax(), new CustomValiIpAddressRange(true)],
+            'ip_address'       => ['nullable', new CustomValiTextMax(), CustomValiIpAddressRange::multiple()],
             'othersite_url'    => ['nullable', new CustomValiUrlMax()],
             'class'            => ['nullable', 'max:255'],
             'layout_inherit_flag' => ['nullable', Rule::in(['0', '1'])],

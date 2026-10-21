@@ -82,18 +82,28 @@ class IpAddressUtilsTest extends TestCase
     }
 
     /**
-     * バリデーションルール: カンマ区切りはスペースを許容し、1件でも不正ならエラー、空は他ルールに任せる
+     * バリデーションルール(1件指定): "*"は許可、複数指定は不可、空は他ルールに任せる
      */
-    public function testValidationRule(): void
+    public function testValidationRuleSingle(): void
     {
-        $single = new CustomValiIpAddressRange();
-        $this->assertTrue($single->passes('ip', '1111::/64'));
-        $this->assertTrue($single->passes('ip', ''));
-        $this->assertFalse($single->passes('ip', '192.168.1.1, 10.0.0.1'));
+        $rule = CustomValiIpAddressRange::single();
+        $this->assertTrue($rule->passes('ip', '1111::/64'));
+        $this->assertTrue($rule->passes('ip', '*'));
+        $this->assertTrue($rule->passes('ip', ''));
+        $this->assertFalse($rule->passes('ip', '192.168.1.1, 10.0.0.1'));
+    }
 
-        $multi = new CustomValiIpAddressRange(true);
-        $this->assertTrue($multi->passes('ip', '192.168.1.1, 10.0.0.0/8,2001:db8::/32'));
-        $this->assertTrue($multi->passes('ip', null));
-        $this->assertFalse($multi->passes('ip', '192.168.1.1,abc'));
+    /**
+     * バリデーションルール(複数指定): カンマ区切りはスペースを許容し、1件でも不正なら
+     * エラー、"*"は単独でも他の指定と併記してもエラー(ページのIPアドレス制限の仕様)
+     */
+    public function testValidationRuleMultiple(): void
+    {
+        $rule = CustomValiIpAddressRange::multiple();
+        $this->assertTrue($rule->passes('ip', '192.168.1.1, 10.0.0.0/8,2001:db8::/32'));
+        $this->assertTrue($rule->passes('ip', null));
+        $this->assertFalse($rule->passes('ip', '192.168.1.1,abc'));
+        $this->assertFalse($rule->passes('ip', '*'));
+        $this->assertFalse($rule->passes('ip', '192.168.1.1, *'));
     }
 }
