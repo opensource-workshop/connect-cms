@@ -38,7 +38,7 @@
         <thead>
             <th nowrap>利用名</th>
             <th nowrap>秘密コード</th>
-            <th nowrap>制限IPアドレス</th>
+            <th nowrap>制限IPアドレス<br><small class="font-weight-normal text-muted">IPv4/IPv6、CIDR形式可</small></th>
             <th nowrap>使用API</th>
             <th nowrap><i class="fas fa-trash-alt"></i></th>
         </thead>
