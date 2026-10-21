@@ -58,7 +58,8 @@
                 </td>
                 <td class="table-text col-1 p-1 w-auto">
                     <div class="form-group mb-0">
-                        <input type="text" name="api_secrets[{{$loop->iteration}}][ip_address]" value="{{$api_secret->ip_address}}" class="form-control">
+                        <input type="text" name="api_secrets[{{$loop->iteration}}][ip_address]" value="{{old('api_secrets.'.$loop->iteration.'.ip_address', $api_secret->ip_address)}}" class="form-control">
+                        @include('plugins.common.errors_inline', ['name' => 'api_secrets.'.$loop->iteration.'.ip_address'])
                     </div>
                 </td>
                 <td class="table-text p-1 w-auto">
