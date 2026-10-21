@@ -51,7 +51,14 @@ class CustomValiIpAddressRange implements Rule
     public function passes($attribute, $value)
     {
         // 空は必須チェック等、他のルールに任せる
-        if ($value === null || trim($value) === '') {
+        if ($value === null || $value === '') {
+            return true;
+        }
+        // 配列など文字列以外は不正
+        if (!is_string($value)) {
+            return false;
+        }
+        if (trim($value) === '') {
             return true;
         }
 

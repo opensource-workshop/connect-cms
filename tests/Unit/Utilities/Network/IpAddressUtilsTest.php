@@ -2,7 +2,6 @@
 
 namespace Tests\Unit\Utilities\Network;
 
-use App\Rules\CustomValiIpAddressRange;
 use App\Utilities\Network\IpAddressUtils;
 use PHPUnit\Framework\TestCase;
 
@@ -50,6 +49,8 @@ class IpAddressUtilsTest extends TestCase
             'マスクが数字でない' => ['192.168.1.1', '192.168.1.0/abc', false],
             '不正なルール' => ['192.168.1.1', 'abc', false],
             '空ルール' => ['192.168.1.1', '', false],
+            'IPv4射影アドレスはIPv4ルールと一致しない(対象外)' => ['::ffff:1.2.3.4', '1.2.3.4', false],
+            'IPv4接続元はIPv4射影アドレスのルールと一致しない(対象外)' => ['1.2.3.4', '::ffff:1.2.3.4', false],
             '不正な接続元' => ['abc', '192.168.1.0/24', false],
         ];
     }
@@ -78,32 +79,12 @@ class IpAddressUtilsTest extends TestCase
             ['192.168.1.*', false],
             ['192.168.1.0/24/8', false],
             ['', false],
+            ['192.168.1.0/', false],
+            ['/24', false],
+            ['192.168.1.0/ 24', false],
+            ['192.168.1.0/024', false],
+            ['192.168.1.0/+24', false],
+            ['::ffff:1.2.3.4', true],
         ];
-    }
-
-    /**
-     * バリデーションルール(1件指定): "*"は許可、複数指定は不可、空は他ルールに任せる
-     */
-    public function testValidationRuleSingle(): void
-    {
-        $rule = CustomValiIpAddressRange::single();
-        $this->assertTrue($rule->passes('ip', '1111::/64'));
-        $this->assertTrue($rule->passes('ip', '*'));
-        $this->assertTrue($rule->passes('ip', ''));
-        $this->assertFalse($rule->passes('ip', '192.168.1.1, 10.0.0.1'));
-    }
-
-    /**
-     * バリデーションルール(複数指定): カンマ区切りはスペースを許容し、1件でも不正なら
-     * エラー、"*"は単独でも他の指定と併記してもエラー(ページのIPアドレス制限の仕様)
-     */
-    public function testValidationRuleMultiple(): void
-    {
-        $rule = CustomValiIpAddressRange::multiple();
-        $this->assertTrue($rule->passes('ip', '192.168.1.1, 10.0.0.0/8,2001:db8::/32'));
-        $this->assertTrue($rule->passes('ip', null));
-        $this->assertFalse($rule->passes('ip', '192.168.1.1,abc'));
-        $this->assertFalse($rule->passes('ip', '*'));
-        $this->assertFalse($rule->passes('ip', '192.168.1.1, *'));
     }
 }

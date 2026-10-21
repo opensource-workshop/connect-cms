@@ -71,7 +71,7 @@ class IpAddressUtils
             return null;
         }
 
-        $bin = @inet_pton(trim($parts[0]));
+        $bin = @inet_pton($parts[0]);
         if ($bin === false) {
             return null;
         }
@@ -82,8 +82,9 @@ class IpAddressUtils
             return [$bin, $max_prefix];
         }
 
-        $mask = trim($parts[1]);
-        if (!ctype_digit($mask) || (int)$mask > $max_prefix) {
+        // マスクは空白・先頭0なしの10進数のみ
+        $mask = $parts[1];
+        if (!preg_match('/\A(0|[1-9][0-9]*)\z/', $mask) || (int)$mask > $max_prefix) {
             return null;
         }
         return [$bin, (int)$mask];
