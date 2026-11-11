@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "id": "school-basic",
+  "name": "学校サイト・基本",
+  "description": "学校紹介、お知らせ、学校ブログ、行事予定を備えた学校サイトの基本構成です。",
+  "required_plugins": [
+    "contents",
+    "menus",
+    "blogs",
+    "calendars"
+  ],
+  "pages": [
+    {
+      "key": "home",
+      "name": "ホーム",
+      "url": "/",
+      "parent": null,
+      "layout": "1|1|0|1"
+    },
+    {
+      "key": "about",
+      "name": "学校紹介",
+      "url": "/about",
+      "parent": null,
+      "layout": null
+    },
+    {
+      "key": "greeting",
+      "name": "校長挨拶",
+      "url": "/about/greeting",
+      "parent": "about",
+      "layout": null
+    },
+    {
+      "key": "policy",
+      "name": "教育目標",
+      "url": "/about/policy",
+      "parent": "about",
+      "layout": null
+    },
+    {
+      "key": "access",
+      "name": "アクセス",
+      "url": "/about/access",
+      "parent": "about",
+      "layout": null
+    },
+    {
+      "key": "news",
+      "name": "お知らせ",
+      "url": "/news",
+      "parent": null,
+      "layout": null
+    },
+    {
+      "key": "blog",
+      "name": "学校ブログ",
+      "url": "/blog",
+      "parent": null,
+      "layout": null
+    },
+    {
+      "key": "calendar",
+      "name": "行事予定",
+      "url": "/calendar",
+      "parent": null,
+      "layout": null
+    },
+    {
+      "key": "letters",
+      "name": "学校だより",
+      "url": "/letters",
+      "parent": null,
+      "layout": null
+    },
+    {
+      "key": "disaster",
+      "name": "緊急時の対応",
+      "url": "/disaster",
+      "parent": null,
+      "layout": null
+    }
+  ],
+  "buckets": [
+    {
+      "key": "header",
+      "name": "学校名",
+      "plugin": "contents"
+    },
+    {
+      "key": "footer",
+      "name": "フッター",
+      "plugin": "contents"
+    },
+    {
+      "key": "welcome",
+      "name": "学校案内",
+      "plugin": "contents"
+    },
+    {
+      "key": "about",
+      "name": "学校紹介",
+      "plugin": "contents"
+    },
+    {
+      "key": "greeting",
+      "name": "校長挨拶",
+      "plugin": "contents"
+    },
+    {
+      "key": "policy",
+      "name": "教育目標",
+      "plugin": "contents"
+    },
+    {
+      "key": "access",
+      "name": "アクセス",
+      "plugin": "contents"
+    },
+    {
+      "key": "letters",
+      "name": "学校だより",
+      "plugin": "contents"
+    },
+    {
+      "key": "disaster",
+      "name": "緊急時の対応",
+      "plugin": "contents"
+    },
+    {
+      "key": "news",
+      "name": "お知らせ",
+      "plugin": "blogs"
+    },
+    {
+      "key": "blog",
+      "name": "学校ブログ",
+      "plugin": "blogs"
+    },
+    {
+      "key": "calendar",
+      "name": "行事予定",
+      "plugin": "calendars"
+    }
+  ],
+  "frames": [
+    {
+      "key": "header",
+      "page": "home",
+      "area": 0,
+      "bucket": "header",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "footer",
+      "page": "home",
+      "area": 4,
+      "bucket": "footer",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 2
+    },
+    {
+      "key": "welcome",
+      "page": "home",
+      "area": 2,
+      "bucket": "welcome",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 3
+    },
+    {
+      "key": "navigation",
+      "page": "home",
+      "area": 0,
+      "bucket": null,
+      "plugin": "menus",
+      "template": "tab",
+      "sequence": 4
+    },
+    {
+      "key": "tree",
+      "page": "home",
+      "area": 1,
+      "bucket": null,
+      "plugin": "menus",
+      "template": "default",
+      "sequence": 5
+    },
+    {
+      "key": "about",
+      "page": "about",
+      "area": 2,
+      "bucket": "about",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "greeting",
+      "page": "greeting",
+      "area": 2,
+      "bucket": "greeting",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "policy",
+      "page": "policy",
+      "area": 2,
+      "bucket": "policy",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "access",
+      "page": "access",
+      "area": 2,
+      "bucket": "access",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "letters",
+      "page": "letters",
+      "area": 2,
+      "bucket": "letters",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "disaster",
+      "page": "disaster",
+      "area": 2,
+      "bucket": "disaster",
+      "plugin": "contents",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "home_news",
+      "page": "home",
+      "area": 2,
+      "bucket": "news",
+      "plugin": "blogs",
+      "template": "default",
+      "sequence": 6
+    },
+    {
+      "key": "news",
+      "page": "news",
+      "area": 2,
+      "bucket": "news",
+      "plugin": "blogs",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "home_blog",
+      "page": "home",
+      "area": 2,
+      "bucket": "blog",
+      "plugin": "blogs",
+      "template": "default",
+      "sequence": 7
+    },
+    {
+      "key": "blog",
+      "page": "blog",
+      "area": 2,
+      "bucket": "blog",
+      "plugin": "blogs",
+      "template": "default",
+      "sequence": 1
+    },
+    {
+      "key": "home_calendar",
+      "page": "home",
+      "area": 2,
+      "bucket": "calendar",
+      "plugin": "calendars",
+      "template": "default",
+      "sequence": 8
+    },
+    {
+      "key": "calendar",
+      "page": "calendar",
+      "area": 2,
+      "bucket": "calendar",
+      "plugin": "calendars",
+      "template": "default",
+      "sequence": 1
+    }
+  ],
+  "contents": [
+    {
+      "bucket": "header",
+      "html": "<p>学校名や校章、学校の紹介文などを入力してください。この内容は全ページ共通のヘッダーに表示されます。</p>"
+    },
+    {
+      "bucket": "footer",
+      "html": "<p>学校の所在地や連絡先、著作権表示などを入力してください。この内容は全ページ共通のフッターに表示されます。</p>"
+    },
+    {
+      "bucket": "welcome",
+      "html": "<h2>{{site_name}}へようこそ</h2><p>学校の活動やお知らせをご案内します。</p>"
+    },
+    {
+      "bucket": "about",
+      "html": "<h2>学校紹介</h2><p>学校の概要を編集して掲載してください。</p>"
+    },
+    {
+      "bucket": "greeting",
+      "html": "<h2>校長挨拶</h2><p>挨拶文を編集して掲載してください。</p>"
+    },
+    {
+      "bucket": "policy",
+      "html": "<h2>教育目標</h2><p>学校の教育目標を編集して掲載してください。</p>"
+    },
+    {
+      "bucket": "access",
+      "html": "<h2>アクセス</h2><p>学校への交通案内を編集して掲載してください。</p>"
+    },
+    {
+      "bucket": "letters",
+      "html": "<h2>学校だより</h2><p>編集画面で資料を添付し、学校だよりを掲載してください。</p>"
+    },
+    {
+      "bucket": "disaster",
+      "html": "<h2>緊急時の対応</h2><p>学校で定めた対応と連絡方法を確認し、編集して掲載してください。</p>"
+    }
+  ],
+  "menus": [
+    {
+      "frame": "navigation",
+      "pages": [
+        "home",
+        "about",
+        "greeting",
+        "policy",
+        "access",
+        "news",
+        "blog",
+        "calendar",
+        "letters",
+        "disaster"
+      ]
+    },
+    {
+      "frame": "tree",
+      "pages": [
+        "home",
+        "about",
+        "greeting",
+        "policy",
+        "access",
+        "news",
+        "blog",
+        "calendar",
+        "letters",
+        "disaster"
+      ]
+    }
+  ]
+}
