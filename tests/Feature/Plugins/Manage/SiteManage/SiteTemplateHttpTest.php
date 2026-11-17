@@ -253,53 +253,127 @@ class SiteTemplateHttpTest extends TestCase
             ->assertDontSee('data-template-warning="simple-school"', false);
     }
 
-    /** @dataProvider invalidConfirmations
-     * 確認なし、期限切れ、トークン・実行者・入力・状態の改変を拒否する。
-     */
-    public function testInvalidConfirmation(string $case): void
+    /** 確認済みのセッションがない適用要求を拒否する。 */
+    public function testMissingConfirmationIsRejected(): void
     {
         $confirmation = $this->prepareConfirmation();
         $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
-        switch ($case) {
-            case 'missing':
-                $this->app['session']->forget('site_template_confirmation');
-                break;
-            case 'expired':
-                $confirmation['expires_at'] = time() - 1;
-                $this->withSession(['site_template_confirmation' => $confirmation]);
-                break;
-            case 'token':
-                $payload['confirmation_token'] = 'wrong';
-                break;
-            case 'unchecked':
-                unset($payload['confirmed']);
-                break;
-            case 'actor':
-                $confirmation['plan']['actor_id'] = 987;
-                $this->withSession(['site_template_confirmation' => $confirmation]);
-                break;
-            case 'input':
-                $payload['site_name'] = '変更後';
-                break;
-            case 'definition':
-                $confirmation['plan']['template_checksum'] = str_repeat('0', 64);
-                $this->withSession(['site_template_confirmation' => $confirmation]);
-                break;
-            case 'state':
-                Configs::where('name', 'base_site_name')->update(['value' => '変更後']);
-                break;
-        }
-        $this->post('/manage/site/applySiteTemplate', $payload)->assertRedirect('/manage/site/siteTemplates')->assertSessionHasErrors();
+        $this->app['session']->forget('site_template_confirmation');
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
         $this->assertDatabaseCount('pages', 1);
         $this->assertDatabaseCount('site_template_applications', 0);
     }
 
-    /** 確認の拒否条件。 */
-    public function invalidConfirmations(): array
+    /** 有効期限を過ぎた確認では適用できない。 */
+    public function testExpiredConfirmationIsRejected(): void
     {
-        return array_map(function ($v) {
-            return [$v];
-        }, ['missing', 'expired', 'token', 'unchecked', 'actor', 'input', 'definition', 'state']);
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        $confirmation['expires_at'] = time() - 1;
+        $this->withSession(['site_template_confirmation' => $confirmation]);
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
+    }
+
+    /** 確認時と異なるトークンでは適用できない。 */
+    public function testIncorrectConfirmationTokenIsRejected(): void
+    {
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        $payload['confirmation_token'] = 'wrong';
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
+    }
+
+    /** 内容確認のチェックがない適用要求を拒否する。 */
+    public function testUncheckedConfirmationIsRejected(): void
+    {
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        unset($payload['confirmed']);
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
+    }
+
+    /** 確認した管理者と異なる実行者による適用を拒否する。 */
+    public function testDifferentConfirmationActorIsRejected(): void
+    {
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        $confirmation['plan']['actor_id'] = 987;
+        $this->withSession(['site_template_confirmation' => $confirmation]);
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
+    }
+
+    /** 確認後に送信されたサイト名が変わっていれば適用を拒否する。 */
+    public function testChangedSiteNameIsRejected(): void
+    {
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        $payload['site_name'] = '変更後';
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
+    }
+
+    /** 確認時とひな型定義のチェックサムが一致しなければ適用を拒否する。 */
+    public function testChangedDefinitionIsRejected(): void
+    {
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        $confirmation['plan']['template_checksum'] = str_repeat('0', 64);
+        $this->withSession(['site_template_confirmation' => $confirmation]);
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
+    }
+
+    /** 確認後にサイト設定が変更されていれば適用を拒否する。 */
+    public function testChangedSiteStateIsRejected(): void
+    {
+        $confirmation = $this->prepareConfirmation();
+        $payload = ['confirmation_token' => $confirmation['token'], 'confirmed' => '1'];
+        Configs::where('name', 'base_site_name')->update(['value' => '変更後']);
+
+        $this->post('/manage/site/applySiteTemplate', $payload)
+            ->assertRedirect('/manage/site/siteTemplates')
+            ->assertSessionHasErrors();
+
+        $this->assertDatabaseCount('pages', 1);
+        $this->assertDatabaseCount('site_template_applications', 0);
     }
 
     /** @dataProvider unauthorizedRequests
@@ -330,7 +404,7 @@ class SiteTemplateHttpTest extends TestCase
                 ['POST', '/manage/site/applySiteTemplate'],
                 ['GET', '/manage/site/siteTemplateResult/1'],
             ] as $request) {
-                $requests[] = [$role, $request[0], $request[1]];
+                $requests[$role . ' ' . $request[0] . ' ' . $request[1]] = [$role, $request[0], $request[1]];
             }
         }
         return $requests;
@@ -404,14 +478,15 @@ class SiteTemplateHttpTest extends TestCase
         $this->get('/about')->assertOk()->assertSee($this->input['site_name']);
     }
 
-    /** 生成データを既存の編集画面から更新し、共有ブログ・予定も両方のページに表示する。 */
-    public function testNormalEditing(): void
+    /** 生成した固定記事を通常の編集画面で更新し、公開ページに反映できる。 */
+    public function testGeneratedContentCanBeEdited(): void
     {
         config(['app.debug' => true]);
         $this->prepareEditingActor();
         $result = $this->applyTemplate()->result;
         $home = $result['pages']['home'];
         $frames = Frame::get();
+
         $contentFrame = $frames->firstWhere('plugin_name', 'contents');
         $content = \App\Models\User\Contents\Contents::where('bucket_id', $contentFrame->bucket_id)->first();
         $this->get('/plugin/contents/edit/' . $home . '/' . $contentFrame->id . '/' . $content->id)->assertOk();
@@ -419,6 +494,16 @@ class SiteTemplateHttpTest extends TestCase
             'contents' => '<p>編集した学校名</p>', 'bucket_name' => '学校名',
         ])->assertRedirect();
         $this->get('/')->assertOk()->assertSee('編集した学校名');
+    }
+
+    /** 生成したメニューの表示ページを通常の選択画面から変更できる。 */
+    public function testGeneratedMenuCanBeEdited(): void
+    {
+        config(['app.debug' => true]);
+        $this->prepareEditingActor();
+        $result = $this->applyTemplate()->result;
+        $home = $result['pages']['home'];
+        $frames = Frame::get();
 
         $menuFrame = $frames->firstWhere('plugin_name', 'menus');
         $this->get('/plugin/menus/select/' . $home . '/' . $menuFrame->id)->assertOk();
@@ -427,6 +512,15 @@ class SiteTemplateHttpTest extends TestCase
             'folder_close_font' => 0, 'folder_open_font' => 0, 'indent_font' => 0,
         ])->assertOk();
         $this->assertDatabaseHas('menus', ['frame_id' => $menuFrame->id, 'page_ids' => $home . ',' . $result['pages']['about']]);
+    }
+
+    /** 生成したブログに投稿するとホームと学校ブログの両方に表示される。 */
+    public function testPostedBlogAppearsOnHomeAndBlogPages(): void
+    {
+        config(['app.debug' => true]);
+        $this->prepareEditingActor();
+        $result = $this->applyTemplate()->result;
+        $frames = Frame::get();
 
         $blogFrame = $frames->where('page_id', $result['pages']['blog'])->firstWhere('plugin_name', 'blogs');
         $blog = \App\Models\User\Blogs\Blogs::where('bucket_id', $blogFrame->bucket_id)->first();
@@ -436,6 +530,15 @@ class SiteTemplateHttpTest extends TestCase
         ])->assertRedirect();
         $this->get('/blog')->assertOk()->assertSee('編集確認ブログ');
         $this->get('/')->assertOk()->assertSee('編集確認ブログ');
+    }
+
+    /** 生成したカレンダーに登録した予定はホームと行事予定の両方に表示される。 */
+    public function testPostedCalendarEventAppearsOnBothPages(): void
+    {
+        config(['app.debug' => true]);
+        $this->prepareEditingActor();
+        $result = $this->applyTemplate()->result;
+        $frames = Frame::get();
 
         $calendarFrame = $frames->where('page_id', $result['pages']['calendar'])->firstWhere('plugin_name', 'calendars');
         $this->get('/plugin/calendars/edit/' . $calendarFrame->page_id . '/' . $calendarFrame->id)->assertOk();
