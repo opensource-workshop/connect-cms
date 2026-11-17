@@ -29,9 +29,13 @@
             </div>
         @endif
 
+        @if (!$templates)
+            <div class="alert alert-info" role="status">利用できるサイトひな型がありません。</div>
+        @endif
+
         <form id="site-template-form" method="POST" action="{{ url('/manage/site/confirmSiteTemplate') }}">
             @csrf
-            <h6 class="mt-4">サイトひな型一覧 @if (!$state['site_reasons']) <span class="badge badge-danger">必須</span> @endif</h6>
+            <h6 class="mt-4">サイトひな型一覧 @if ($templates && !$state['site_reasons']) <span class="badge badge-danger">必須</span> @endif</h6>
             <p id="site-template-help" class="form-text text-muted">サイトひな型を選択すると、作成するページなどの詳細が開きます。</p>
             @include('plugins.common.errors_inline', ['name' => 'template_id', 'class' => 'mb-3'])
             <div class="table-responsive">
@@ -47,7 +51,7 @@
                                         <input type="radio" id="site-template-{{ $loop->index }}" class="custom-control-input" name="template_id" value="{{ $template['id'] }}" data-template-available="{{ empty($template_states[$template['id']]['template_reasons']) ? '1' : '0' }}" required aria-controls="site-template-detail-{{ $loop->index }}" aria-describedby="site-template-description-{{ $loop->index }}" @if (old('template_id') === $template['id']) checked @endif>
                                         <label id="site-template-label-{{ $loop->index }}" class="custom-control-label" for="site-template-{{ $loop->index }}">{{ $template['name'] }}</label>
                                         @if ($template_states[$template['id']]['template_reasons'])
-                                            <span class="text-warning ml-1" role="img" aria-label="利用できないプラグインがあります。詳細を確認してください。">
+                                            <span class="text-warning ml-1" role="img" aria-label="このサイトひな型は利用できません。詳細を確認してください。">
                                                 <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                                             </span>
                                         @endif
@@ -99,7 +103,7 @@
                 </table>
             </div>
 
-            @if (!$state['site_reasons'])
+            @if ($templates && !$state['site_reasons'])
                 <div class="form-group">
                     <label for="site_name" class="col-form-label">サイト名 <span class="badge badge-danger">必須</span></label>
                     <input type="text" id="site_name" class="form-control @if ($errors->has('site_name')) border-danger @endif" name="site_name" placeholder="学校名など" required maxlength="100" aria-describedby="site_name_help" value="{{ old('site_name') }}">

@@ -9,6 +9,8 @@ use App\Models\Core\Configs;
 use App\Models\Core\SiteTemplateApplication;
 use App\Models\Core\UsersRoles;
 use App\Services\SiteTemplates\SiteTemplateService;
+use App\Services\SiteTemplates\SiteTemplateDefinition;
+use Illuminate\Support\Facades\File;
 use App\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -148,6 +150,45 @@ class SiteTemplateHttpTest extends TestCase
         $this->assertMatchesRegularExpression('/id="site-template-detail-0" class="collapse\s*"/', $response->getContent());
         $this->assertSame(1, substr_count($response->getContent(), 'name="site_name"'));
         $this->assertMatchesRegularExpression('/name="site_name"[^>]*value=""/', $response->getContent());
+    }
+
+    /** JSONの追加だけで一覧に新しい候補が現れ、不正な候補は利用不可になる。 */
+    public function testDiscoveredTemplatesAreShown(): void
+    {
+        $this->useAdditionalTemplateDirectory();
+        $this->get('/manage/site/siteTemplates')->assertOk()
+            ->assertSee('value="another-school" data-template-available="1"', false)
+            ->assertSee('value="broken" data-template-available="0"', false)
+            ->assertSee('サイトひな型のJSONが不正です。');
+    }
+
+    /** 追加JSONを確認POSTで選択でき、そのレイアウトを確認画面に表示する。 */
+    public function testDiscoveredTemplateCanBeConfirmed(): void
+    {
+        $this->useAdditionalTemplateDirectory();
+        $this->post('/manage/site/confirmSiteTemplate', [
+            'template_id' => 'another-school', 'site_name' => '追加学校',
+        ])->assertOk()->assertSee('レイアウトを中央に変更します。');
+        $this->assertSame('another-school', session('site_template_confirmation.plan.input.template_id'));
+    }
+
+    /** JSONが一件もない場合も一覧画面を開け、適用操作は表示しない。 */
+    public function testEmptyTemplateDirectory(): void
+    {
+        $this->app->instance(SiteTemplateDefinition::class, new SiteTemplateDefinition(__DIR__ . '/missing'));
+        $this->get('/manage/site/siteTemplates')->assertOk()
+            ->assertSee('利用できるサイトひな型がありません。')
+            ->assertDontSee('type="submit"', false);
+    }
+
+    /** 元のJSONがなくても保存済みの適用結果を表示できる。 */
+    public function testResultWithoutOriginalTemplate(): void
+    {
+        $application = $this->applyTemplate();
+        $this->app->instance(SiteTemplateDefinition::class, new SiteTemplateDefinition(__DIR__ . '/missing'));
+        $this->app->forgetInstance(SiteTemplateService::class);
+        $this->get('/manage/site/siteTemplateResult/' . $application->id)->assertOk()
+            ->assertViewHas('template_name', 'school-basic');
     }
 
     /** サイトひな型を選択していない確認POSTを拒否する。 */
@@ -568,6 +609,23 @@ class SiteTemplateHttpTest extends TestCase
             'page_name' => '学校紹介を編集', 'permanent_link' => '/about', 'base_display_flag' => 1,
         ])->assertRedirect();
         $this->assertDatabaseHas('pages', ['id' => $page_id, 'page_name' => '学校紹介を編集']);
+    }
+
+    /** 実際のJSON検出経路を通すため、専用の一時ディレクトリに候補を追加する。 */
+    private function useAdditionalTemplateDirectory(): void
+    {
+        $directory = sys_get_temp_dir() . '/site-template-http-' . bin2hex(random_bytes(8));
+        File::makeDirectory($directory . '/another-school', 0755, true);
+        File::makeDirectory($directory . '/broken');
+        $this->beforeApplicationDestroyed(function () use ($directory) {
+            File::deleteDirectory($directory);
+        });
+        $definition = json_decode(file_get_contents(resource_path('site_templates/school-basic/template.json')), true);
+        $definition['id'] = 'another-school';
+        $definition['pages'][0]['layout'] = '0|0|0|0';
+        file_put_contents($directory . '/another-school/template.json', json_encode($definition));
+        file_put_contents($directory . '/broken/template.json', '{invalid');
+        $this->app->instance(SiteTemplateDefinition::class, new SiteTemplateDefinition($directory));
     }
 
     /** 複数のHTTP段階を一つのテストにせず、適用POSTに必要な確認済み状態だけを用意する。 */

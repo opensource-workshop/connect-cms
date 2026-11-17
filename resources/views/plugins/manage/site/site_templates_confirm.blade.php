@@ -3,6 +3,13 @@
 
 @section('manage_content')
 @php
+    $layout_flags = explode('|', $plan['definition']['pages'][0]['layout']);
+    $layout_labels = ['中央'];
+    foreach ([0 => 'ヘッダー', 1 => '左', 2 => '右', 3 => 'フッター'] as $index => $label) {
+        if ($layout_flags[$index] === '1') {
+            $layout_labels[] = $label;
+        }
+    }
     $template_buckets = collect($plan['definition']['buckets'])->keyBy('key');
     $template_frames_by_page = collect($plan['definition']['frames'])->groupBy('page');
 @endphp
@@ -16,7 +23,7 @@
 
         <div class="alert alert-warning" role="alert">
             <p class="mb-2"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> 作成後、ページと入力したサイト名が公開されます。</p>
-            <p class="mb-2">初期トップページを再利用し、レイアウトをヘッダー・左・中央・フッターに変更します。</p>
+            <p class="mb-2">初期トップページを再利用し、レイアウトを{{ implode('・', $layout_labels) }}に変更します。</p>
             <p class="mb-0">実行中は他の管理者による編集、移行処理、書込バッチを停止してください。成功後の一括取り消しはありません。</p>
         </div>
 

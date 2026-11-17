@@ -40,7 +40,7 @@ class SiteTemplateService
 
     public function templates(): array
     {
-        return [$this->definitions->load('school-basic')];
+        return $this->definitions->all();
     }
 
     public function authorize(User $actor): void
@@ -120,7 +120,7 @@ class SiteTemplateService
     {
         $pages = ['home' => $state['home']];
         $pages['home']->fill([
-            'page_name' => $definition['pages'][0]['name'], 'layout' => '1|1|0|1', 'layout_inherit_flag' => 1,
+            'page_name' => $definition['pages'][0]['name'], 'layout' => $definition['pages'][0]['layout'], 'layout_inherit_flag' => 1,
         ])->save();
         $pending = array_filter($definition['pages'], function ($page) {
             return $page['key'] !== 'home';
@@ -176,7 +176,7 @@ class SiteTemplateService
                 $this->saveAs(new CalendarFrame(['frame_id' => $frame->id, 'calendar_id' => $calendars[$item['bucket']]->id]), $actor);
             } elseif ($item['plugin'] === 'blogs') {
                 $this->saveAs(new FrameConfig([
-                    'frame_id' => $frame->id, 'name' => 'blog_view_count', 'value' => $item['page'] === 'home' ? '5' : '15',
+                    'frame_id' => $frame->id, 'name' => 'blog_view_count', 'value' => (string) ($item['view_count'] ?? ($item['page'] === 'home' ? 5 : 15)),
                 ]), $actor);
             }
         }

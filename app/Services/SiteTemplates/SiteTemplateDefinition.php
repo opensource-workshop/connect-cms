@@ -4,6 +4,7 @@ namespace App\Services\SiteTemplates;
 
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
+use JsonException;
 
 /**
  * リポジトリに同梱した定義・本文を読み込み、保存前に参照関係を検証する。
@@ -12,19 +13,63 @@ class SiteTemplateDefinition
 {
     public const PLUGIN_LABELS = ['contents' => '固定記事', 'menus' => 'メニュー', 'blogs' => 'ブログ', 'calendars' => 'カレンダー'];
 
+    private $directory;
+
+    public function __construct(?string $directory = null)
+    {
+        $this->directory = $directory ?? resource_path('site_templates');
+    }
+
+    /** 同梱JSONをID順に検出し、不正な候補も管理画面に案内する。 */
+    public function all(): array
+    {
+        $templates = [];
+        foreach (glob($this->directory . '/*/template.json') ?: [] as $path) {
+            $id = basename(dirname($path));
+            try {
+                $templates[] = $this->load($id);
+            } catch (InvalidArgumentException $exception) {
+                $templates[] = [
+                    'id' => $id, 'name' => $id, 'description' => '',
+                    'required_plugins' => [], 'pages' => [], 'frames' => [],
+                    'definition_error' => $exception->getMessage(),
+                ];
+            }
+        }
+        usort($templates, function ($left, $right) {
+            return strcmp($left['id'], $right['id']);
+        });
+        return $templates;
+    }
+
     public function load(string $id): array
     {
-        if ($id !== 'school-basic') {
-            throw new InvalidArgumentException('指定されたサイトひな型はありません。');
+        if (!preg_match('/^[a-z][a-z0-9-]{0,99}$/D', $id)) {
+            throw new InvalidArgumentException('サイトひな型のIDが不正です。');
         }
-        $source = file_get_contents(resource_path('site_templates/school-basic/template.json'));
-        if (strlen($source) > 8388608) {
+        $root = realpath($this->directory);
+        $path = realpath($this->directory . '/' . $id . '/template.json');
+        if (!$root || !$path || strpos($path, $root . DIRECTORY_SEPARATOR) !== 0 || !is_file($path) || !is_readable($path)) {
+            throw new InvalidArgumentException('指定されたサイトひな型を読み込めません。');
+        }
+        if (filesize($path) > 8388608) {
             throw new InvalidArgumentException('サイトひな型の定義が上限を超えています。');
         }
-        $definition = json_decode($source, true, 512, JSON_THROW_ON_ERROR);
+        $source = file_get_contents($path);
+        if ($source === false || strlen($source) > 8388608) {
+            throw new InvalidArgumentException('サイトひな型の定義を読み込めないか、上限を超えています。');
+        }
+        try {
+            $definition = json_decode($source, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new InvalidArgumentException('サイトひな型のJSONが不正です。');
+        }
+        if (!is_array($definition)) {
+            throw new InvalidArgumentException('サイトひな型の定義が不正です。');
+        }
         $this->validate($definition);
         if ($definition['id'] !== $id) {
-            throw new InvalidArgumentException('登録されたサイトひな型と定義が一致しません。');
+            throw new InvalidArgumentException('ディレクトリ名とサイトひな型のIDが一致しません。');
         }
         $definition['checksum'] = hash('sha256', $source);
         return $definition;
@@ -40,8 +85,8 @@ class SiteTemplateDefinition
             'name' => 'required|string|max:100',
             'description' => 'required|string|max:1000', 'required_plugins' => 'required|array',
             'required_plugins.*' => 'required|string|distinct',
-            'pages' => 'required|array|min:1|max:50', 'buckets' => 'required|array|min:1|max:100',
-            'frames' => 'required|array|min:1|max:200', 'menus' => 'required|array|max:200', 'contents' => 'required|array|max:100',
+            'pages' => 'required|array|min:1|max:50', 'buckets' => 'present|array|max:100',
+            'frames' => 'required|array|min:1|max:200', 'menus' => 'present|array|max:200', 'contents' => 'present|array|max:100',
             'pages.*' => 'required|array', 'buckets.*' => 'required|array', 'frames.*' => 'required|array',
             'pages.*.name' => 'required|string|max:100', 'pages.*.url' => 'required|string|max:255',
             'pages.*.parent' => 'nullable|string', 'buckets.*.name' => 'required|string|max:100',
@@ -60,10 +105,10 @@ class SiteTemplateDefinition
             'buckets' => ['key', 'name', 'plugin'],
             'frames' => ['key', 'page', 'area', 'bucket', 'plugin', 'template', 'sequence'],
         ];
-        $maps = [];
+        $maps = ['pages' => [], 'buckets' => [], 'frames' => []];
         foreach ($schemas as $type => $keys) {
             foreach ($definition[$type] as $row) {
-                if (array_diff(array_keys($row), $keys) || array_diff($keys, array_keys($row)) ||
+                if (array_diff(array_keys($row), $type === 'frames' ? array_merge($keys, ['view_count']) : $keys) || array_diff($keys, array_keys($row)) ||
                     !is_string($row['key']) || !preg_match('/^[a-z][a-z0-9_]{0,99}$/D', $row['key']) || isset($maps[$type][$row['key']])) {
                     $fail();
                 }
@@ -81,7 +126,7 @@ class SiteTemplateDefinition
             }
             $urls[$page['url']] = true;
             if ($key === 'home') {
-                if ($page['url'] !== '/' || $page['parent'] !== null || $page['layout'] !== '1|1|0|1') {
+                if ($page['url'] !== '/' || $page['parent'] !== null || !is_string($page['layout']) || !preg_match('/^[01]\|[01]\|[01]\|[01]$/D', $page['layout'])) {
                     $fail();
                 }
             } elseif ($page['url'] === '/' || $page['layout'] !== null) {
@@ -101,7 +146,8 @@ class SiteTemplateDefinition
             $fail();
         }
         foreach ($maps['buckets'] as $bucket) {
-            if (!in_array($bucket['plugin'], ['contents', 'blogs', 'calendars'], true)) {
+            if (!in_array($bucket['plugin'], ['contents', 'blogs', 'calendars'], true) ||
+                !in_array($bucket['plugin'], $definition['required_plugins'], true)) {
                 $fail();
             }
         }
@@ -110,6 +156,10 @@ class SiteTemplateDefinition
             if (!isset($maps['pages'][$frame['page']]) || !in_array($frame['area'], [0, 1, 2, 3, 4], true) ||
                 !is_int($frame['sequence']) || $frame['sequence'] < 1 || !in_array($frame['plugin'], $definition['required_plugins'], true) ||
                 !in_array($frame['template'], $frame['plugin'] === 'menus' ? ['default', 'tab'] : ['default'], true)) {
+                $fail();
+            }
+            if (array_key_exists('view_count', $frame) && ($frame['plugin'] !== 'blogs' ||
+                !is_int($frame['view_count']) || $frame['view_count'] < 1 || $frame['view_count'] > 100)) {
                 $fail();
             }
             $sequence = $frame['page'] . ':' . $frame['sequence'];

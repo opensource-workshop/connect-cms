@@ -135,6 +135,38 @@ class SiteTemplateDefinitionTest extends TestCase
         (new SiteTemplateDefinition())->load($id);
     }
 
+    /** 候補がないディレクトリは空一覧として扱う。 */
+    public function testEmptyDirectory(): void
+    {
+        $this->assertSame([], (new SiteTemplateDefinition(__DIR__ . '/missing'))->all());
+    }
+
+    /** @dataProvider invalidExtensions
+     * 表示件数・レイアウト・必要プラグインの不整合を保存前に拒否する。
+     */
+    public function testInvalidExtendedSettings(string $case): void
+    {
+        $service = new SiteTemplateDefinition();
+        $definition = $service->load('school-basic');
+        unset($definition['checksum']);
+        if ($case === 'layout') {
+            $definition['pages'][0]['layout'] = 'invalid';
+        } elseif ($case === 'plugin') {
+            $definition['required_plugins'] = ['contents'];
+        } else {
+            $index = array_search('home_news', array_column($definition['frames'], 'key'));
+            $definition['frames'][$index]['view_count'] = $case === 'zero' ? 0 : 101;
+        }
+        $this->expectException(InvalidArgumentException::class);
+        $service->validate($definition);
+    }
+
+    /** 拒否すべき追加設定の境界。 */
+    public function invalidExtensions(): array
+    {
+        return [['layout'], ['plugin'], ['zero'], ['over-limit']];
+    }
+
     /** 登録外の識別子。 */
     public function unknownTemplates(): array
     {

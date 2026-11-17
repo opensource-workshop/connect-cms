@@ -247,9 +247,17 @@ class SiteManage extends ManagePluginBase
         $templates = app(SiteTemplateService::class)->templates();
         $template_states = [];
         foreach ($templates as $template) {
-            $template_states[$template['id']] = app(SiteTemplatePreflight::class)->inspect($template);
+            $template_states[$template['id']] = isset($template['definition_error'])
+                ? ['site_reasons' => [], 'template_reasons' => [$template['definition_error']]]
+                : app(SiteTemplatePreflight::class)->inspect($template);
         }
-        $state = $template_states[$templates[0]['id']];
+        $state = ['site_reasons' => []];
+        foreach ($templates as $template) {
+            if (!isset($template['definition_error'])) {
+                $state = $template_states[$template['id']];
+                break;
+            }
+        }
         $application = Schema::hasTable('site_template_applications')
             ? SiteTemplateApplication::where('application_key', 'initial-site')->whereNotNull('applied_at')->first() : null;
         return view('plugins.manage.site.site_templates', [
