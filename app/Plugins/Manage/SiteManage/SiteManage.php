@@ -6,11 +6,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
+use App\Models\Core\SiteTemplateApplication;
 use App\Models\Core\UsersColumnsSet;
 use App\Models\Common\Categories;
 use App\Models\Common\Group;
@@ -24,6 +27,10 @@ use App\Enums\BaseLoginRedirectPage;
 use App\Enums\StatusType;
 use App\Enums\SmartphoneMenuTemplateType;
 use App\Utilities\File\FileUtils;
+use App\Services\SiteTemplates\SiteTemplateService;
+use App\Services\SiteTemplates\SiteTemplatePreflight;
+use InvalidArgumentException;
+use Throwable;
 
 /* 移行データ用 */
 use App\Models\User\Contents\Contents;
@@ -237,14 +244,14 @@ class SiteManage extends ManagePluginBase
     public function siteTemplates($request, $page_id = null)
     {
         $this->checkSiteTemplateRequest($request, 'GET');
-        $templates = app(\App\Services\SiteTemplates\SiteTemplateService::class)->templates();
+        $templates = app(SiteTemplateService::class)->templates();
         $template_states = [];
         foreach ($templates as $template) {
-            $template_states[$template['id']] = app(\App\Services\SiteTemplates\SiteTemplatePreflight::class)->inspect($template);
+            $template_states[$template['id']] = app(SiteTemplatePreflight::class)->inspect($template);
         }
         $state = $template_states[$templates[0]['id']];
-        $application = \Illuminate\Support\Facades\Schema::hasTable('site_template_applications')
-            ? \App\Models\Core\SiteTemplateApplication::where('application_key', 'initial-site')->whereNotNull('applied_at')->first() : null;
+        $application = Schema::hasTable('site_template_applications')
+            ? SiteTemplateApplication::where('application_key', 'initial-site')->whereNotNull('applied_at')->first() : null;
         return view('plugins.manage.site.site_templates', [
             'function' => __FUNCTION__, 'plugin_name' => 'site', 'templates' => $templates,
             'state' => $state, 'template_states' => $template_states, 'application' => $application,
@@ -258,10 +265,10 @@ class SiteManage extends ManagePluginBase
     {
         $this->checkSiteTemplateRequest($request, 'POST');
         try {
-            $plan = app(\App\Services\SiteTemplates\SiteTemplateService::class)->plan($request->user(), $request->only([
+            $plan = app(SiteTemplateService::class)->plan($request->user(), $request->only([
                 'template_id', 'site_name',
             ]));
-        } catch (\InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             return redirect(url('/manage/site/siteTemplates'))->withErrors($exception->getMessage())->withInput();
         }
         unset($plan['state']);
@@ -292,11 +299,11 @@ class SiteManage extends ManagePluginBase
             }
         }
         try {
-            $application = app(\App\Services\SiteTemplates\SiteTemplateService::class)->apply($request->user(), $confirmation['plan']);
-        } catch (\InvalidArgumentException $exception) {
+            $application = app(SiteTemplateService::class)->apply($request->user(), $confirmation['plan']);
+        } catch (InvalidArgumentException $exception) {
             return redirect(url('/manage/site/siteTemplates'))->withErrors($exception->getMessage());
-        } catch (\Throwable $exception) {
-            \Illuminate\Support\Facades\Log::error('Site template application failed', [
+        } catch (Throwable $exception) {
+            Log::error('Site template application failed', [
                 'template_id' => $confirmation['plan']['input']['template_id'],
                 'actor_id' => $request->user()->id, 'error_type' => get_class($exception),
             ]);
@@ -311,8 +318,8 @@ class SiteManage extends ManagePluginBase
     public function siteTemplateResult($request, $id = null)
     {
         $this->checkSiteTemplateRequest($request, 'GET');
-        $application = \App\Models\Core\SiteTemplateApplication::whereNotNull('applied_at')->findOrFail($id);
-        $template = collect(app(\App\Services\SiteTemplates\SiteTemplateService::class)->templates())->firstWhere('id', $application->template_id);
+        $application = SiteTemplateApplication::whereNotNull('applied_at')->findOrFail($id);
+        $template = collect(app(SiteTemplateService::class)->templates())->firstWhere('id', $application->template_id);
         $template_name = $template['name'] ?? $application->template_id;
         return view('plugins.manage.site.site_templates_result', [
             'function' => __FUNCTION__, 'plugin_name' => 'site', 'application' => $application, 'template_name' => $template_name,
@@ -327,8 +334,8 @@ class SiteManage extends ManagePluginBase
         abort_unless($request->isMethod($method), 405);
         abort_unless($request->user(), 403);
         try {
-            app(\App\Services\SiteTemplates\SiteTemplateService::class)->authorize($request->user());
-        } catch (\InvalidArgumentException $exception) {
+            app(SiteTemplateService::class)->authorize($request->user());
+        } catch (InvalidArgumentException $exception) {
             abort(403, $exception->getMessage());
         }
     }
