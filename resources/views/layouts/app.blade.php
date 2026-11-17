@@ -22,6 +22,10 @@ use App\Http\Controllers\Core\UploadController;
         $is_manage_page = true;
     }
 
+    // URL文字列を入力として受け取らないよう、現在ページのIDからプレビューを開始する。
+    $preview_url = !$is_manage_page && isset($page) && !empty($page->id) ?
+        route('preview.device', ['page_id' => $page->id]) : null;
+
 if (! isset($cc_configs)) {
     // cc_configsは app\Http\Middleware\ConnectInit.php で処理しているため、基本ここには入らない。
     // .envのAPP_KEYに"xxxx"とダブルクォートで囲むと`php artisan key:generate`しても変換されない＋APP_DEBUG=falseで、cc_configsなしでここに到達する。
@@ -38,6 +42,10 @@ if (! isset($cc_configs)) {
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+@if (app('request')->input('mode') == 'preview' && app('request')->input('preview_frame') == '1')
+    {{-- iframe内の操作ではプレビューを継続せず、通常画面へ戻る。 --}}
+    <base target="_top">
+@endif
 @if (Configs::getConfigsValue($cc_configs, 'description'))
     <meta name="description" content="{{ StringUtils::getNobrValue(Configs::getConfigsValue($cc_configs, 'description')) }}">
 @endif
@@ -45,7 +53,9 @@ if (! isset($cc_configs)) {
 @php
     $meta_robots = null;
     $page_tree = null;
-    if (isset($page)) {
+    if (app('request')->input('mode') == 'preview') {
+        $meta_robots = 'noindex, nofollow, noarchive';
+    } elseif (isset($page)) {
         $page_tree = app('request')->attributes->get('page_tree');
         $meta_robots = $page->getMetaRobots($page_tree);
     } elseif ($is_manage_page || in_array(\Route::currentRouteName(), [
@@ -315,19 +325,11 @@ $base_header_optional_class = Configs::getConfigsRandValue($cc_configs, 'base_he
                                 {{-- プレビューモード --}}
                                 {{-- システム管理者、サイト管理者権限があれば、プレビューを有効にする（同権限でプラグイン設定できる。プレビューはプラグイン設定ボタンをOFFにする機能ため、同権限で制御する） --}}
                                 @if (Auth::user()->can('role_arrangement'))
-                                    @if (isset($page_list))
+                                    @if (isset($page_list) && isset($page))
                                         @if (app('request')->input('mode') == 'preview')
-                                            @isset ($page)
-                                                <a href="{{ url($page->permanent_link) }}" class="dropdown-item">プレビュー終了</a>
-                                            @else
-                                                <a href="{{ url()->current() }}" class="dropdown-item">プレビュー終了</a>
-                                            @endisset
+                                            <a href="{{ url($page->permanent_link) }}" class="dropdown-item">プレビュー終了</a>
                                         @else
-                                            @isset ($page)
-                                                <a href="{{ url($page->permanent_link) }}?mode=preview" class="dropdown-item">プレビューモード</a>
-                                            @else
-                                                <a href="{{ url()->current() }}/?mode=preview" class="dropdown-item">プレビューモード</a>
-                                            @endisset
+                                            <a href="{{ $preview_url }}" class="dropdown-item">プレビューモード</a>
                                         @endif
                                         @if (Auth::user()->can('role_manage_on') && isset($page_list))
                                             <div class="dropdown-divider"></div>
