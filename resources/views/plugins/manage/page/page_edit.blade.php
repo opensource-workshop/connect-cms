@@ -34,14 +34,19 @@
 <div id="collapse{{$page->id}}" class="collapse mt-3">
     <div class="card border-danger">
         <div class="card-body">
-            <span class="text-danger">ページを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
-            <div class="text-center">
-                {{-- 削除ボタン --}}
-                <form action="{{url('/manage/page/destroy')}}/{{$page->id}}" method="POST">
-                    {{csrf_field()}}
-                    <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
-                </form>
-            </div>
+            @if ($has_children)
+                <p class="text-danger">子ページがあるため削除できません。子ページを最上位または別の親ページへ移動してから、削除してください。</p>
+                <a href="{{ url('/manage/page') }}">ページ一覧へ</a>
+            @else
+                <span class="text-danger">ページを削除します。<br>元に戻すことはできないため、よく確認して実行してください。</span>
+                <div class="text-center">
+                    {{-- 削除ボタン --}}
+                    <form action="{{url('/manage/page/destroy')}}/{{$page->id}}" method="POST">
+                        {{csrf_field()}}
+                        <button type="submit" class="btn btn-danger" onclick="javascript:return confirm('データを削除します。\nよろしいですか？')"><i class="fas fa-check"></i> 本当に削除する</button>
+                    </form>
+                </div>
+            @endif
         </div>
     </div>
 </div>

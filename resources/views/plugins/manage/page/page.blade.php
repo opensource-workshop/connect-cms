@@ -29,6 +29,26 @@ $base_layout_page->layout = $base_layout;
         @include('plugins.manage.page.page_manage_tab')
     </div>
 
+    @if (session('errors') && session('errors')->has('page_delete'))
+        <div class="alert alert-danger m-3" role="alert">{{ session('errors')->first('page_delete') }}</div>
+    @endif
+
+    @if ($orphan_pages->isNotEmpty())
+        <div class="alert alert-warning m-3" role="alert">
+            <p class="mb-2 font-weight-bold">対応が必要なページが{{ $orphan_pages->count() }}件あります</p>
+            <p class="mb-2">親ページを設定してください。対象行の「ページ移動」から最上位または別の親ページへ移動してください。</p>
+
+            <details @if ($orphan_pages->count() <= 5) open @endif>
+                <summary>対象ページを表示（{{ $orphan_pages->count() }}件）</summary>
+                <ul class="mb-0 pl-4 overflow-auto" style="max-height: 12rem;">
+                    @foreach ($orphan_pages as $orphan_page)
+                        <li><a class="alert-link" href="#{{ $orphan_page->id }}">{{ $orphan_page->page_name }}</a></li>
+                    @endforeach
+                </ul>
+            </details>
+        </div>
+    @endif
+
     <!-- Pages list -->
     @if (count($pages) > 0)
         <script src="{{ url('/') }}{{ mix('/js/manage/page/index.js') }}"></script>
@@ -110,7 +130,7 @@ $base_layout_page->layout = $base_layout;
                 })
                 {{-- 移動先選択ボタン --}}
                 $('input:radio[name="level_move_modal_page_id"]').on('change', function() {
-                    if ($(this).val() === '0') {
+                    if ($(this).val() === '0' || $(this).is('[data-missing-parent]')) {
                         $('#move_position_before, #move_position_after').prop('disabled', true);
                         $('#move_position_child').prop('checked', true);
                     } else {
@@ -334,7 +354,7 @@ $base_layout_page->layout = $base_layout;
                                 data-page-id="{{$page_item->id}}"
                                 data-parent-id="{{$page_item->parent_id ?? ''}}"
                                 data-search="{{$page_path}} {{$page_item->permanent_link}}">
-                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-page-name="{{$page_item->page_name}}" name="level_move_modal_page_id" class="custom-control-input">
+                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-page-name="{{$page_item->page_name}}" @if ($orphan_pages->has($page_item->id)) data-missing-parent @endif name="level_move_modal_page_id" class="custom-control-input">
                                 @for ($i = 0; $i < $page_item->depth; $i++)
                                     @if ($i+1==$page_item->depth) <span class="px-3"></span> @else <span class="px-2"></span>@endif
                                 @endfor
@@ -395,6 +415,10 @@ $base_layout_page->layout = $base_layout;
                 @php
                     $direct_children = $page_children->get($page_item->id, collect());
                     $has_children = $direct_children->isNotEmpty();
+                    $is_orphan = $orphan_pages->has($page_item->id);
+                    $siblings = $page_children->get($page_item->parent_id ?? '');
+                    $is_first_sibling = $siblings->first()->id === $page_item->id;
+                    $is_last_sibling = $siblings->last()->id === $page_item->id;
                     $page_tree = $page_item->getPageTreeByGoingBackParent(null, false);
                     $ancestor_ids = $page_tree->pluck('id')
                         ->reject(function ($id) use ($page_item) {
@@ -403,6 +427,7 @@ $base_layout_page->layout = $base_layout;
                         ->implode(' ');
                 @endphp
                 <tr id="{{$page_item->id}}"
+                    @if ($is_orphan) tabindex="-1" @endif
                     data-page-id="{{$page_item->id}}"
                     data-parent-id="{{$page_item->parent_id ?? ''}}"
                     data-depth="{{$page_item->depth}}"
@@ -421,12 +446,12 @@ $base_layout_page->layout = $base_layout;
                         </div>
 
                         {{-- 上移動 --}}
-                        <button type="button" class="btn p-1" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_up({{$page_item->id}})">
+                        <button type="button" class="btn p-1" @if ($is_first_sibling || $is_orphan) disabled @endif onclick="javascript:submit_sequence_up({{$page_item->id}})">
                             <i class="fas fa-arrow-up"></i>
                         </button>
 
                         {{-- 下移動 --}}
-                        <button type="button" class="btn p-1" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_down({{$page_item->id}})">
+                        <button type="button" class="btn p-1" @if ($is_last_sibling || $is_orphan) disabled @endif onclick="javascript:submit_sequence_down({{$page_item->id}})">
                             <i class="fas fa-arrow-down"></i>
                         </button>
 
@@ -435,10 +460,10 @@ $base_layout_page->layout = $base_layout;
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButtonSequence">
-                                <button type="button" class="dropdown-item" @if ($loop->first) disabled @endif onclick="javascript:submit_sequence_top({{$page_item->id}})">
+                                <button type="button" class="dropdown-item" @if ($is_first_sibling || $is_orphan) disabled @endif onclick="javascript:submit_sequence_top({{$page_item->id}})">
                                     一番上へ
                                 </button>
-                                <button type="button" class="dropdown-item" @if ($loop->last) disabled @endif onclick="javascript:submit_sequence_bottom({{$page_item->id}})">
+                                <button type="button" class="dropdown-item" @if ($is_last_sibling || $is_orphan) disabled @endif onclick="javascript:submit_sequence_bottom({{$page_item->id}})">
                                     一番下へ
                                 </button>
                             </div>
@@ -446,7 +471,7 @@ $base_layout_page->layout = $base_layout;
                     </td>
                     <td class="table-text p-1" nowrap>
                         {{-- ページ移動 --}}
-                        <a class="btn p-1 btn-primary btn-sm" id="move_level_{{$page_item->id}}" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick='select_page({{$page_item->id}}, @json($page_item->page_name));' ><i class="fas fa-sitemap"></i></a>
+                        <a class="btn p-1 btn-primary btn-sm" id="move_level_{{$page_item->id}}" title="ページ移動" aria-label="ページ移動" style="cursor:pointer;color:#FFF;" data-toggle="modal" data-target="#moveLevlModal" onclick='select_page({{$page_item->id}}, @json($page_item->page_name));' ><i class="fas fa-sitemap"></i></a>
                     </td>
                     <td class="table-text p-1 manage-page-pagename">
                         <div class="manage-page-tree" style="--cc-page-tree-depth: {{$page_item->depth}};">
@@ -464,6 +489,9 @@ $base_layout_page->layout = $base_layout;
                                 <span class="manage-page-tree__toggle-placeholder" aria-hidden="true"></span>
                             @endif
                             <span class="manage-page-tree__label @if ($has_children) manage-page-tree__label--parent @endif">{{$page_item->page_name}}</span>
+                            @if ($is_orphan)
+                                <span class="badge badge-warning ml-1">親ページなし</span>
+                            @endif
                         </div>
                     </td>
                     <td class="table-text p-1">

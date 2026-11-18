@@ -111,6 +111,11 @@ class PageManage extends ManagePluginBase
             $page->page_roles = $page_roles->where('page_id', $page->id);
         }
 
+        $pages_by_id = $pages->keyBy('id');
+        $orphan_pages = $pages->filter(function ($page) use ($pages_by_id) {
+            return $page->parent_id !== null && !$pages_by_id->has($page->parent_id);
+        })->keyBy('id');
+
         // 移動先用にコピー
         $pages_select = $pages;
 
@@ -125,6 +130,7 @@ class PageManage extends ManagePluginBase
             "page"         => new Page(),
             "pages"        => $pages,
             "pages_select" => $pages_select,
+            "orphan_pages" => $orphan_pages,
             "themes"       => $themes,
             "errors"       => $errors,
         ]);
@@ -169,6 +175,7 @@ class PageManage extends ManagePluginBase
             "page"        => $page,
             "pages"       => $pages,
             "themes"      => $themes,
+            "has_children" => $page && $page->exists && $page->children()->exists(),
         ]);
     }
 
@@ -362,11 +369,26 @@ class PageManage extends ManagePluginBase
      */
     public function destroy($request, $page_id)
     {
-        // Log::debug($id);
-        DB::table('pages')->where('id', '=', $page_id)->delete();
+        $has_children = DB::transaction(function () use ($page_id) {
+            // 階層移動と同じ順序でロックし、確認と削除の間の子ページ追加を防ぐ。
+            $this->lockPageTree();
 
-        // ページ管理画面に戻る
-        return redirect("/manage/page");
+            if (Page::where('parent_id', $page_id)->exists()) {
+                return true;
+            }
+
+            DB::table('pages')->where('id', $page_id)->delete();
+
+            return false;
+        }, 3);
+
+        if ($has_children) {
+            return redirect('/manage/page')->withErrors([
+                'page_delete' => '子ページがあるため削除できません。子ページを最上位または別の親ページへ移動してから、削除してください。',
+            ]);
+        }
+
+        return redirect('/manage/page');
     }
 
     /**
@@ -374,12 +396,15 @@ class PageManage extends ManagePluginBase
      */
     public function sequenceUp($request, $page_id)
     {
-        // 移動元のオブジェクトを取得して、up
-        $pages = Page::find($page_id);
-        $pages->up();
+        DB::transaction(function () use ($page_id) {
+            $this->lockPageTree();
+            $page = Page::find($page_id);
+            if ($page) {
+                $page->up();
+            }
+        }, 3);
 
-        // ページ管理画面に戻る
-        return redirect("/manage/page");
+        return redirect('/manage/page');
     }
 
     /**
@@ -387,14 +412,18 @@ class PageManage extends ManagePluginBase
      */
     public function sequenceTop($request, $page_id)
     {
-        // 移動元のオブジェクトを取得
-        $pages = Page::find($page_id);
-        // 兄弟の一番上取得
-        $sibling = $pages->siblings()->defaultOrder()->first();
-        $pages->insertBeforeNode($sibling);
+        DB::transaction(function () use ($page_id) {
+            $this->lockPageTree();
+            $page = Page::find($page_id);
+            if ($page) {
+                $sibling = $page->siblings()->defaultOrder()->first();
+                if ($sibling) {
+                    $page->insertBeforeNode($sibling);
+                }
+            }
+        }, 3);
 
-        // ページ管理画面に戻る
-        return redirect("/manage/page");
+        return redirect('/manage/page');
     }
 
     /**
@@ -402,12 +431,15 @@ class PageManage extends ManagePluginBase
      */
     public function sequenceDown($request, $page_id)
     {
-        // 移動元のオブジェクトを取得して、down
-        $pages = Page::find($page_id);
-        $pages->down();
+        DB::transaction(function () use ($page_id) {
+            $this->lockPageTree();
+            $page = Page::find($page_id);
+            if ($page) {
+                $page->down();
+            }
+        }, 3);
 
-        // ページ管理画面に戻る
-        return redirect("/manage/page");
+        return redirect('/manage/page');
     }
 
     /**
@@ -415,14 +447,18 @@ class PageManage extends ManagePluginBase
      */
     public function sequenceBottom($request, $page_id)
     {
-        // 移動元のオブジェクトを取得
-        $pages = Page::find($page_id);
-        // 兄弟の一番下取得
-        $sibling = $pages->siblings()->reversed()->first();
-        $pages->insertAfterNode($sibling);
+        DB::transaction(function () use ($page_id) {
+            $this->lockPageTree();
+            $page = Page::find($page_id);
+            if ($page) {
+                $sibling = $page->siblings()->reversed()->first();
+                if ($sibling) {
+                    $page->insertAfterNode($sibling);
+                }
+            }
+        }, 3);
 
-        // ページ管理画面に戻る
-        return redirect("/manage/page");
+        return redirect('/manage/page');
     }
 
     /**
@@ -435,49 +471,53 @@ class PageManage extends ManagePluginBase
      */
     public function movePage($request, $page_id)
     {
+        $request->validate([
+            'destination_id' => 'required|integer|min:0',
+            'move_position' => 'sometimes|in:before,after,child',
+        ]);
         $move_position = $request->move_position ?? 'child';
 
-        // ルートへ移動
-        if ($request->destination_id == "0") {
-            // 移動元のオブジェクトを取得
-            $page = Page::find($page_id);
-            if (empty($page)) {
-                return redirect("/manage/page");
-            }
-            $page->saveAsRoot();
-            $page->recalcDepthWithDescendants();
-        } else {
-            // その他の場所へ移動
-
-            // 移動元のオブジェクトを取得
+        DB::transaction(function () use ($request, $page_id, $move_position) {
+            $this->lockPageTree();
             $source_page = Page::find($page_id);
-
-            // 移動先のオブジェクトを取得
-            $destination_page = Page::find($request->destination_id);
-
-            if (empty($source_page) || empty($destination_page)) {
-                return redirect("/manage/page");
+            if (!$source_page) {
+                return;
             }
 
-            if ($source_page->is($destination_page) || $destination_page->isDescendantOf($source_page)) {
-                return redirect("/manage/page");
-            }
-
-            // 移動
-            if ($move_position === 'before') {
-                $source_page->insertBeforeNode($destination_page);
-            } elseif ($move_position === 'after') {
-                $source_page->insertAfterNode($destination_page);
+            if ((int) $request->destination_id === 0) {
+                $source_page->saveAsRoot();
             } else {
-                $source_page->appendToNode($destination_page)->save();
+                $destination_page = Page::find($request->destination_id);
+                if (!$destination_page || $source_page->is($destination_page) || $destination_page->isDescendantOf($source_page)) {
+                    return;
+                }
+
+                if ($move_position !== 'child' && $destination_page->parent_id !== null && !$destination_page->parent()->exists()) {
+                    return;
+                }
+
+                if ($move_position === 'before') {
+                    $source_page->insertBeforeNode($destination_page);
+                } elseif ($move_position === 'after') {
+                    $source_page->insertAfterNode($destination_page);
+                } else {
+                    $source_page->appendToNode($destination_page)->save();
+                }
             }
 
             $source_page->refresh();
             $source_page->recalcDepthWithDescendants();
-        }
+        }, 3);
 
-        // ページ管理画面に戻る
-        return redirect("/manage/page");
+        return redirect('/manage/page');
+    }
+
+    /**
+     * 左右値を変更する階層移動と削除を直列化する。
+     */
+    private function lockPageTree(): void
+    {
+        DB::table('pages')->orderBy('id')->lockForUpdate()->pluck('id');
     }
 
     /**
