@@ -52,6 +52,8 @@ class SiteTemplateHttpTest extends TestCase
         $this->assertSame(User::first()->id, $confirmation['plan']['actor_id']);
         $this->assertSame($this->input, $confirmation['plan']['input']);
         $this->assertNotEmpty($confirmation['token']);
+        $this->assertSame($this->input['site_name'], session()->getOldInput('site_name'));
+        $this->assertSame($this->input['template_id'], session()->getOldInput('template_id'));
         $this->assertGreaterThan(time(), $confirmation['expires_at']);
         $this->assertDatabaseCount('pages', 1);
         $this->assertDatabaseCount('site_template_applications', 0);

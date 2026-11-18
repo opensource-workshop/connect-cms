@@ -279,6 +279,7 @@ class SiteManage extends ManagePluginBase
         } catch (InvalidArgumentException $exception) {
             return redirect(url('/manage/site/siteTemplates'))->withErrors($exception->getMessage())->withInput();
         }
+        $request->session()->flashInput($plan['input']);
         unset($plan['state']);
         $token = bin2hex(random_bytes(32));
         $request->session()->put('site_template_confirmation', ['token' => $token, 'expires_at' => time() + 900, 'plan' => $plan]);
