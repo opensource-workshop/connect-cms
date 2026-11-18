@@ -35,6 +35,12 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
+    # Redirect direct access to index.php to the canonical URL.
+    # Works for both web-root and sub-directory installs.
+    # THE_REQUEST is the original request line, so the internal rewrite below does not loop.
+    RewriteCond %{THE_REQUEST} ^[A-Z]+\s(/(?:[^\s?/][^\s?]*?/)?)index\.php(?:/([^\s?]*))?(?:\?\S*)?\s [NC]
+    RewriteRule ^index\.php(?:/.*)?$ %1%2 [R=301,L,NE]
+
     # Redirect Trailing Slashes If Not A Folder...
     # Exclusion shibboleth.
     RewriteCond %{REQUEST_URI} !(^/Shibboleth.sso/)
