@@ -100,6 +100,20 @@ class SiteTemplateDiscoveryTest extends TestCase
         $this->definitions->load('broken');
     }
 
+    /** キー付きページ定義が混在しても、正常な候補は一覧に表示する。 */
+    public function testKeyedPagesDoNotHideValidTemplate(): void
+    {
+        $broken = $this->template;
+        $broken['id'] = 'broken';
+        $broken['pages'] = array_column($broken['pages'], null, 'key');
+        File::makeDirectory($this->directory . '/broken');
+        file_put_contents($this->directory . '/broken/template.json', json_encode($broken));
+        $templates = $this->definitions->all();
+        $this->assertSame(['another-school', 'broken'], array_column($templates, 'id'));
+        $this->assertArrayNotHasKey('definition_error', $templates[0]);
+        $this->assertArrayHasKey('definition_error', $templates[1]);
+    }
+
     /** 確認後のJSON変更ではサイトデータを作らず再確認を求める。 */
     public function testChangedJsonIsRejected(): void
     {

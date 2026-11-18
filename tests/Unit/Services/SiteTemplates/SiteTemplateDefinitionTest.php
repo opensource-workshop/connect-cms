@@ -36,6 +36,9 @@ class SiteTemplateDefinitionTest extends TestCase
         $definition = $service->load('school-basic');
         unset($definition['checksum']);
         switch ($case) {
+            case 'keyed-pages':
+                $definition['pages'] = array_column($definition['pages'], null, 'key');
+                break;
             case 'unknown':
                 $definition['sql'] = 'invalid';
                 break;
@@ -95,7 +98,7 @@ class SiteTemplateDefinitionTest extends TestCase
         return array_map(function ($case) {
             return [$case];
         }, [
-            'unknown', 'url', 'cycle', 'parent', 'bucket', 'plugin', 'setting', 'key', 'pages', 'frames', 'buckets', 'menu', 'body', 'missing-html', 'legacy-body', 'html-limit',
+            'keyed-pages', 'unknown', 'url', 'cycle', 'parent', 'bucket', 'plugin', 'setting', 'key', 'pages', 'frames', 'buckets', 'menu', 'body', 'missing-html', 'legacy-body', 'html-limit',
         ]);
     }
 

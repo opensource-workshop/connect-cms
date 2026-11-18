@@ -100,6 +100,11 @@ class SiteTemplateDefinition
         if (Validator::make($definition, $rules)->fails() || array_diff(array_keys($definition), $allowed) || $definition['schema_version'] !== 1) {
             $fail();
         }
+        foreach (['required_plugins', 'pages', 'buckets', 'frames', 'menus', 'contents'] as $type) {
+            if (array_values($definition[$type]) !== $definition[$type]) {
+                $fail();
+            }
+        }
         $schemas = [
             'pages' => ['key', 'name', 'url', 'parent', 'layout'],
             'buckets' => ['key', 'name', 'plugin'],
