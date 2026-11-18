@@ -66,6 +66,9 @@
                         その他設定
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        @can('admin_system')
+                            <a href="{{ url('/manage/site/siteTemplates') }}" class="dropdown-item @if (in_array($function, ['siteTemplates', 'confirmSiteTemplate', 'applySiteTemplate', 'siteTemplateResult'], true)) active bg-light @endif">サイトひな型</a>
+                        @endcan
 
                         @if ($function == "languages")
                             <a href="{{url('/manage/site/languages')}}" class="dropdown-item active bg-light">多言語設定</a>

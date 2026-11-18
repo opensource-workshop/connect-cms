@@ -9,6 +9,7 @@ use Database\Factories\Common\BucketsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class Buckets extends Model
 {
@@ -256,9 +257,11 @@ class Buckets extends Model
     /**
      * 新規バケツ作成時の投稿権限初期値を適用する。
      */
-    public function initializeDefaultPostRoles(): void
+    public function initializeDefaultPostRoles(?Collection $configs = null): void
     {
-        $default_post_role_flags = self::getDefaultNewBucketPostRoleFlags();
+        $default_post_role_flags = $configs === null
+            ? self::getDefaultNewBucketPostRoleFlags()
+            : self::resolveDefaultNewBucketPostRoleFlags($configs);
 
         foreach ($default_post_role_flags as $role => $post_flag) {
             if ((int) $post_flag !== 1) {
@@ -281,22 +284,22 @@ class Buckets extends Model
     /**
      * 投稿権限設定を持つプラグインの新規バケツなら、投稿権限初期値を適用する。
      */
-    public function initializeDefaultPostRolesIfTargetPlugin(): void
+    public function initializeDefaultPostRolesIfTargetPlugin(?Collection $configs = null): void
     {
         if (!self::isDefaultPostRoleTargetPlugin($this->plugin_name)) {
             return;
         }
 
-        $this->initializeDefaultPostRoles();
+        $this->initializeDefaultPostRoles($configs);
     }
 
     /**
      * 新規バケツを作成し、対象プラグインだけ投稿権限初期値を適用する。
      */
-    public static function createWithDefaultPostRoles(array $attributes): self
+    public static function createWithDefaultPostRoles(array $attributes, ?Collection $configs = null): self
     {
         $bucket = self::create($attributes);
-        $bucket->initializeDefaultPostRolesIfTargetPlugin();
+        $bucket->initializeDefaultPostRolesIfTargetPlugin($configs);
 
         return $bucket;
     }

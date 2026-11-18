@@ -6,11 +6,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\Core\ApiSecret;
 use App\Models\Core\Configs;
 use App\Models\Core\ConfigsLoginPermits;
 use App\Models\Core\Plugins;
+use App\Models\Core\SiteTemplateApplication;
 use App\Models\Core\UsersColumnsSet;
 use App\Models\Common\Categories;
 use App\Models\Common\Group;
@@ -24,6 +27,10 @@ use App\Enums\BaseLoginRedirectPage;
 use App\Enums\StatusType;
 use App\Enums\SmartphoneMenuTemplateType;
 use App\Utilities\File\FileUtils;
+use App\Services\SiteTemplates\SiteTemplateService;
+use App\Services\SiteTemplates\SiteTemplatePreflight;
+use InvalidArgumentException;
+use Throwable;
 
 /* 移行データ用 */
 use App\Models\User\Contents\Contents;
@@ -224,7 +231,122 @@ class SiteManage extends ManagePluginBase
         $role_ckeck_table["downloadDocument"] = array('admin_site');
         $role_ckeck_table["total"]            = ['admin_site'];
 
+        foreach (['siteTemplates', 'confirmSiteTemplate', 'applySiteTemplate', 'siteTemplateResult'] as $action) {
+            $role_ckeck_table[$action] = ['admin_system'];
+        }
+
         return $role_ckeck_table;
+    }
+
+    /**
+     * 初期サイト構成の選択と適用済み状態。
+     */
+    public function siteTemplates($request, $page_id = null)
+    {
+        $this->checkSiteTemplateRequest($request, 'GET');
+        $templates = app(SiteTemplateService::class)->templates();
+        $template_states = [];
+        foreach ($templates as $template) {
+            $template_states[$template['id']] = isset($template['definition_error'])
+                ? ['site_reasons' => [], 'template_reasons' => [$template['definition_error']]]
+                : app(SiteTemplatePreflight::class)->inspect($template);
+        }
+        $state = ['site_reasons' => []];
+        foreach ($templates as $template) {
+            if (!isset($template['definition_error'])) {
+                $state = $template_states[$template['id']];
+                break;
+            }
+        }
+        $application = Schema::hasTable('site_template_applications')
+            ? SiteTemplateApplication::where('application_key', 'initial-site')->whereNotNull('applied_at')->first() : null;
+        return view('plugins.manage.site.site_templates', [
+            'function' => __FUNCTION__, 'plugin_name' => 'site', 'templates' => $templates,
+            'state' => $state, 'template_states' => $template_states, 'application' => $application,
+        ]);
+    }
+
+    /**
+     * DBを変更せず、実行者と状態を結び付けた確認を保存する。
+     */
+    public function confirmSiteTemplate($request, $page_id = null)
+    {
+        $this->checkSiteTemplateRequest($request, 'POST');
+        try {
+            $plan = app(SiteTemplateService::class)->plan($request->user(), $request->only([
+                'template_id', 'site_name',
+            ]));
+        } catch (InvalidArgumentException $exception) {
+            return redirect(url('/manage/site/siteTemplates'))->withErrors($exception->getMessage())->withInput();
+        }
+        $request->session()->flashInput($plan['input']);
+        unset($plan['state']);
+        $token = bin2hex(random_bytes(32));
+        $request->session()->put('site_template_confirmation', ['token' => $token, 'expires_at' => time() + 900, 'plan' => $plan]);
+        return view('plugins.manage.site.site_templates_confirm', [
+            'function' => __FUNCTION__, 'plugin_name' => 'site', 'plan' => $plan, 'token' => $token,
+        ]);
+    }
+
+    /**
+     * 確認済みのサーバー側入力だけを使って一括適用する。
+     */
+    public function applySiteTemplate($request, $page_id = null)
+    {
+        $this->checkSiteTemplateRequest($request, 'POST');
+        $confirmation = $request->session()->pull('site_template_confirmation');
+        if (!$confirmation || !is_string($request->input('confirmation_token')) ||
+            !hash_equals($confirmation['token'], $request->input('confirmation_token')) ||
+            $confirmation['expires_at'] < time() ||
+            (int) $confirmation['plan']['actor_id'] !== (int) $request->user()->id ||
+            !in_array($request->input('confirmed'), ['1', 1], true)) {
+            return redirect(url('/manage/site/siteTemplates'))->withErrors('確認が無効または期限切れです。最初から確認してください。');
+        }
+        foreach (['template_id', 'site_name'] as $key) {
+            if ($request->has($key) && $request->input($key) !== $confirmation['plan']['input'][$key]) {
+                return redirect(url('/manage/site/siteTemplates'))->withErrors('確認した入力と一致しません。再確認してください。');
+            }
+        }
+        try {
+            $application = app(SiteTemplateService::class)->apply($request->user(), $confirmation['plan']);
+        } catch (InvalidArgumentException $exception) {
+            return redirect(url('/manage/site/siteTemplates'))->withErrors($exception->getMessage());
+        } catch (Throwable $exception) {
+            Log::error('Site template application failed', [
+                'template_id' => $confirmation['plan']['input']['template_id'],
+                'actor_id' => $request->user()->id, 'error_type' => get_class($exception),
+            ]);
+            return redirect(url('/manage/site/siteTemplates'))->withErrors('適用できませんでした。一覧で履歴を確認し、記録がない場合は再確認してください。');
+        }
+        return redirect(url('/manage/site/siteTemplateResult/' . $application->id));
+    }
+
+    /**
+     * 生成データを編集するための案内を表示する。
+     */
+    public function siteTemplateResult($request, $id = null)
+    {
+        $this->checkSiteTemplateRequest($request, 'GET');
+        $application = SiteTemplateApplication::whereNotNull('applied_at')->findOrFail($id);
+        $template = collect(app(SiteTemplateService::class)->templates())->firstWhere('id', $application->template_id);
+        $template_name = $template['name'] ?? $application->template_id;
+        return view('plugins.manage.site.site_templates_result', [
+            'function' => __FUNCTION__, 'plugin_name' => 'site', 'application' => $application, 'template_name' => $template_name,
+        ]);
+    }
+
+    /**
+     * 汎用管理ルートにもHTTPメソッドとシステム管理権限を適用する。
+     */
+    private function checkSiteTemplateRequest($request, string $method): void
+    {
+        abort_unless($request->isMethod($method), 405);
+        abort_unless($request->user(), 403);
+        try {
+            app(SiteTemplateService::class)->authorize($request->user());
+        } catch (InvalidArgumentException $exception) {
+            abort(403, $exception->getMessage());
+        }
     }
 
     /**
