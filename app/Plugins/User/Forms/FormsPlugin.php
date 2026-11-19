@@ -3575,22 +3575,13 @@ ORDER BY forms_inputs_id, forms_columns_id
                 $upload = Uploads::find($value->value);
 
                 if ($upload) {
-                    // コピー先のページ・プラグインに書き換えて、データとファイルを複製する
-                    //
-                    // バケツIDからフレームを再取得（page_idを使う）
-                    $tmp_frame = $this->getFrameByBucketId($frame->bucket_id);
-                    if (!$tmp_frame) {
-                        Log::error('FormPlugin: 連携時にフレームのbucket_idから、フレームを再取得できませんでした。（bucket_id=' . $frame->bucket_id . '）');
-                        continue;
-                    }
-
                     // データの複製
                     $new_upload = $upload->replicate();
-                    $new_upload->plugin_name = $frame->plugin_name;     // プラグイン名の書き換え
-                    $new_upload->page_id = $tmp_frame->page_id;         // ページIDの書き換え
-                    $new_upload->check_method = null;
+                    // plugin_name = 'forms'、check_method = 'canDownload' は元の値を維持する
+                    $new_upload->page_id        = $frame->page_id;
+                    $new_upload->temporary_flag = 0;
                     $new_upload->download_count = 0;
-                    $new_upload->play_count = 0;
+                    $new_upload->play_count     = 0;
                     $new_upload->save();
 
                     // 複製したファイルのIDに置き換える
