@@ -815,9 +815,9 @@ class FormsPlugin extends UserPluginBase
             }
         }
         // ～日以降を許容
-        if ($forms_column->rule_date_after_equal) {
-            $comparison_date = Carbon::now()->addDay($forms_column->rule_date_after_equal)->format('Y/m/d');
-            $validator_rule[] = 'after_or_equal:' . $comparison_date;
+        $minimum_date = $forms_column->getMinimumInputDate();
+        if ($minimum_date !== null) {
+            $validator_rule[] = 'after_or_equal:' . $minimum_date->format('Y/m/d');
         }
         // 日付チェック
         if ($forms_column->column_type == FormColumnType::date) {
@@ -865,25 +865,29 @@ class FormsPlugin extends UserPluginBase
     }
 
     /**
-     * 最終登録で受け取るファイルIDの検証ルールを組み立てる。
+     * 最終登録で受け取るファイルIDと日付範囲の検証ルールを組み立てる。
      *
-     * 確認画面のhidden値は利用者が変更できるため、アップロード済みファイルIDとして扱える値だけを保存する。
+     * 確認画面から送られる値を保存前に再検証する。
      */
-    private function getPublicStoreFileValidatorArray($forms_columns, int $page_id): array
+    private function getPublicStoreValidatorArray($forms_columns, int $page_id): array
     {
         $validator_array = array('column' => array(), 'message' => array());
 
         foreach ($forms_columns as $forms_column) {
-            if (!FormsColumns::isFileColumnType($forms_column->column_type)) {
+            $minimum_date = $forms_column->getMinimumInputDate();
+            $validator_rule = [$forms_column->required ? 'required' : 'nullable'];
+
+            if (FormsColumns::isFileColumnType($forms_column->column_type)) {
+                $validator_rule[] = 'integer';
+                $validator_rule[] = Rule::exists('uploads', 'id')
+                    ->where('plugin_name', 'forms')
+                    ->where('page_id', $page_id);
+            } elseif ($minimum_date !== null) {
+                $validator_rule[] = 'date';
+                $validator_rule[] = 'after_or_equal:' . $minimum_date->format('Y/m/d');
+            } else {
                 continue;
             }
-
-            $validator_rule = [];
-            $validator_rule[] = $forms_column->required ? 'required' : 'nullable';
-            $validator_rule[] = 'integer';
-            $validator_rule[] = Rule::exists('uploads', 'id')
-                ->where('plugin_name', 'forms')
-                ->where('page_id', $page_id);
 
             $validator_array['column']['forms_columns_value.' . $forms_column->id] = $validator_rule;
             $validator_array['message']['forms_columns_value.' . $forms_column->id] = $forms_column->column_name;
@@ -1265,8 +1269,8 @@ class FormsPlugin extends UserPluginBase
         // フォームのカラムデータ
         $forms_columns = FormsColumns::where('forms_id', $form->id)->orderBy('display_sequence')->get();
 
-        // 確認画面のhidden値を直接改ざんされても、不正なファイルIDを保存しない。
-        $validator_array = $this->getPublicStoreFileValidatorArray($forms_columns, $page_id);
+        // 確認画面から送られるファイルIDと日付範囲を再検証する。
+        $validator_array = $this->getPublicStoreValidatorArray($forms_columns, $page_id);
         if (!empty($validator_array['column'])) {
             $validator = Validator::make($request->all(), $validator_array['column']);
             $validator->setAttributeNames($validator_array['message']);
@@ -2597,7 +2601,7 @@ class FormsPlugin extends UserPluginBase
             $validator_attributes['rule_regex'] = '正規表現';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
-        if ($request->rule_date_after_equal) {
+        if ($request->rule_date_after_equal !== null && $request->rule_date_after_equal !== '') {
             $validator_values['rule_date_after_equal'] = ['numeric'];
             $validator_attributes['rule_date_after_equal'] = '～日以降を許容';
         }

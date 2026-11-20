@@ -5,6 +5,7 @@ namespace App\Models\User\Databases;
 use Illuminate\Database\Eloquent\Model;
 
 use App\UserableNohistory;
+use Carbon\Carbon;
 use App\Enums\DatabaseColumnType;
 
 class DatabasesColumns extends Model
@@ -30,6 +31,19 @@ class DatabasesColumns extends Model
         'row_group',
         'column_group'
     ];
+
+    /**
+     * 日付型で入力できる最も早い日を返す。未設定の場合は null。
+     */
+    public function getMinimumInputDate(): ?Carbon
+    {
+        $offset = $this->rule_date_after_equal;
+        if ($this->column_type != DatabaseColumnType::date || $offset === null || $offset === '') {
+            return null;
+        }
+
+        return Carbon::today()->addDay($offset);
+    }
 
     /**
      * DBカラムの権限を取得

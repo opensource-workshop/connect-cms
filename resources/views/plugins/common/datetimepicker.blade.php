@@ -16,6 +16,7 @@
     $calendar_icon = $calendar_icon ?? true;
     $stepping = $stepping ?? 1;
     $view_mode = $view_mode ?? 'calendar';
+    $minimum_date = $minimum_date ?? null;
 
     // 設定のみオプション
     $is_setting_only = $is_setting_only ?? false;
@@ -75,6 +76,11 @@
             @endif
             theme: 'light',
         },
+        @if ($minimum_date !== null)
+            restrictions: {
+                minDate: new Date(@json($minimum_date->format('Y-m-d') . 'T00:00:00')),
+            },
+        @endif
         stepping: {{$stepping}},
     }
 
