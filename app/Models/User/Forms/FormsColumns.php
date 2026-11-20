@@ -4,6 +4,7 @@ namespace App\Models\User\Forms;
 
 use App\Enums\FormColumnType;
 use App\UserableNohistory;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +16,19 @@ class FormsColumns extends Model
 
     // 更新する項目の定義
     protected $fillable = ['forms_id', 'column_type', 'column_name', 'required', 'frame_col', 'caption', 'caption_color', 'place_holder', 'minutes_increments', 'minutes_increments_from', 'minutes_increments_to', 'rule_allowed_numeric', 'rule_allowed_alpha_numeric', 'rule_digits_or_less', 'rule_max', 'rule_min', 'rule_word_count', 'rule_date_after_equal', 'rule_file_extensions', 'rule_file_max_kb', 'display_sequence'];
+
+    /**
+     * 日付型で入力できる最も早い日を返す。未設定の場合は null。
+     */
+    public function getMinimumInputDate(): ?Carbon
+    {
+        $offset = $this->rule_date_after_equal;
+        if ($this->column_type != FormColumnType::date || $offset === null || $offset === '') {
+            return null;
+        }
+
+        return Carbon::today()->addDay($offset);
+    }
 
     /**
      * ファイルタイプのカラム型か

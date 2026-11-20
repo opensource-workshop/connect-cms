@@ -1296,9 +1296,9 @@ class DatabasesPlugin extends UserPluginBase
             $validator_rule[] = 'min:' . $databases_column->rule_min;
         }
         // ～日以降を許容
-        if ($databases_column->rule_date_after_equal) {
-            $comparison_date = Carbon::now()->addDay($databases_column->rule_date_after_equal)->databaseat('Y/m/d');
-            $validator_rule[] = 'after_or_equal:' . $comparison_date;
+        $minimum_date = $databases_column->getMinimumInputDate();
+        if ($minimum_date !== null) {
+            $validator_rule[] = 'after_or_equal:' . $minimum_date->format('Y/m/d');
         }
         // 日付チェック
         if ($databases_column->column_type == DatabaseColumnType::date) {
@@ -2842,7 +2842,7 @@ class DatabasesPlugin extends UserPluginBase
             $validator_attributes['rule_word_count'] = '入力最大文字数';
         }
         // ～日以降許容を指定時、入力値が数値であるかチェック
-        if ($request->rule_date_after_equal) {
+        if ($request->rule_date_after_equal !== null && $request->rule_date_after_equal !== '') {
             $validator_values['rule_date_after_equal'] = [
                 'numeric',
             ];
