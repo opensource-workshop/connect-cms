@@ -3403,13 +3403,13 @@ ORDER BY forms_inputs_id, forms_columns_id
 
             switch ($frame->plugin_name) {
                 case PluginName::getPluginName(PluginName::bbses):
-                    $this->toBbs($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form, $frame);
+                    $this->toBbs($frame, $this->fetchFormInputValues($form_inputs_id), $form);
                     break;
                 case PluginName::getPluginName(PluginName::blogs):
-                    $this->toBlog($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form, $frame);
+                    $this->toBlog($frame, $this->fetchFormInputValues($form_inputs_id), $form);
                     break;
                 case PluginName::getPluginName(PluginName::faqs):
-                    $this->toFaq($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form, $frame);
+                    $this->toFaq($frame, $this->fetchFormInputValues($form_inputs_id), $form);
                     break;
                 default:
                     break;
@@ -3427,11 +3427,15 @@ ORDER BY forms_inputs_id, forms_columns_id
      */
     private function fetchTargetFrames(array $target_frame_ids): Collection
     {
-        return Frame::select('plugin_name', 'bucket_id')
-            ->whereIn('id', $target_frame_ids)
+        return Frame::whereIn('id', $target_frame_ids)
             ->whereIn('plugin_name', FormsRegisterTargetPlugin::getKeysPluginsCanSpecifiedFrames())
-            ->groupBy('plugin_name', 'bucket_id')
-            ->get();
+            ->orderBy('id')
+            ->get()
+            // 同じバケツには1回だけ連携する（二重投稿の防止）
+            ->unique(function (Frame $frame) {
+                return $frame->plugin_name . ':' . $frame->bucket_id;
+            })
+            ->values();
     }
 
     /**
@@ -3456,16 +3460,15 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * フォーム登録データを掲示板に登録する
      *
-     * @param int $bucket_id 登録先のバケツID
+     * @param Frame $frame
      * @param Collection $input_values フォーム登録データ
      * @param Forms $form
-     * @param Frame $frame
      */
-    private function toBbs(int $bucket_id, Collection $input_values, Forms $form, Frame $frame)
+    private function toBbs(Frame $frame, Collection $input_values, Forms $form)
     {
         $this->replicateAndReplaceFileValue($input_values, $frame);
 
-        $bbs_id = Bbs::where('bucket_id', $bucket_id)->first()->id;
+        $bbs_id = Bbs::where('bucket_id', $frame->bucket_id)->first()->id;
 
         $post = BbsPost::create([
             'bbs_id' => $bbs_id,
@@ -3482,16 +3485,15 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * フォーム登録データをブログに登録する
      *
-     * @param int $bucket_id 登録先のバケツID
+     * @param Frame $frame
      * @param Collection $input_values フォーム登録データ
      * @param Forms $form
-     * @param Frame $frame
      */
-    private function toBlog(int $bucket_id, Collection $input_values, Forms $form, Frame $frame)
+    private function toBlog(Frame $frame, Collection $input_values, Forms $form)
     {
         $this->replicateAndReplaceFileValue($input_values, $frame);
 
-        $blogs_id = Blogs::where('bucket_id', $bucket_id)->first()->id;
+        $blogs_id = Blogs::where('bucket_id', $frame->bucket_id)->first()->id;
 
         $post = BlogsPosts::create([
             'blogs_id' => $blogs_id,
@@ -3510,16 +3512,15 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * フォーム登録データをFAQに登録する
      *
-     * @param int $bucket_id 登録先のバケツID
+     * @param Frame $frame
      * @param Collection $input_values フォーム登録データ
      * @param Forms $form
-     * @param Frame $frame
      */
-    private function toFaq(int $bucket_id, Collection $input_values, Forms $form, Frame $frame)
+    private function toFaq(Frame $frame, Collection $input_values, Forms $form)
     {
         $this->replicateAndReplaceFileValue($input_values, $frame);
 
-        $faqs_id = Faqs::where('bucket_id', $bucket_id)->first()->id;
+        $faqs_id = Faqs::where('bucket_id', $frame->bucket_id)->first()->id;
 
         $max_display_sequence = FaqsPosts::where('faqs_id', $faqs_id)->max('display_sequence');
         $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
