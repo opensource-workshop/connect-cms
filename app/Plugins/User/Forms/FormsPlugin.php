@@ -3555,39 +3555,50 @@ ORDER BY forms_inputs_id, forms_columns_id
      *
      * @param Collection $input_values フォーム登録データ
      * @param Frame $frame
-     * @return Collection
      */
-    private function replicateAndReplaceFileValue(Collection $input_values, Frame $frame): Collection
+    private function replicateAndReplaceFileValue(Collection $input_values, Frame $frame): void
     {
-        foreach ($input_values as &$value) {
-            if ($value->column_type === FormColumnType::file) {
-                // ファイル型
-                $upload = Uploads::find($value->value);
-
-                if ($upload) {
-                    // データの複製
-                    $new_upload = $upload->replicate();
-                    // plugin_name = 'forms'、check_method = 'canDownload' は元の値を維持する
-                    $new_upload->page_id        = $frame->page_id;
-                    $new_upload->temporary_flag = 0;
-                    $new_upload->download_count = 0;
-                    $new_upload->play_count     = 0;
-                    $new_upload->save();
-
-                    // 複製したファイルのIDに置き換える
-                    $value->value = $new_upload->id;
-
-                    // ファイルの複製
-                    $source_file_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension;
-                    $destination_file_path = $this->getDirectory($new_upload->id) . '/' . $new_upload->id . '.' . $new_upload->extension;
-                    if (Storage::exists($source_file_path)) {
-                        Storage::copy($source_file_path, $destination_file_path);
-                    }
-                }
+        foreach ($input_values as $value) {
+            if ($value->column_type !== FormColumnType::file) {
+                continue;
             }
+            $upload = Uploads::find($value->value);
+            $new_upload = $upload ? $this->replicateUploadForTarget($upload, $frame) : null;  // 失敗時は null
+
+            $value->value = $new_upload ? $new_upload->id : null;
+        }
+    }
+
+    /**
+     * フォームの添付ファイルを、連携先のプラグイン・ページ用に複製する
+     *
+     * @return Uploads|null 複製できなかった場合は null
+     */
+    private function replicateUploadForTarget(Uploads $upload, Frame $frame): ?Uploads
+    {
+        // 実ファイルがなければ、レコードも作らずに失敗とする
+        $source_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension;
+        if (!Storage::exists($source_path)) {
+            Log::warning('FormsPlugin: 連携元ファイルの実体がありません。', ['upload_id' => $upload->id]);
+            return null;
         }
 
-        return $input_values;
+        // データの複製
+        $new_upload = $upload->replicate();
+        // plugin_name = 'forms'、check_method = 'canDownload' は元の値を維持する
+        $new_upload->page_id        = $frame->page_id;
+        $new_upload->temporary_flag = 0;
+        $new_upload->download_count = 0;
+        $new_upload->play_count     = 0;
+        $new_upload->save();
+
+        // 実ファイルを、複製したレコードの ID で保存する
+        Storage::copy(
+            $source_path,
+            $this->getDirectory($new_upload->id) . '/' . $new_upload->id . '.' . $new_upload->extension
+        );
+
+        return $new_upload;
     }
 
     /**
