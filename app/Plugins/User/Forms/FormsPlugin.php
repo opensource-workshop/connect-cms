@@ -3435,17 +3435,6 @@ ORDER BY forms_inputs_id, forms_columns_id
     }
 
     /**
-     * バケツIDからフレームを取得する
-     *
-     * @param int $bucket_id
-     * @return Frame
-     */
-    private function getFrameByBucketId(int $bucket_id): ?Frame
-    {
-        return Frame::where('bucket_id', $bucket_id)->first();
-    }
-
-    /**
      * 本文用にフォーム登録データを取得する
      *
      * @param int $form_inputs_id
