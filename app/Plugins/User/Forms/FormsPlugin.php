@@ -3638,7 +3638,8 @@ ORDER BY forms_inputs_id, forms_columns_id
                 // ファイル型
                 $new_upload = Uploads::find($value->value);
                 if ($new_upload) {
-                    $body .= '<a href="/file/' . $new_upload->id . '" target="_blank" rel="noopener">' . htmlspecialchars($new_upload->client_original_name) . '</a>';
+                    $body .= '<a href="' . url('/') . '/file/' . $new_upload->id . '" target="_blank" rel="noopener">'
+                            . htmlspecialchars($new_upload->client_original_name) . '</a>';
                 } else {
                     $body .= '（ファイルが見つかりません）';
                     Log::error('FormPlugin: 連携時にファイルが見つからなかった。（upload_id=' . $value->value . '）');
