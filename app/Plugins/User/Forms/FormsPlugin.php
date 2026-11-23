@@ -91,6 +91,9 @@ class FormsPlugin extends UserPluginBase
      */
     public $use_getpost = false;
 
+    /** @var string[] 連携中にコピーしたファイルのパス（失敗時に削除する） */
+    private $replicated_file_paths = [];
+
     /* コアから呼び出す関数 */
 
     /**
@@ -3393,27 +3396,38 @@ ORDER BY forms_inputs_id, forms_columns_id
             return;
         }
 
-        // 登録処理
-        foreach ($this->fetchTargetFrames(explode(',', $form->target_frame_ids)) as $frame) {
-            // バケツ未指定は連携できない
-            if (!$frame->bucket_id) {
-                Log::debug('bucket_id is null.');
-                continue;
-            }
+        $this->replicated_file_paths = [];
 
-            switch ($frame->plugin_name) {
-                case PluginName::getPluginName(PluginName::bbses):
-                    $this->toBbs($frame, $this->fetchFormInputValues($form_inputs_id), $form);
-                    break;
-                case PluginName::getPluginName(PluginName::blogs):
-                    $this->toBlog($frame, $this->fetchFormInputValues($form_inputs_id), $form);
-                    break;
-                case PluginName::getPluginName(PluginName::faqs):
-                    $this->toFaq($frame, $this->fetchFormInputValues($form_inputs_id), $form);
-                    break;
-                default:
-                    break;
+        DB::beginTransaction();
+        try {
+            // 登録処理
+            foreach ($this->fetchTargetFrames(explode(',', $form->target_frame_ids)) as $frame) {
+                // バケツ未指定は連携できない
+                if (!$frame->bucket_id) {
+                    Log::debug('bucket_id is null.');
+                    continue;
+                }
+
+                switch ($frame->plugin_name) {
+                    case PluginName::getPluginName(PluginName::bbses):
+                        $this->toBbs($frame, $this->fetchFormInputValues($form_inputs_id), $form);
+                        break;
+                    case PluginName::getPluginName(PluginName::blogs):
+                        $this->toBlog($frame, $this->fetchFormInputValues($form_inputs_id), $form);
+                        break;
+                    case PluginName::getPluginName(PluginName::faqs):
+                        $this->toFaq($frame, $this->fetchFormInputValues($form_inputs_id), $form);
+                        break;
+                    default:
+                        break;
+                }
             }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // DB のロールバックでは消えないため、コピーしたファイルを削除する
+            Storage::delete($this->replicated_file_paths);
+            throw $e;
         }
 
         $request->flash_message = '登録内容を他プラグインへ連携しました。連携した情報は連携先で一時保存状態になっています。登録内容を確認して公開してください。';
@@ -3593,10 +3607,11 @@ ORDER BY forms_inputs_id, forms_columns_id
         $new_upload->save();
 
         // 実ファイルを、複製したレコードの ID で保存する
-        Storage::copy(
-            $source_path,
-            $this->getDirectory($new_upload->id) . '/' . $new_upload->id . '.' . $new_upload->extension
-        );
+        $destination_path = $this->getDirectory($new_upload->id) . '/' . $new_upload->id . '.' . $new_upload->extension;
+        Storage::copy($source_path, $destination_path);
+
+        // コピーしたらファイルのパスを記録する
+        $this->replicated_file_paths[] = $destination_path;
 
         return $new_upload;
     }
