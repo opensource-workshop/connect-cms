@@ -130,7 +130,7 @@ $base_layout_page->layout = $base_layout;
                 })
                 {{-- 移動先選択ボタン --}}
                 $('input:radio[name="level_move_modal_page_id"]').on('change', function() {
-                    if ($(this).val() === '0' || $(this).is('[data-missing-parent]')) {
+                    if ($(this).val() === '0') {
                         $('#move_position_before, #move_position_after').prop('disabled', true);
                         $('#move_position_child').prop('checked', true);
                     } else {
@@ -354,7 +354,7 @@ $base_layout_page->layout = $base_layout;
                                 data-page-id="{{$page_item->id}}"
                                 data-parent-id="{{$page_item->parent_id ?? ''}}"
                                 data-search="{{$page_path}} {{$page_item->permanent_link}}">
-                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-page-name="{{$page_item->page_name}}" @if ($orphan_pages->has($page_item->id)) data-missing-parent @endif name="level_move_modal_page_id" class="custom-control-input">
+                                <input type="radio" value="{{$page_item->id}}" id="level_move_modal_page_{{$page_item->id}}" data-page-name="{{$page_item->page_name}}" name="level_move_modal_page_id" class="custom-control-input">
                                 @for ($i = 0; $i < $page_item->depth; $i++)
                                     @if ($i+1==$page_item->depth) <span class="px-3"></span> @else <span class="px-2"></span>@endif
                                 @endfor

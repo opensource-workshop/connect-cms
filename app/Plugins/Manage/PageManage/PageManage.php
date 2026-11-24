@@ -25,6 +25,7 @@ use App\Utilities\Csv\CsvUtils;
 use App\Utilities\String\StringUtils;
 use App\Utilities\Url\UrlUtils;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -116,8 +117,10 @@ class PageManage extends ManagePluginBase
             return $page->parent_id !== null && !$pages_by_id->has($page->parent_id);
         })->keyBy('id');
 
-        // 移動先用にコピー
-        $pages_select = $pages;
+        $rooted_page_ids = $this->getRootedPageIds($pages);
+        $pages_select = $pages->filter(function ($page) use ($rooted_page_ids) {
+            return isset($rooted_page_ids[$page->id]);
+        });
 
         // テーマの取得
         $themes = $this->getThemes();
@@ -492,7 +495,8 @@ class PageManage extends ManagePluginBase
                     return;
                 }
 
-                if ($move_position !== 'child' && $destination_page->parent_id !== null && !$destination_page->parent()->exists()) {
+                $rooted_page_ids = $this->getRootedPageIds(Page::get(['id', 'parent_id']));
+                if (!isset($rooted_page_ids[$destination_page->id])) {
                     return;
                 }
 
@@ -518,6 +522,26 @@ class PageManage extends ManagePluginBase
     private function lockPageTree(): void
     {
         DB::table('pages')->orderBy('id')->lockForUpdate()->pluck('id');
+    }
+
+    /**
+     * 最上位から親子関係をたどれるページIDを取得する。
+     */
+    private function getRootedPageIds(Collection $pages): array
+    {
+        $children_by_parent = $pages->groupBy('parent_id');
+        $pending = $children_by_parent->get('', collect())->pluck('id')->all();
+        $rooted_page_ids = [];
+
+        for ($index = 0; $index < count($pending); $index++) {
+            $page_id = $pending[$index];
+            $rooted_page_ids[$page_id] = true;
+            foreach ($children_by_parent->get($page_id, []) as $child) {
+                $pending[] = $child->id;
+            }
+        }
+
+        return $rooted_page_ids;
     }
 
     /**

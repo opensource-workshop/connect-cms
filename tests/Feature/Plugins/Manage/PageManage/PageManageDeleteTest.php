@@ -69,17 +69,23 @@ class PageManageDeleteTest extends TestCase
     }
 
     /**
-     * 親を失ったページの対象行へのリンクと移動操作を表示する。
+     * 親を失ったページの移動操作は残し、その配下も含めて移動先から除外する。
      */
-    public function testPageListOffersRecoveryLinks(): void
+    public function testPageListOffersRecoveryWithoutInvalidDestinations(): void
     {
         [$user, $parent, $child] = $this->createPageTree();
+        $descendant = Page::factory()->make(['permanent_link' => '/orphan-descendant']);
+        $descendant->appendToNode($child)->save();
+        $root = Page::factory()->create(['permanent_link' => '/valid-destination']);
         Page::whereKey($parent->id)->delete();
 
         $this->actingAs($user)->get('/manage/page')
             ->assertOk()
             ->assertSee('href="#' . $child->id . '"', false)
-            ->assertSee('id="move_level_' . $child->id . '"', false);
+            ->assertSee('id="move_level_' . $child->id . '"', false)
+            ->assertSee('id="level_move_modal_page_' . $root->id . '"', false)
+            ->assertDontSee('id="level_move_modal_page_' . $child->id . '"', false)
+            ->assertDontSee('id="level_move_modal_page_' . $descendant->id . '"', false);
     }
 
     /**

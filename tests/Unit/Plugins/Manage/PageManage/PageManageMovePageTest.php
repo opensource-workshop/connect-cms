@@ -109,6 +109,26 @@ class PageManageMovePageTest extends TestCase
     }
 
     /**
+     * 最上位につながらないページやその子孫を基準にすると、どの移動位置でも元の階層を維持する。
+     */
+    public function testMovePageRejectsDestinationsDisconnectedFromRoot(): void
+    {
+        $parent = Page::factory()->create(['permanent_link' => '/deleted-parent']);
+        $orphan = $this->createChildPage($parent, 'orphan', '/orphan');
+        $descendant = $this->createChildPage($orphan, 'descendant', '/descendant');
+        $source_parent = Page::factory()->create(['permanent_link' => '/source-parent']);
+        $source = $this->createChildPage($source_parent, 'source', '/source');
+        Page::whereKey($parent->id)->delete();
+
+        foreach ([$orphan, $descendant] as $destination) {
+            foreach (['child', 'before', 'after'] as $position) {
+                $this->movePage($source, $destination, $position);
+                $this->assertSame($source_parent->id, $source->fresh()->parent_id);
+            }
+        }
+    }
+
+    /**
      * 子ページを最上位ページの直前に移動して独立させられる。
      */
     public function testMoveChildBeforeRootPage(): void
