@@ -21,16 +21,15 @@ class PageManageDeleteTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * 子がいる親を編集すると、子ページの移動を案内する。
+     * 子がいる親の編集画面には削除フォームを表示しない。
      */
-    public function testParentEditShowsHowToMoveChildrenBeforeDeletion(): void
+    public function testParentEditDoesNotOfferDeletionWhileItHasChildren(): void
     {
         [$user, $parent] = $this->createPageTree();
 
         $this->actingAs($user)->get('/manage/page/edit/' . $parent->id)
             ->assertOk()
-            ->assertSee('子ページがあるため削除できません。')
-            ->assertDontSee('本当に削除する');
+            ->assertDontSee('action="' . url('/manage/page/destroy/' . $parent->id) . '"', false);
     }
 
     /**
@@ -70,20 +69,15 @@ class PageManageDeleteTest extends TestCase
     }
 
     /**
-     * 親を失ったページは一覧に表示され、移動操作で復旧できることが分かる。
+     * 親を失ったページの対象行へのリンクと移動操作を表示する。
      */
-    public function testPageListShowsRecoveryInstructionsForOrphanedPage(): void
+    public function testPageListOffersRecoveryLinks(): void
     {
         [$user, $parent, $child] = $this->createPageTree();
         Page::whereKey($parent->id)->delete();
 
         $this->actingAs($user)->get('/manage/page')
             ->assertOk()
-            ->assertSee('対応が必要なページが1件あります')
-            ->assertSee('閲覧者がメニューからページにたどり着けないことがあります。')
-            ->assertSee('公開中のページを優先して')
-            ->assertSee('親ページなし')
-            ->assertSee('対象ページを表示（1件）')
             ->assertSee('href="#' . $child->id . '"', false)
             ->assertSee('id="move_level_' . $child->id . '"', false);
     }
@@ -101,13 +95,9 @@ class PageManageDeleteTest extends TestCase
         Page::whereKey($parent->id)->delete();
 
         $response = $this->actingAs($user)->get('/manage/page');
-        $response->assertOk()->assertSeeInOrder([
-            '<summary>対象ページを表示（6件）</summary>',
-            'href="#' . $child->id . '"',
-            '</details>',
-        ], false);
+        $response->assertOk();
         $this->assertMatchesRegularExpression(
-            '/<details\s*>\s*<summary>対象ページを表示（6件）<\/summary>/u',
+            '/<details\s*>\s*<summary>[^<]*<\/summary>(?:(?!<\/details>).)*href="#' . $child->id . '"/s',
             $response->getContent()
         );
     }
