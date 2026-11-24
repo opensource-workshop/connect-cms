@@ -89,6 +89,61 @@ class PageManageMovePageTest extends TestCase
     }
 
     /**
+     * 親を失ったページを最上位へ移動しても、子孫と固定リンクを維持できる。
+     */
+    public function testMoveOrphanPageToRoot(): void
+    {
+        $parent = Page::factory()->create(['page_name' => 'parent', 'permanent_link' => '/parent']);
+        $source = $this->createChildPage($parent, 'source', '/source');
+        $child = $this->createChildPage($source, 'child', '/child');
+        // 旧バージョンで親ページだけが削除されたデータを再現する。
+        Page::whereKey($parent->id)->delete();
+
+        (new PageManage())->movePage(new Request(['destination_id' => '0']), $source->id);
+
+        $this->assertNull($source->fresh()->parent_id);
+        $this->assertSame('/source', $source->fresh()->permanent_link);
+        $this->assertSame(0, (int) $source->fresh()->depth);
+        $this->assertSame($source->id, $child->fresh()->parent_id);
+        $this->assertSame(1, (int) $child->fresh()->depth);
+    }
+
+    /**
+     * 最上位につながらないページやその子孫を基準にすると、どの移動位置でも元の階層を維持する。
+     */
+    public function testMovePageRejectsDestinationsDisconnectedFromRoot(): void
+    {
+        $parent = Page::factory()->create(['permanent_link' => '/deleted-parent']);
+        $orphan = $this->createChildPage($parent, 'orphan', '/orphan');
+        $descendant = $this->createChildPage($orphan, 'descendant', '/descendant');
+        $source_parent = Page::factory()->create(['permanent_link' => '/source-parent']);
+        $source = $this->createChildPage($source_parent, 'source', '/source');
+        Page::whereKey($parent->id)->delete();
+
+        foreach ([$orphan, $descendant] as $destination) {
+            foreach (['child', 'before', 'after'] as $position) {
+                $this->movePage($source, $destination, $position);
+                $this->assertSame($source_parent->id, $source->fresh()->parent_id);
+            }
+        }
+    }
+
+    /**
+     * 子ページを最上位ページの直前に移動して独立させられる。
+     */
+    public function testMoveChildBeforeRootPage(): void
+    {
+        $parent = Page::factory()->create(['page_name' => 'parent', 'permanent_link' => '/parent']);
+        $destination = Page::factory()->create(['page_name' => 'destination', 'permanent_link' => '/destination']);
+        $source = $this->createChildPage($parent, 'source', '/source');
+
+        $this->movePage($source, $destination, 'before');
+
+        $this->assertNull($source->fresh()->parent_id);
+        $this->assertSame($destination->id, $source->fresh()->getNextSibling()->id);
+    }
+
+    /**
      * 指定した親ページの末尾にテスト用ページを作成する。
      */
     private function createChildPage(Page $parent, string $page_name, string $permanent_link): Page
