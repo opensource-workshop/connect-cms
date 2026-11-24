@@ -91,6 +91,9 @@ class FormsPlugin extends UserPluginBase
      */
     public $use_getpost = false;
 
+    /** @var string[] 連携中にコピーしたファイルのパス（失敗時に削除する） */
+    private $replicated_file_paths = [];
+
     /* コアから呼び出す関数 */
 
     /**
@@ -3397,27 +3400,38 @@ ORDER BY forms_inputs_id, forms_columns_id
             return;
         }
 
-        // 登録処理
-        foreach ($this->fetchTargetFrames(explode(',', $form->target_frame_ids)) as $frame) {
-            // バケツ未指定は連携できない
-            if (!$frame->bucket_id) {
-                Log::debug('bucket_id is null.');
-                continue;
-            }
+        $this->replicated_file_paths = [];
 
-            switch ($frame->plugin_name) {
-                case PluginName::getPluginName(PluginName::bbses):
-                    $this->toBbs($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form);
-                    break;
-                case PluginName::getPluginName(PluginName::blogs):
-                    $this->toBlog($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form);
-                    break;
-                case PluginName::getPluginName(PluginName::faqs):
-                    $this->toFaq($frame->bucket_id, $this->fetchFormInputValues($form_inputs_id), $form);
-                    break;
-                default:
-                    break;
+        DB::beginTransaction();
+        try {
+            // 登録処理
+            foreach ($this->fetchTargetFrames(explode(',', $form->target_frame_ids)) as $frame) {
+                // バケツ未指定は連携できない
+                if (!$frame->bucket_id) {
+                    Log::debug('bucket_id is null.');
+                    continue;
+                }
+
+                switch ($frame->plugin_name) {
+                    case PluginName::getPluginName(PluginName::bbses):
+                        $this->toBbs($frame, $this->fetchFormInputValues($form_inputs_id), $form);
+                        break;
+                    case PluginName::getPluginName(PluginName::blogs):
+                        $this->toBlog($frame, $this->fetchFormInputValues($form_inputs_id), $form);
+                        break;
+                    case PluginName::getPluginName(PluginName::faqs):
+                        $this->toFaq($frame, $this->fetchFormInputValues($form_inputs_id), $form);
+                        break;
+                    default:
+                        break;
+                }
             }
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // DB のロールバックでは消えないため、コピーしたファイルを削除する
+            Storage::delete($this->replicated_file_paths);
+            throw $e;
         }
 
         $request->flash_message = '登録内容を他プラグインへ連携しました。連携した情報は連携先で一時保存状態になっています。登録内容を確認して公開してください。';
@@ -3431,22 +3445,26 @@ ORDER BY forms_inputs_id, forms_columns_id
      */
     private function fetchTargetFrames(array $target_frame_ids): Collection
     {
-        return Frame::select('plugin_name', 'bucket_id')
-            ->whereIn('id', $target_frame_ids)
+        return Frame::whereIn('id', $target_frame_ids)
             ->whereIn('plugin_name', FormsRegisterTargetPlugin::getKeysPluginsCanSpecifiedFrames())
-            ->groupBy('plugin_name', 'bucket_id')
-            ->get();
+            ->orderBy('id')
+            ->get()
+            // 同じバケツには1回だけ連携する（二重投稿の防止）
+            ->unique(function (Frame $frame) {
+                return $frame->plugin_name . ':' . $frame->bucket_id;
+            })
+            ->values();
     }
 
     /**
      * 本文用にフォーム登録データを取得する
      *
-     * @param array $target_frame_ids
+     * @param int $form_inputs_id
      * @return Collection
      */
     private function fetchFormInputValues(int $form_inputs_id): Collection
     {
-        $input_values = FormsInputs::select('forms_columns.column_name', 'forms_input_cols.value')
+        $input_values = FormsInputs::select('forms_columns.column_name', 'forms_columns.column_type', 'forms_input_cols.value')
             ->leftJoin('forms_input_cols', 'forms_inputs.id', '=', 'forms_input_cols.forms_inputs_id')
             ->leftJoin('forms_columns', 'forms_input_cols.forms_columns_id', '=', 'forms_columns.id')
             ->where('forms_inputs.id', $form_inputs_id)
@@ -3460,13 +3478,15 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * フォーム登録データを掲示板に登録する
      *
-     * @param int $bucket_id 登録先のバケツID
+     * @param Frame $frame
      * @param Collection $input_values フォーム登録データ
      * @param Forms $form
      */
-    private function toBbs(int $bucket_id, Collection $input_values, Forms $form)
+    private function toBbs(Frame $frame, Collection $input_values, Forms $form)
     {
-        $bbs_id = Bbs::where('bucket_id', $bucket_id)->first()->id;
+        $this->replicateAndReplaceFileValue($input_values, $frame);
+
+        $bbs_id = Bbs::where('bucket_id', $frame->bucket_id)->first()->id;
 
         $post = BbsPost::create([
             'bbs_id' => $bbs_id,
@@ -3483,13 +3503,15 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * フォーム登録データをブログに登録する
      *
-     * @param int $bucket_id 登録先のバケツID
+     * @param Frame $frame
      * @param Collection $input_values フォーム登録データ
      * @param Forms $form
      */
-    private function toBlog(int $bucket_id, Collection $input_values, Forms $form)
+    private function toBlog(Frame $frame, Collection $input_values, Forms $form)
     {
-        $blogs_id = Blogs::where('bucket_id', $bucket_id)->first()->id;
+        $this->replicateAndReplaceFileValue($input_values, $frame);
+
+        $blogs_id = Blogs::where('bucket_id', $frame->bucket_id)->first()->id;
 
         $post = BlogsPosts::create([
             'blogs_id' => $blogs_id,
@@ -3508,13 +3530,15 @@ ORDER BY forms_inputs_id, forms_columns_id
     /**
      * フォーム登録データをFAQに登録する
      *
-     * @param int $bucket_id 登録先のバケツID
+     * @param Frame $frame
      * @param Collection $input_values フォーム登録データ
      * @param Forms $form
      */
-    private function toFaq(int $bucket_id, Collection $input_values, Forms $form)
+    private function toFaq(Frame $frame, Collection $input_values, Forms $form)
     {
-        $faqs_id = Faqs::where('bucket_id', $bucket_id)->first()->id;
+        $this->replicateAndReplaceFileValue($input_values, $frame);
+
+        $faqs_id = Faqs::where('bucket_id', $frame->bucket_id)->first()->id;
 
         $max_display_sequence = FaqsPosts::where('faqs_id', $faqs_id)->max('display_sequence');
         $display_sequence = empty($max_display_sequence) ? 1 : $max_display_sequence + 1;
@@ -3545,6 +3569,58 @@ ORDER BY forms_inputs_id, forms_columns_id
     }
 
     /**
+     * ファイル項目系は複製して値を置き換える
+     *
+     * @param Collection $input_values フォーム登録データ
+     * @param Frame $frame
+     */
+    private function replicateAndReplaceFileValue(Collection $input_values, Frame $frame): void
+    {
+        foreach ($input_values as $value) {
+            if ($value->column_type !== FormColumnType::file) {
+                continue;
+            }
+            $upload = Uploads::find($value->value);
+            $new_upload = $upload ? $this->replicateUploadForTarget($upload, $frame) : null;  // 失敗時は null
+
+            $value->value = $new_upload ? $new_upload->id : null;
+        }
+    }
+
+    /**
+     * フォームの添付ファイルを、連携先のプラグイン・ページ用に複製する
+     *
+     * @return Uploads|null 複製できなかった場合は null
+     */
+    private function replicateUploadForTarget(Uploads $upload, Frame $frame): ?Uploads
+    {
+        // 実ファイルがなければ、レコードも作らずに失敗とする
+        $source_path = $this->getDirectory($upload->id) . '/' . $upload->id . '.' . $upload->extension;
+        if (!Storage::exists($source_path)) {
+            Log::warning('FormsPlugin: 連携元ファイルの実体がありません。', ['upload_id' => $upload->id]);
+            return null;
+        }
+
+        // データの複製
+        $new_upload = $upload->replicate();
+        // plugin_name = 'forms'、check_method = 'canDownload' は元の値を維持する
+        $new_upload->page_id        = $frame->page_id;
+        $new_upload->temporary_flag = 0;
+        $new_upload->download_count = 0;
+        $new_upload->play_count     = 0;
+        $new_upload->save();
+
+        // 実ファイルを、複製したレコードの ID で保存する
+        $destination_path = $this->getDirectory($new_upload->id) . '/' . $new_upload->id . '.' . $new_upload->extension;
+        Storage::copy($source_path, $destination_path);
+
+        // コピーしたらファイルのパスを記録する
+        $this->replicated_file_paths[] = $destination_path;
+
+        return $new_upload;
+    }
+
+    /**
      * 他プラグイン連携時の本文を取得する
      *
      * @param Collection $input_values フォーム登録データ
@@ -3559,7 +3635,23 @@ ORDER BY forms_inputs_id, forms_columns_id
             $body .= htmlspecialchars($value->column_name);
             $body .= '</h1>';
             $body .= '<p>';
-            $body .= htmlspecialchars($value->value);
+            if ($value->column_type === FormColumnType::textarea) {
+                // テキストエリア型
+                $body .= nl2br(htmlspecialchars($value->value));
+            } elseif ($value->column_type === FormColumnType::file) {
+                // ファイル型
+                $new_upload = Uploads::find($value->value);
+                if ($new_upload) {
+                    $body .= '<a href="' . url('/') . '/file/' . $new_upload->id . '" target="_blank" rel="noopener">'
+                            . htmlspecialchars($new_upload->client_original_name) . '</a>';
+                } else {
+                    $body .= '（ファイルが見つかりません）';
+                    Log::error('FormPlugin: 連携時にファイルが見つからなかった。（upload_id=' . $value->value . '）');
+                }
+            } else {
+                // その他の型
+                $body .= htmlspecialchars($value->value);
+            }
             $body .= '</p>';
         }
 
