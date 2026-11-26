@@ -369,6 +369,32 @@ use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
         </div>
     </div>
 
+    @php
+        $selected_category_ids = (array) (session()->hasOldInput()
+            ? old('target_category_ids', [])
+            : $whatsnew->target_category_ids);
+    @endphp
+    <fieldset class="form-group">
+        <div class="row">
+            <legend class="{{$frame->getSettingLabelClass()}}">出力するカテゴリ</legend>
+            <div class="{{$frame->getSettingInputClass()}}">
+                @foreach ($categories as $category)
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" name="target_category_ids[]" value="{{ $category->id }}"
+                            class="custom-control-input" id="target_category_{{ $frame_id }}_{{ $category->id }}"
+                            @if (in_array($category->id, $selected_category_ids)) checked @endif>
+                        <label class="custom-control-label" for="target_category_{{ $frame_id }}_{{ $category->id }}">{{ $category->category }}</label>
+                    </div>
+                @endforeach
+                <small class="form-text text-muted">選択しない場合は、すべてのカテゴリとカテゴリ未設定の記事を表示します。</small>
+                @include('plugins.common.errors_inline', ['name' => 'target_category_ids', 'class' => 'float-none'])
+                @foreach ($errors->get('target_category_ids.*') as $messages)
+                    <div class="text-danger">{{ $messages[0] }}</div>
+                @endforeach
+            </div>
+        </div>
+    </fieldset>
+
     {{-- フレームの選択 --}}
     <div class="form-group row">
         <label class="{{$frame->getSettingLabelClass()}}">フレームの選択</label>

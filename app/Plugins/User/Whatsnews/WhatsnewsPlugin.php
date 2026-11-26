@@ -8,8 +8,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
+use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Core\Configs;
@@ -129,12 +131,17 @@ class WhatsnewsPlugin extends UserPluginBase
                      'whatsnews.read_more_btn_type',
                      'whatsnews.read_more_btn_transparent_flag',
                      'whatsnews.target_plugins',
+                     'whatsnews.target_category_ids',
                      'whatsnews.frame_select',
                      'whatsnews.target_frame_ids'
                  )
                  ->leftJoin('whatsnews', 'whatsnews.bucket_id', '=', 'frames.bucket_id')
                  ->where('frames.id', $frame_id)
                  ->first();
+        if ($this->whatsnews_frame) {
+            $this->whatsnews_frame->target_category_ids = json_decode($this->whatsnews_frame->target_category_ids ?? '[]', true);
+        }
+
         return $this->whatsnews_frame;
     }
 
@@ -186,15 +193,16 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         // ターゲットプラグインをループ
-        $target_plugins = explode(',', $whatsnews_frame->target_plugins);
+        $target_plugins = array_filter(explode(',', $whatsnews_frame->target_plugins));
 
         // ターゲットが指定されていない場合は空を返す。
-        if (empty(array_filter($target_plugins))) {
+        if (empty($target_plugins)) {
             return [null, null, null];
         }
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
+        $category_support = [];
         $link_pattern = array();
         $link_base = array();
         foreach ($target_plugins as $target_plugin) {
@@ -205,10 +213,11 @@ class WhatsnewsPlugin extends UserPluginBase
                 return $this->viewError("500_inframe", null, 'ファイル Not found.<br />' . $file_path);
             }
 
-            list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
+            [$union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin], $category_support[$target_plugin]] =
+                $class_name::getWhatsnewArgs() + [3 => false];
         }
 
-        $whatsnews = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)->get();
+        $whatsnews = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls, $category_support, $method === 'rss')->get();
         // Log::debug(DB::getQueryLog());
         // Log::debug($whatsnews);
 
@@ -217,19 +226,6 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnew->post_title = strip_tags($whatsnew->post_title);
             return $whatsnew;
         });
-
-        // 取得後の絞り込み
-
-        // 重要なもののみ
-        if ($whatsnews_frame->important == 'important_only') {
-            // $union_sql->where('important', 1);
-            $whatsnews = $whatsnews->where('important', 1);
-        }
-        // 重要なものを除外
-        if ($whatsnews_frame->important == 'not_important') {
-            // $union_sql->whereNull('important');
-            $whatsnews = $whatsnews->where('important', null);
-        }
 
         // 新着の「もっと見る」処理判定用に総件数を保持
         $this->whatsnews_total_count = $whatsnews->count();
@@ -243,7 +239,7 @@ class WhatsnewsPlugin extends UserPluginBase
             // 「表示件数」で制限
             // $whatsnews_sql->limit($whatsnews_frame->count);
             $whatsnews = $whatsnews->slice(0, $whatsnews_frame->count);
-        } else {
+        } elseif (empty($whatsnews_frame->target_category_ids)) {
             // 「表示日数」で制限
             // $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
             $whatsnews = $whatsnews->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
@@ -254,7 +250,7 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews = $this->addWhatsnewsValues($whatsnews, $post_detail_length);
 
         // 一旦オブジェクト変数へ。（Singleton のため。フレーム表示確認でコアが使用する）
-        $this->whatsnews_results = array($whatsnews, $link_pattern, $link_base);
+        $this->whatsnews_results = [$whatsnews, $link_pattern, $link_base];
 
         return $this->whatsnews_results;
     }
@@ -339,8 +335,10 @@ class WhatsnewsPlugin extends UserPluginBase
         return html_entity_decode(strip_tags($value ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
-    private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls)
+    private function buildQueryGetWhatsnews($whatsnews_frame, $union_sqls, array $category_support, bool $for_rss = false)
     {
+        $category_ids = $whatsnews_frame->target_category_ids;
+
         // ベースの新着DUAL（ダミーテーブル）
         $whatsnews_sql = DB::table('whatsnews_dual')
             ->select(
@@ -358,8 +356,22 @@ class WhatsnewsPlugin extends UserPluginBase
             )
             ->leftJoin('categories', 'categories.id', '=', 'whatsnews_dual.categories_id');
 
+        if ($category_ids) {
+            $whatsnews_sql->whereRaw('1 = 0');
+        }
+
         // 各プラグインのSQLにwhere条件を付加してUNION
-        foreach ($union_sqls as $union_sql) {
+        foreach ($union_sqls as $plugin_name => $union_sql) {
+            if ($category_ids) {
+                if (!$category_support[$plugin_name]) {
+                    continue;
+                }
+
+                $union_sql->whereIn('categories.id', $category_ids)
+                    ->whereNull('categories.target')
+                    ->whereNull('categories.deleted_at');
+            }
+
             // （where条件）フレーム選択
             if ($whatsnews_frame->frame_select == 1) {
                 $union_sql->whereIn('frames.id', explode(',', $whatsnews_frame->target_frame_ids));
@@ -373,12 +385,36 @@ class WhatsnewsPlugin extends UserPluginBase
             $whatsnews_sql->unionAll($union_sql);
         }
 
-        if ($whatsnews_frame->important == 'top') {
+        $important = $whatsnews_frame->important;
+        $filter_by_date = $category_ids && !$for_rss && $whatsnews_frame->view_pattern != 0;
+
+        if ($filter_by_date || in_array($important, ['important_only', 'not_important'], true)) {
+            // UNION全体に条件を適用し、初期表示と追加取得で同じ結果を使う。
+            $whatsnews_sql = DB::query()->fromSub($whatsnews_sql, 'filtered_whatsnews');
+        }
+
+        if ($important === 'important_only') {
+            $whatsnews_sql->where('important', 1);
+        } elseif ($important === 'not_important') {
+            $whatsnews_sql->where(function ($query) {
+                $query->whereNull('important')->orWhere('important', 0);
+            });
+        }
+
+        if ($filter_by_date) {
+            $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
+        }
+
+        if ($important === 'top') {
             // （orderBy条件）重要記事の扱い
             $whatsnews_sql->orderBy('important', 'desc');
         }
         // （orderBy条件）デフォルトは登録日時の降順
         $whatsnews_sql->orderBy('posted_at', 'desc');
+        if ($category_ids) {
+            // 同じ投稿日時でも、初期表示と追加取得の並び順を揃える。
+            $whatsnews_sql->orderBy('plugin_name')->orderBy('post_id')->orderBy('frame_id');
+        }
 
         return $whatsnews_sql;
     }
@@ -448,10 +484,11 @@ class WhatsnewsPlugin extends UserPluginBase
             return "error";
         }
 
-        $target_plugins = explode(',', $whatsnews_frame->target_plugins);
+        $target_plugins = array_filter(explode(',', $whatsnews_frame->target_plugins));
 
         // union するSQL を各プラグインから取得。その際に使用するURL パターンとベースのURL も取得
         $union_sqls = array();
+        $category_support = [];
         $link_pattern = array();
         $link_base = array();
         /**
@@ -469,11 +506,12 @@ class WhatsnewsPlugin extends UserPluginBase
             }
 
             // 各プラグインのgetWhatsnewArgs() 関数を呼び出し。
-            list($union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin]) = $class_name::getWhatsnewArgs();
+            [$union_sqls[$target_plugin], $link_pattern[$target_plugin], $link_base[$target_plugin], $category_support[$target_plugin]] =
+                $class_name::getWhatsnewArgs() + [3 => false];
         }
 
         // クエリ取得
-        $whatsnews_query = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls);
+        $whatsnews_query = $this->buildQueryGetWhatsnews($whatsnews_frame, $union_sqls, $category_support);
         $this->whatsnews_total_count = $whatsnews_query->count();
 
         // limit/offset条件を付加
@@ -616,6 +654,7 @@ class WhatsnewsPlugin extends UserPluginBase
         return $this->view('whatsnews_edit_whatsnew', [
             'whatsnew'              => $whatsnew,
             'target_plugins_frames' => $target_plugins_frames,
+            'categories'            => Categories::whereNull('target')->orderBy('display_sequence')->orderBy('id')->get(['id', 'category']),
         ]);
     }
 
@@ -628,6 +667,11 @@ class WhatsnewsPlugin extends UserPluginBase
         $validator = Validator::make($request->all(), [
             'whatsnew_name'                  => ['required'],
             'target_plugin'                  => ['required'],
+            'target_category_ids'            => ['sometimes', 'array'],
+            'target_category_ids.*'          => [
+                'bail', 'required', 'integer', 'min:1', 'distinct',
+                Rule::exists('categories', 'id')->whereNull('target')->whereNull('deleted_at'),
+            ],
             'count'                          => ['nullable', 'numeric'],
             'days'                           => ['nullable', 'numeric'],
             'rss_count'                      => ['nullable', 'numeric'],
@@ -641,6 +685,8 @@ class WhatsnewsPlugin extends UserPluginBase
         $validator->setAttributeNames([
             'whatsnew_name'                  => '新着情報名',
             'target_plugin'                  => '対象プラグイン',
+            'target_category_ids'            => '出力するカテゴリ',
+            'target_category_ids.*'          => '出力するカテゴリ',
             'count'                          => '表示件数',
             'days'                           => '表示日数',
             'rss_count'                      => '対象RSS件数',
@@ -714,6 +760,8 @@ class WhatsnewsPlugin extends UserPluginBase
         $whatsnews->read_more_btn_type = $request->read_more_btn_type;
         $whatsnews->read_more_btn_transparent_flag = $request->read_more_btn_transparent_flag;
         $whatsnews->target_plugins    = implode(',', $request->target_plugin);
+        $category_ids = array_values(array_map('intval', $validator->validated()['target_category_ids'] ?? []));
+        $whatsnews->target_category_ids = $category_ids ?: null;
         $whatsnews->frame_select      = intval($request->frame_select);
         $whatsnews->target_frame_ids  = empty($request->target_frame_ids) ? "": implode(',', $request->target_frame_ids);
 
