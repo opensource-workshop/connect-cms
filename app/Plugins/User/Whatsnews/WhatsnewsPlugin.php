@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 use App\Models\Common\Buckets;
 use App\Models\Common\Categories;
@@ -646,11 +645,26 @@ class WhatsnewsPlugin extends UserPluginBase
         // 選択できるフレームの一覧
         $target_plugins_frames = $this->getTargetPluginsFrames();
 
+        $category_options = Categories::whereNull('target')->orderBy('display_sequence')->orderBy('id')->pluck('category', 'id');
+        $unavailable_category_ids = array_diff($whatsnew->target_category_ids ?? [], $category_options->keys()->all());
+        $has_deleted_categories = false;
+        if ($unavailable_category_ids) {
+            $deleted_categories = Categories::onlyTrashed()->whereNull('target')
+                ->whereIn('id', $unavailable_category_ids)->pluck('category', 'id');
+            $has_deleted_categories = $deleted_categories->isNotEmpty();
+            foreach ($unavailable_category_ids as $category_id) {
+                $category_options->put($category_id, $deleted_categories->has($category_id)
+                    ? $deleted_categories[$category_id] . '（削除済み）'
+                    : '利用できないカテゴリ（ID: ' . $category_id . '）');
+            }
+        }
+
         // 表示テンプレートを呼び出す。
         return $this->view('whatsnews_edit_whatsnew', [
             'whatsnew'              => $whatsnew,
             'target_plugins_frames' => $target_plugins_frames,
-            'categories'            => Categories::whereNull('target')->orderBy('display_sequence')->orderBy('id')->get(['id', 'category']),
+            'category_options'      => $category_options,
+            'has_deleted_categories' => $has_deleted_categories,
         ]);
     }
 
@@ -659,6 +673,11 @@ class WhatsnewsPlugin extends UserPluginBase
      */
     public function saveBuckets($request, $page_id, $frame_id, $id = null)
     {
+        $whatsnews = empty($request->whatsnews_id)
+            ? new Whatsnews()
+            : Whatsnews::where('id', $request->whatsnews_id)->firstOrFail();
+        $saved_category_ids = $whatsnews->target_category_ids ?? [];
+
         // 項目のエラーチェック
         $validator = Validator::make($request->all(), [
             'whatsnew_name'                  => ['required'],
@@ -666,7 +685,12 @@ class WhatsnewsPlugin extends UserPluginBase
             'target_category_ids'            => ['sometimes', 'array'],
             'target_category_ids.*'          => [
                 'bail', 'required', 'integer', 'min:1', 'distinct',
-                Rule::exists('categories', 'id')->whereNull('target')->whereNull('deleted_at'),
+                function ($attribute, $value, $fail) use ($saved_category_ids) {
+                    if (!in_array((int) $value, $saved_category_ids, true)
+                        && !Categories::whereNull('target')->whereKey($value)->exists()) {
+                        $fail('選択された出力するカテゴリは利用できません。');
+                    }
+                },
             ],
             'count'                          => ['nullable', 'numeric'],
             'days'                           => ['nullable', 'numeric'],
@@ -702,7 +726,7 @@ class WhatsnewsPlugin extends UserPluginBase
         // 更新後のメッセージ
         $flash_message = null;
 
-        if (empty($request->whatsnews_id)) {
+        if (!$whatsnews->exists) {
             // 画面から渡ってくるwhatsnews_id が空ならバケツと設定データを新規登録
             // バケツの登録
             $bucket_id = DB::table('buckets')->insertGetId([
@@ -712,7 +736,6 @@ class WhatsnewsPlugin extends UserPluginBase
             ]);
 
             // 新着情報設定データ新規オブジェクト
-            $whatsnews = new Whatsnews();
             $whatsnews->bucket_id = $bucket_id;
 
             // Frame のBuckets を見て、Buckets が設定されていなければ、作成したものに紐づける。
@@ -727,10 +750,6 @@ class WhatsnewsPlugin extends UserPluginBase
 
             $flash_message = '新着情報設定を追加しました。';
         } else {
-            // whatsnews_id があれば、新着情報設定を更新
-            // 新着情報設定の取得
-            $whatsnews = Whatsnews::where('id', $request->whatsnews_id)->first();
-
             // 新着情報名で、Buckets名も更新する
             Buckets::where('id', $whatsnews->bucket_id)->update(['bucket_name' => $request->whatsnew_name]);
 

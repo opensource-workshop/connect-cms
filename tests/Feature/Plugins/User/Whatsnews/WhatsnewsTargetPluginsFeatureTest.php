@@ -307,13 +307,47 @@ class WhatsnewsTargetPluginsFeatureTest extends TestCase
         $deleted = json_decode($plugin->indexJson($request, $page->id, $frame->id), true);
         $this->assertSame(0, $deleted['whatsnews_total_count']);
 
-        $invalid = $plugin->saveBuckets(Request::create('/', 'POST', $settings_input), $page->id, $frame->id);
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $invalid);
-        $this->assertTrue(session('errors')->has('target_category_ids.0'));
+        $edit = $plugin->editBuckets(Request::create('/'), $page->id, $frame->id)->getData();
+        $this->assertSame('共通のお知らせ（削除済み）', $edit['category_options']->get($category->id));
+        $this->assertTrue($edit['has_deleted_categories']);
+        $this->assertSame([$category->id], $edit['whatsnew']->target_category_ids);
 
+        // 削除済みカテゴリを選択したまま表示件数を変更しても、絞り込みは維持される。
+        $settings_input['count'] = 2;
+        $plugin->saveBuckets(Request::create('/', 'POST', $settings_input), $page->id, $frame->id);
+        $this->assertSame(2, (int) $settings->refresh()->count);
+        $this->assertSame([$category->id], $settings->target_category_ids);
+        $plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+        $after_save = json_decode($plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertSame(0, $after_save['whatsnews_total_count']);
+
+        // 新規設定や別の設定では、削除済みカテゴリを新たに選べない。
+        [, $other_bucket] = $this->createPluginFrame('whatsnews');
+        $other_settings = Whatsnews::create([
+            'bucket_id' => $other_bucket->id,
+            'whatsnew_name' => '別の新着情報',
+            'target_plugins' => 'blogs',
+        ]);
+        foreach ([null, $other_settings->id] as $other_id) {
+            $invalid_input = array_replace($settings_input, ['whatsnews_id' => $other_id]);
+            $invalid = $plugin->saveBuckets(Request::create('/', 'POST', $invalid_input), $page->id, $frame->id);
+            $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $invalid);
+            $this->assertTrue(session('errors')->has('target_category_ids.0'));
+        }
+
+        DB::table('faqs_posts')->insert([
+            'faqs_id' => $faq_id,
+            'post_title' => 'カテゴリ未設定のFAQ',
+            'post_text' => '質問',
+            'posted_at' => $posted_at,
+        ]);
         unset($settings_input['target_category_ids']);
         $plugin->saveBuckets(Request::create('/', 'POST', $settings_input), $page->id, $frame->id);
         $this->assertNull($settings->refresh()->target_category_ids);
+        $plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+        $this->assertFalse($plugin->editBuckets(Request::create('/'), $page->id, $frame->id)->getData()['has_deleted_categories']);
+        $cleared = json_decode($plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertContains('カテゴリ未設定のFAQ', array_column($cleared['whatsnewses'], 'post_title'));
     }
 
     /**
