@@ -20,6 +20,7 @@ class Whatsnews extends Model
         'view_posted_name',
         'view_posted_at',
         'target_plugins',
+        'target_category_ids',
         'frame_select',
         'read_more_use_flag',
         'read_more_name',
@@ -27,6 +28,10 @@ class Whatsnews extends Model
         'read_more_btn_color_type',
         'read_more_btn_type',
         'read_more_btn_transparent_flag'
+    ];
+
+    protected $casts = [
+        'target_category_ids' => 'array',
     ];
 
     /**

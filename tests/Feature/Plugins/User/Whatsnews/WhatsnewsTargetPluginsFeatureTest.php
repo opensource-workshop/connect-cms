@@ -5,6 +5,7 @@ namespace Tests\Feature\Plugins\User\Whatsnews;
 use App\Enums\ContentOpenType;
 use App\Enums\PhotoalbumFrameConfig;
 use App\Models\Common\Buckets;
+use App\Models\Common\Categories;
 use App\Models\Common\Frame;
 use App\Models\Common\Page;
 use App\Models\Common\Uploads;
@@ -15,11 +16,15 @@ use App\Models\User\Calendars\Calendar;
 use App\Models\User\Calendars\CalendarPost;
 use App\Models\User\Photoalbums\Photoalbum;
 use App\Models\User\Photoalbums\PhotoalbumContent;
+use App\Models\User\Whatsnews\Whatsnews;
 use App\Plugins\User\Cabinets\CabinetsPlugin;
 use App\Plugins\User\Calendars\CalendarsPlugin;
 use App\Plugins\User\Photoalbums\PhotoalbumsPlugin;
 use App\Plugins\User\Whatsnews\WhatsnewTargetPluginTool;
+use App\Plugins\User\Whatsnews\WhatsnewsPlugin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -177,6 +182,172 @@ class WhatsnewsTargetPluginsFeatureTest extends TestCase
         $this->assertContains('公開写真', $post_titles);
         $this->assertNotContains('非表示アルバム', $post_titles);
         $this->assertNotContains('非表示写真', $post_titles);
+    }
+
+    /**
+     * 設定した共通カテゴリだけが、公開一覧の初期表示と追加表示に反映されること。
+     */
+    public function testSavedCommonCategoryFiltersInitialAndAdditionalWhatsnews(): void
+    {
+        [$page, $news_bucket, $frame] = $this->createPluginFrame('whatsnews');
+        $settings = Whatsnews::create([
+            'bucket_id' => $news_bucket->id,
+            'whatsnew_name' => '新着情報',
+            'target_plugins' => 'blogs,faqs,calendars',
+            'count' => 1,
+        ]);
+
+        $category = Categories::create([
+            'category' => '共通のお知らせ',
+            'classname' => 'common-notice',
+            'color' => '#000000',
+            'background_color' => '#ffffff',
+        ]);
+
+        [, $blog_bucket, $blog_frame] = $this->createPluginFrame('blogs');
+        [, $faq_bucket] = $this->createPluginFrame('faqs');
+        $blog_id = DB::table('blogs')->insertGetId(['bucket_id' => $blog_bucket->id, 'blog_name' => 'ブログ']);
+        $faq_id = DB::table('faqs')->insertGetId(['bucket_id' => $faq_bucket->id, 'faq_name' => 'FAQ', 'view_count' => 10]);
+
+        $posted_at = now()->subMinutes(2);
+        DB::table('blogs_posts')->insert([
+            ['blogs_id' => $blog_id, 'post_title' => '対象ブログ', 'important' => 0, 'post_text' => '本文', 'categories_id' => $category->id, 'posted_at' => $posted_at],
+            ['blogs_id' => $blog_id, 'post_title' => 'カテゴリ未設定', 'important' => null, 'post_text' => '本文', 'categories_id' => null, 'posted_at' => now()->subMinute()],
+        ]);
+        DB::table('faqs_posts')->insert([
+            'faqs_id' => $faq_id,
+            'post_title' => '対象FAQ',
+            'important' => 1,
+            'post_text' => '質問',
+            'categories_id' => $category->id,
+            'posted_at' => $posted_at,
+        ]);
+        $this->createCalendarPost('対象外カレンダー', 'カテゴリ未設定');
+        request()->merge(['frame_configs' => new \Illuminate\Database\Eloquent\Collection()]);
+        $plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+
+        $settings_input = $settings->refresh()->toArray() + [
+            'whatsnews_id' => $settings->id,
+            'target_plugin' => explode(',', $settings->target_plugins),
+        ];
+        $unfiltered = json_decode($plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertContains('カテゴリ未設定', array_column($unfiltered['whatsnewses'], 'post_title'));
+
+        $settings_input['target_category_ids'] = [$category->id];
+        $plugin->saveBuckets(Request::create('/', 'POST', $settings_input), $page->id, $frame->id);
+        $this->assertSame([$category->id], $settings->refresh()->target_category_ids);
+
+        $plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+        $request = Request::create('/', 'GET', [
+            'whatsnews_category_' . $frame->id => $category->id + 100,
+            'limit' => 1,
+            'offset' => 1,
+        ]);
+        $plugin->getContentsCount($frame->id);
+        $initial = $plugin->index($request, $page->id, $frame->id)->getData();
+        $additional = json_decode($plugin->indexJson($request, $page->id, $frame->id), true);
+
+        $this->assertSame(['対象ブログ'], $initial['whatsnews']->pluck('post_title')->all());
+        $this->assertSame(['対象FAQ'], array_column($additional['whatsnewses'], 'post_title'));
+        $this->assertSame(2, $additional['whatsnews_total_count']);
+
+        // カテゴリの有無にかかわらず、重要記事のみの一覧と追加取得は同じ条件で絞り込まれる。
+        foreach ([[$category->id], null] as $category_ids) {
+            $settings->target_category_ids = $category_ids;
+            $settings->important = 'important_only';
+            $settings->save();
+
+            $important_plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+            $first_page = Request::create('/', 'GET', ['limit' => 1]);
+            $important_initial = $important_plugin->index($first_page, $page->id, $frame->id)->getData();
+            $important_json = json_decode($important_plugin->indexJson($first_page, $page->id, $frame->id), true);
+            $this->assertSame(['対象FAQ'], $important_initial['whatsnews']->pluck('post_title')->all());
+            $this->assertSame(['対象FAQ'], array_column($important_json['whatsnewses'], 'post_title'));
+            $this->assertSame(1, $important_json['whatsnews_total_count']);
+        }
+
+        $settings->target_category_ids = [$category->id];
+        $settings->important = 'not_important';
+        $settings->save();
+        $regular_plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+        $regular_json = json_decode($regular_plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertSame(['対象ブログ'], array_column($regular_json['whatsnewses'], 'post_title'));
+
+        $settings->important = null;
+        $settings->view_pattern = 1;
+        $settings->days = 1;
+
+        // 表示日数より古い記事は、カテゴリの有無にかかわらず初期表示と追加表示から除かれる。
+        DB::table('faqs_posts')->where('faqs_id', $faq_id)->update(['posted_at' => now()->subDays(2)]);
+        foreach ([[$category->id], null] as $category_ids) {
+            $settings->target_category_ids = $category_ids;
+            $settings->save();
+
+            $date_plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+            $date_request = Request::create('/');
+            $date_initial = $date_plugin->index($date_request, $page->id, $frame->id)->getData();
+            $date_json = json_decode($date_plugin->indexJson($date_request, $page->id, $frame->id), true);
+            $titles = $date_initial['whatsnews']->pluck('post_title')->all();
+            $this->assertContains('対象ブログ', $titles);
+            $this->assertNotContains('対象FAQ', $titles);
+            $this->assertEqualsCanonicalizing($titles, array_column($date_json['whatsnewses'], 'post_title'));
+            $this->assertSame(count($titles), $date_json['whatsnews_total_count']);
+        }
+
+        DB::table('faqs_posts')->where('faqs_id', $faq_id)->update(['posted_at' => $posted_at]);
+        $settings->target_category_ids = [$category->id];
+        $settings->view_pattern = 0;
+        $settings->save();
+
+        $blog_frame->update(['content_open_type' => ContentOpenType::always_close]);
+        $only_public = json_decode($plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertSame(['対象FAQ'], array_column($only_public['whatsnewses'], 'post_title'));
+
+        $category->delete();
+        $deleted = json_decode($plugin->indexJson($request, $page->id, $frame->id), true);
+        $this->assertSame(0, $deleted['whatsnews_total_count']);
+
+        $edit = $plugin->editBuckets(Request::create('/'), $page->id, $frame->id)->getData();
+        $this->assertSame('共通のお知らせ（削除済み）', $edit['category_options']->get($category->id));
+        $this->assertTrue($edit['has_deleted_categories']);
+        $this->assertSame([$category->id], $edit['whatsnew']->target_category_ids);
+
+        // 削除済みカテゴリを選択したまま表示件数を変更しても、絞り込みは維持される。
+        $settings_input['count'] = 2;
+        $plugin->saveBuckets(Request::create('/', 'POST', $settings_input), $page->id, $frame->id);
+        $this->assertSame(2, (int) $settings->refresh()->count);
+        $this->assertSame([$category->id], $settings->target_category_ids);
+        $plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+        $after_save = json_decode($plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertSame(0, $after_save['whatsnews_total_count']);
+
+        // 新規設定や別の設定では、削除済みカテゴリを新たに選べない。
+        [, $other_bucket] = $this->createPluginFrame('whatsnews');
+        $other_settings = Whatsnews::create([
+            'bucket_id' => $other_bucket->id,
+            'whatsnew_name' => '別の新着情報',
+            'target_plugins' => 'blogs',
+        ]);
+        foreach ([null, $other_settings->id] as $other_id) {
+            $invalid_input = array_replace($settings_input, ['whatsnews_id' => $other_id]);
+            $invalid = $plugin->saveBuckets(Request::create('/', 'POST', $invalid_input), $page->id, $frame->id);
+            $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $invalid);
+            $this->assertTrue(session('errors')->has('target_category_ids.0'));
+        }
+
+        DB::table('faqs_posts')->insert([
+            'faqs_id' => $faq_id,
+            'post_title' => 'カテゴリ未設定のFAQ',
+            'post_text' => '質問',
+            'posted_at' => $posted_at,
+        ]);
+        unset($settings_input['target_category_ids']);
+        $plugin->saveBuckets(Request::create('/', 'POST', $settings_input), $page->id, $frame->id);
+        $this->assertNull($settings->refresh()->target_category_ids);
+        $plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+        $this->assertFalse($plugin->editBuckets(Request::create('/'), $page->id, $frame->id)->getData()['has_deleted_categories']);
+        $cleared = json_decode($plugin->indexJson(Request::create('/'), $page->id, $frame->id), true);
+        $this->assertContains('カテゴリ未設定のFAQ', array_column($cleared['whatsnewses'], 'post_title'));
     }
 
     /**

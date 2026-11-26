@@ -380,6 +380,8 @@ class FaqsPlugin extends UserPluginBase
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/faqs/show';
 
+        $return[] = true; // 新着情報の共通カテゴリ絞り込みに対応
+
         return $return;
     }
 

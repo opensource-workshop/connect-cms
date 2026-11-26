@@ -4421,6 +4421,8 @@ AND databases_inputs.posted_at <= NOW()
         $return[] = 'show_page_frame_post';
         $return[] = '/plugin/databases/detail';
 
+        $return[] = true; // 新着情報の共通カテゴリ絞り込みに対応
+
         return $return;
     }
 
