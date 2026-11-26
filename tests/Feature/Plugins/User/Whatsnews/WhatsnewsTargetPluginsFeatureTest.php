@@ -274,6 +274,29 @@ class WhatsnewsTargetPluginsFeatureTest extends TestCase
         $this->assertSame(['対象ブログ'], array_column($regular_json['whatsnewses'], 'post_title'));
 
         $settings->important = null;
+        $settings->view_pattern = 1;
+        $settings->days = 1;
+
+        // 表示日数より古い記事は、カテゴリの有無にかかわらず初期表示と追加表示から除かれる。
+        DB::table('faqs_posts')->where('faqs_id', $faq_id)->update(['posted_at' => now()->subDays(2)]);
+        foreach ([[$category->id], null] as $category_ids) {
+            $settings->target_category_ids = $category_ids;
+            $settings->save();
+
+            $date_plugin = new WhatsnewsPlugin($page, $frame, Page::defaultOrder()->get());
+            $date_request = Request::create('/');
+            $date_initial = $date_plugin->index($date_request, $page->id, $frame->id)->getData();
+            $date_json = json_decode($date_plugin->indexJson($date_request, $page->id, $frame->id), true);
+            $titles = $date_initial['whatsnews']->pluck('post_title')->all();
+            $this->assertContains('対象ブログ', $titles);
+            $this->assertNotContains('対象FAQ', $titles);
+            $this->assertEqualsCanonicalizing($titles, array_column($date_json['whatsnewses'], 'post_title'));
+            $this->assertSame(count($titles), $date_json['whatsnews_total_count']);
+        }
+
+        DB::table('faqs_posts')->where('faqs_id', $faq_id)->update(['posted_at' => $posted_at]);
+        $settings->target_category_ids = [$category->id];
+        $settings->view_pattern = 0;
         $settings->save();
 
         $blog_frame->update(['content_open_type' => ContentOpenType::always_close]);

@@ -239,10 +239,6 @@ class WhatsnewsPlugin extends UserPluginBase
             // 「表示件数」で制限
             // $whatsnews_sql->limit($whatsnews_frame->count);
             $whatsnews = $whatsnews->slice(0, $whatsnews_frame->count);
-        } elseif (empty($whatsnews_frame->target_category_ids)) {
-            // 「表示日数」で制限
-            // $whatsnews_sql->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
-            $whatsnews = $whatsnews->where('posted_at', '>=', date('Y-m-d H:i:s', strtotime("- " . $whatsnews_frame->days . " day")));
         }
 
         // 記事詳細から、最初の画像を抜き出して設定する。
@@ -386,7 +382,7 @@ class WhatsnewsPlugin extends UserPluginBase
         }
 
         $important = $whatsnews_frame->important;
-        $filter_by_date = $category_ids && !$for_rss && $whatsnews_frame->view_pattern != 0;
+        $filter_by_date = !$for_rss && $whatsnews_frame->view_pattern != 0;
 
         if ($filter_by_date || in_array($important, ['important_only', 'not_important'], true)) {
             // UNION全体に条件を適用し、初期表示と追加取得で同じ結果を使う。
